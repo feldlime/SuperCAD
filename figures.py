@@ -232,6 +232,7 @@ class Circle(Figure):
         self._i_radius = float(value)
 
     def rotate(self, angle):
+        """Not implemented here"""
         return NotImplemented
 
     def get_base_representation(self):
@@ -309,5 +310,4 @@ class Arc(Figure):
     def _validate_center_angle(cls, angle):
         cls._validate_positive_num(angle, 'center angle')
         if angle >= 2 * np.pi:
-            raise IncorrectParamError('Parameter  '
-                                      'must be positive')
+            raise IncorrectParamError('Center angle must be positive')
