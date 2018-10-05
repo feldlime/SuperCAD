@@ -204,7 +204,17 @@ class Segment(Figure):
 
         dx, dy = x2 - x1, y2 - y1
         length = np.sqrt(dx ** 2 + dy ** 2)
-        angle = np.arctan()  # TODO: Think about angles > pi / 2
+
+        cls._validate_positive_num(length, 'length')
+
+        if dx == 0:
+            angle = np.pi / 2 if dy > 0 else -np.pi / 2
+        elif dx > 0:
+            angle = np.arctan(dy / dx)
+        else:
+            angle = np.arctan(dy / dx) + np.pi
+
+        return cls(start=(x1, y1), angle=angle, length=length)
 
 
 class Circle(Figure):
