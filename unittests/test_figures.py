@@ -1,5 +1,5 @@
 import pytest
-from ..figures import *
+from figures import *
 
 
 class TestFigure:
