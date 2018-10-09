@@ -65,3 +65,32 @@ class TestPoint:
     def test_incorrect_creation_from_coordinates(self):
         with pytest.raises(TypeError):
             p = Point.from_coordinates(y=10)
+            
+class TestSegment:
+    def test_normal_creation(self):
+        s = Segment((1, 2), 1)
+        assert isinstance(s, Segment)
+        s = Segment((1., 2.), 1)
+        assert isinstance(s, Segment)
+        s = Segment((1, -2), 1.)
+        assert isinstance(s, Segment)
+        s = Segment()
+        assert isinstance(s, Segment)
+
+    def test_incorrect_creation(self):
+        with pytest.raises(IncorrectParamType):
+            s = Segment(('1', 2), 1)
+            s = Segment((1, 2), '1')
+
+    def test_default_representation(self):
+        s = Segment()
+        rep = s.get_base_representation()
+        assert rep == (0.0, 0.0, 1.0, 0.0)
+
+    @pytest.mark.randomize(num=int, min_num=-100, max_num=100, ncalls=10)
+    def test_create_from_point(self, num):
+        s = Segment()
+        ss = s.from_points(0, 0, num, 0)
+        assert abs(num) == ss._length
+        assert (0, 0, num, 0) == ss.get_base_representation()
+
