@@ -86,7 +86,7 @@ class Figure:
     @staticmethod
     def _validate_num(value, parameter_name):
         if not (isinstance(value, int) or isinstance(value, float)):
-            raise IncorrectParamError(f'Incorrect type of {parameter_name}')
+            raise IncorrectParamType(f'Incorrect type of {parameter_name}')
 
     @staticmethod
     def _validate_positive_num(value, parameter_name):
