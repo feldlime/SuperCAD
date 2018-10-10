@@ -1,4 +1,5 @@
 import pytest
+from numpy import isclose
 from figures import *
 
 
@@ -39,7 +40,7 @@ class TestPoint:
     def test_normal_creation(self):
         p = Point((1, 2))
         rep = p.get_base_representation()
-        assert rep == (1, 2)
+        assert all(isclose(rep, (1, 2)))
 
     def test_incorrect_creation(self):
         with pytest.raises(TypeError):
@@ -49,23 +50,24 @@ class TestPoint:
         p = Point((1, 2))
         p.move(3, 4)
         rep = p.get_base_representation()
-        assert rep == (4, 6)
+        assert all(isclose(rep, (4, 6)))
 
     def test_not_rotation(self):
         p = Point((1, 2))
         res = p.rotate(1.5)
         rep = p.get_base_representation()
-        assert rep == (1, 2) and res == NotImplemented
+        assert all(isclose(rep, (1, 2))) and res == NotImplemented
 
     def test_creation_from_coordinates(self):
         p = Point.from_coordinates(0, 10)
         rep = p.get_base_representation()
-        assert rep == (0, 10)
+        assert all(isclose(rep, (0, 10)))
 
     def test_incorrect_creation_from_coordinates(self):
         with pytest.raises(TypeError):
             p = Point.from_coordinates(y=10)
-            
+
+
 class TestSegment:
     def test_normal_creation(self):
         s = Segment((1, 2), 1)
