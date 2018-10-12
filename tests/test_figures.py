@@ -17,6 +17,7 @@ class TestFigure:
     def test_incorrect_creation(self):
         with pytest.raises(IncorrectParamType):
             f = Figure(('1', 2), 1)
+        with pytest.raises(IncorrectParamType):
             f = Figure((1, 2), '1')
 
     def test_representation(self):
@@ -28,6 +29,7 @@ class TestFigure:
         f = Figure()
         with pytest.raises(IncorrectParamType):
             f.move('1', 2)
+        with pytest.raises(IncorrectParamType):
             f.move(1, '2')
 
     def test_incorrect_rotation(self):
@@ -85,13 +87,23 @@ class TestSegment:
 
     def test_incorrect_creation(self):
         with pytest.raises(IncorrectParamType):
-            s = Segment(('1', 2), 1)
-            s = Segment((1, 2), '1')
+            Segment(('1', 2), 1)
+        with pytest.raises(IncorrectParamType):
+            Segment((1, 2), '1')
+        with pytest.raises(IncorrectParamType):
+            Segment((1, 1), 1, '1')
+        for i in range(-1, 1):
+            with pytest.raises(IncorrectParamValue):
+                Segment((1, 2), 0, i)
 
     def test_create_from_point(self):
-        for coo in np.random.random((10, 4)) * 111:
+        for coo in np.random.random((10, 4)) * 100 - 50:
             s = Segment.from_points(*coo)
-            assert all(isclose(*coo, s.get_base_representation()))
+            assert all(isclose(coo, s.get_base_representation()))
 
-
-
+    def test_incorrect_create_from_point(self):
+        for i in range(4):
+            a = [1, 1, 1, 1]
+            a[i] = '1'
+            with pytest.raises(IncorrectParamError):
+                Segment.from_points(*a)

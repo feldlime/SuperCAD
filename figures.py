@@ -9,6 +9,10 @@ class IncorrectParamType(IncorrectParamError, TypeError):
     pass
 
 
+class IncorrectParamValue(IncorrectParamError, ValueError):
+    pass
+
+
 class Figure:
     """Base class for any geometry figure.
 
@@ -91,9 +95,9 @@ class Figure:
     @staticmethod
     def _validate_positive_num(value, parameter_name):
         if not (isinstance(value, int) or isinstance(value, float)):
-            raise IncorrectParamError(f'Incorrect type of {parameter_name}')
+            raise IncorrectParamType(f'Incorrect type of {parameter_name}')
         if value <= 0:
-            raise IncorrectParamError(f'{parameter_name.capitalize()} '
+            raise IncorrectParamValue(f'{parameter_name.capitalize()} '
                                       f'must be positive')
 
     def __repr__(self):
