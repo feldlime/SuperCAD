@@ -88,7 +88,7 @@ class TestSegment:
             s = Segment(('1', 2), 1)
             s = Segment((1, 2), '1')
 
-    @pytest.mark.randomize(num=int, min_num=-100, max_num=100, ncalls=10)
+    @pytest.mark.randomize(length=int, min_num=-100, max_num=100, ncalls=10)
     def test_create_from_point(self, length):
         s = Segment.from_points(0, 0, length, 0)
         assert all(isclose((0, 0, length, 0), s.get_base_representation()))
