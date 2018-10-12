@@ -77,7 +77,7 @@ class TestSegment:
     def test_normal_creation(self):
         s = Segment((1, 2), 0, 3)
         rep = s.get_base_representation()
-        assert all(isclose((1, 2, 3, 0), rep))
+        assert all(isclose((1, 2, 4, 2), rep))
 
         s = Segment((1, 2), np.pi / 2, 3)
         rep = s.get_base_representation()
