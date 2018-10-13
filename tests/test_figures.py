@@ -107,3 +107,29 @@ class TestSegment:
             a[i] = '1'
             with pytest.raises(IncorrectParamError):
                 Segment.from_points(*a)
+
+    def test_move(self):
+        for coo in np.random.random((10, 2)) * 100 - 50:
+            s = Segment()
+            s.move(*coo)
+            assert all(isclose((coo[0], coo[1], coo[0]+1, coo[1]), s.get_base_representation()))
+
+    def test_rotate_180(self):
+        s = Segment()
+        s.rotate(np.pi)
+        assert all(isclose((0, 0, -1, 0), s.get_base_representation()))
+
+    def test_rotate_90(self):
+        s = Segment()
+        s.rotate(np.pi/2)
+        assert all(isclose((0, 0, 0, 1), s.get_base_representation()))
+
+    def test_rotate_min_90(self):
+        s = Segment()
+        s.rotate(-np.pi/2)
+        assert all(isclose((0, 0, 0, -1), s.get_base_representation()))
+
+    def test_rotate_min_180(self):
+        s = Segment()
+        s.rotate(-np.pi)
+        assert all(isclose((0, 0, -1, 0), s.get_base_representation()))
