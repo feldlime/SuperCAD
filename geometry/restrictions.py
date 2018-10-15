@@ -1,3 +1,6 @@
+"""Module with classes of geometry restrictions."""
+
+
 class Restriction:
     def get_restriction_equation(self, objects):
         # may be no objects

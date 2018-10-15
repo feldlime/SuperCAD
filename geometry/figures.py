@@ -1,3 +1,5 @@
+"""Module with classes of geometry figures."""
+
 import numpy as np
 
 
