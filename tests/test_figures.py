@@ -1,6 +1,6 @@
 import pytest
 from numpy import isclose
-from figures import *
+from geometry.figures import *
 
 
 class TestFigure:

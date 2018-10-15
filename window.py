@@ -4,7 +4,16 @@
 
 from PyQt5 import QtWidgets
 import design
+from project import CADProject
 
 
 class CADWindow(QtWidgets.QMainWindow, design.UiSuperCAD):
-    pass
+    def __init__(self):
+        super().__init__()
+        self._project = CADProject()
+
+    def save(self):
+        raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
