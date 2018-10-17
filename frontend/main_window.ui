@@ -80,7 +80,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QPushButton" name="Point">
+      <widget class="QPushButton" name="point">
        <property name="text">
         <string/>
        </property>
@@ -97,7 +97,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="Line">
+      <widget class="QPushButton" name="line">
        <property name="text">
         <string/>
        </property>
@@ -288,32 +288,22 @@
      </item>
     </layout>
    </widget>
-   <zorder>work_plane</zorder>
-   <zorder>Point</zorder>
-   <zorder>Line</zorder>
-   <zorder>fix_angle</zorder>
-   <zorder>fix_length</zorder>
-   <zorder>combine_points</zorder>
-   <zorder>point_on_middle_line</zorder>
-   <zorder>horizontally</zorder>
-   <zorder>point_on_line</zorder>
-   <zorder>fix_point</zorder>
-   <zorder>normal</zorder>
-   <zorder>fix_size</zorder>
-   <zorder>parallelism</zorder>
-   <zorder>layoutWidget_2</zorder>
-   <zorder>Line_2</zorder>
-   <zorder>Point_2</zorder>
-   <zorder>fix_angle_2</zorder>
-   <zorder>fix_length_2</zorder>
-   <zorder>point_on_line_2</zorder>
-   <zorder>point_on_middle_line_2</zorder>
-   <zorder>combine_points_2</zorder>
-   <zorder>fix_point_2</zorder>
-   <zorder>parallelism_2</zorder>
-   <zorder>fix_size_2</zorder>
-   <zorder>horizontally_2</zorder>
-   <zorder>normal_2</zorder>
+   <widget class="QListView" name="listView">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>0</y>
+      <width>256</width>
+      <height>601</height>
+     </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -332,7 +322,8 @@
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
-    <addaction name="actionColse"/>
+    <addaction name="actionSaveAs"/>
+    <addaction name="actionClose"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuMenu">
@@ -340,8 +331,8 @@
      <string>Menu</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionBack"/>
-    <addaction name="actionRede"/>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
     <addaction name="actionShow_elements_table"/>
    </widget>
    <addaction name="menuFile"/>
@@ -372,12 +363,50 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionColse">
+  <action name="actionSaveAs">
    <property name="text">
-    <string>Colse</string>
+    <string>Save As</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="text">
+    <string>Undo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Z</string>
+   </property>
+  </action>
+  <action name="actionShow_elements_table">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show elements table</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
   <action name="actionExit">
@@ -388,34 +417,40 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionBack">
-   <property name="text">
-    <string>Undo</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Z</string>
-   </property>
-  </action>
-  <action name="actionRede">
-   <property name="text">
-    <string>Rede</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Shift+Z</string>
-   </property>
-  </action>
-  <action name="actionShow_elements_table">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show elements table</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+T</string>
-   </property>
-  </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionShow_elements_table</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>listView</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>177</x>
+     <y>322</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>changed()</signal>
+   <receiver>SuperCAD</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>324</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
