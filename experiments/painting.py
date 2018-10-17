@@ -67,27 +67,22 @@ class Helper(object):
         # self.textFont.setPixelSize(50)
         # self.linePen = QPen(Qt.black)
         # self.linePen.setWidth(1)
-        pass
+        self.point_end = [0,0]
+        self.point_start = [0,0]
 
     def paint(self, painter, event, elapsed):
         painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255)))
-        painter.translate(100, 100)
+        # painter.translate(100, 100)
 
         painter.save()
         # painter.setBrush(self.circleBrush)
         # painter.setPen(self.linePen)
-        painter.setPen(QPen(Qt.black, 1, Qt.DashDotLine, Qt.RoundCap))
-        painter.rotate(elapsed * 0.030)
+        # painter.setPen(QPen(Qt.black, 1, Qt.DashDotLine, Qt.RoundCap))
+        # painter.rotate(elapsed * 0.030)
 
-        r = elapsed / 1000.0
-        n = 30
-        for i in range(n):
-            painter.rotate(30)
-            radius = 0 + 120.0 * ((i + r) / n)
-            lineRadius = 1 + ((i + r) / n) * 20
-            painter.drawLine(0, 0, lineRadius * 2, lineRadius * 2)
-            # painter.drawEllipse(QRectF(radius, - lineRadius,
-            #         lineRadius*2, lineRadius*2))
+        painter.drawLine(self.point_start[0], self.point_start[1], self.point_end[0], self.point_end[1])
+        # painter.drawEllipse(QRectF(radius, - lineRadius,
+        #         lineRadius*2, lineRadius*2))
 
         painter.restore()
 
@@ -115,6 +110,16 @@ class Widget(QWidget):
         self.helper.paint(painter, event, self.elapsed)
         painter.end()
 
+    def mouseMoveEvent(self, e):
+        # self.setupUi(self) # Если это разкоментить, то координаты будут выводиться в статус бар
+        x = e.x()
+        y = e.y()
+        # text = "x: {0},  y: {1}".format(x, y)
+        self.helper.point_end = [x,y]
+        # self.statusbar.showMessage(text)  # Если это разкоментить, то координаты будут выводиться в статус бар
+        # print(text)
+
+
 
 class GLWidget(QOpenGLWidget):
     def __init__(self, helper, parent):
@@ -135,6 +140,15 @@ class GLWidget(QOpenGLWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         self.helper.paint(painter, event, self.elapsed)
         painter.end()
+
+    def mouseMoveEvent(self, e):
+        # self.setupUi(self) # Если это разкоментить, то координаты будут выводиться в статус бар
+        x = e.x()
+        y = e.y()
+        # text = "x: {0},  y: {1}".format(x, y)
+        self.helper.point_end = [x,y]
+        # self.statusbar.showMessage(text)  # Если это разкоментить, то координаты будут выводиться в статус бар
+        # print(text)
 
 
 class Window(QWidget):

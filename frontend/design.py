@@ -185,10 +185,9 @@ class Ui_SuperCAD(object):
         self.menubar.addAction(self.menuMenu.menuAction())
 
         self.retranslateUi(SuperCAD)
-        self.actionShow_elements_table.triggered['bool'].connect(self.triggered_list_view)
+        self.actionShow_elements_table.triggered['bool'].connect(self.listView.hide)
         self.actionExit.changed.connect(SuperCAD.close)
         QtCore.QMetaObject.connectSlotsByName(SuperCAD)
-
 
     def retranslateUi(self, SuperCAD):
         _translate = QtCore.QCoreApplication.translate
