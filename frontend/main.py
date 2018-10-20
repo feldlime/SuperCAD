@@ -9,11 +9,10 @@ from PyQt5.QtGui import (QBrush, QColor, QFont, QLinearGradient, QPainter,
                          QPen, QSurfaceFormat)
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QLabel, QOpenGLWidget,
                              QWidget)
-
-# import os
-# from PyQt5 import uic
+from time import sleep
 
 import design  # Это наш конвертированный файл дизайна
+from figures import *
 
 
 class Helper(object):
@@ -21,10 +20,15 @@ class Helper(object):
         self.point_end = [0, 0]
         self.point_start = [0, 0]
 
-    def paint(self, painter, event, elapsed):
+    def paint(self, painter, event, center_width, center_height, s):
         painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255)))
         painter.save()
-        painter.drawLine(self.point_start[0], self.point_start[1], self.point_end[0], self.point_end[1])
+        painter.translate(center_width, center_height)
+        for line in s:
+            to_draw = line.get_base_representation()
+            painter.drawLine(*to_draw)
+
+        # print('paint', len(s))
         painter.restore()
 
 
@@ -34,32 +38,56 @@ class GLWidget(QOpenGLWidget):
 
         self.helper = helper
         self.elapsed = 0
-        # self.setFixedSize(200, 200)
         self.setAutoFillBackground(True)
-        #
-        self.setGeometry(QtCore.QRect(0, 0, 1231, 611))
+
+        self.setGeometry(QtCore.QRect(0, 0, parent.work_plane.width(), parent.work_plane.height()))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
 
+        self.center_height = parent.work_plane.height() // 2
+        self.center_width = parent.work_plane.width() // 2
+
         self.setSizePolicy(sizePolicy)
+        # s1 = Segment()
+        self.s = []
 
     def animate(self):
-        self.elapsed = (self.elapsed + self.sender().interval()) % 1000
         self.update()
 
     def paintEvent(self, event):
         painter = QPainter()
         painter.begin(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        self.helper.paint(painter, event, self.elapsed)
+        self.helper.paint(painter, event, self.center_width, self.center_height, self.s)
         painter.end()
 
-    def mouseMoveEvent(self, e):
-        x = e.x()
-        y = e.y()
-        self.helper.point_end = [x, y]
+    def mouseMoveEvent(self, event):
+        if self.drag_to_print:
+            x = event.x()
+            y = event.y()
+            self.helper.point_end = [x - self.center_width, y - self.center_height]
+            self.s[-1] = Segment.from_points(self.helper.point_start[0],
+                                             self.helper.point_start[1],
+                                             self.helper.point_end[0],
+                                             self.helper.point_end[1])
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            x = event.x()
+            y = event.y()
+            self.drag_to_print = True
+            self.helper.point_start = [x - self.center_width, y - self.center_height]
+            self.helper.point_end = [x - self.center_width + 1, y - self.center_height + 1]
+            s1 = Segment.from_points(self.helper.point_start[0],
+                                     self.helper.point_start[1],
+                                     self.helper.point_end[0],
+                                     self.helper.point_end[1])
+            self.s.append(s1)
+        else:
+            self.drag_to_print = False
+            print('else')
 
 
 class MainWindow(QtWidgets.QMainWindow, design.Ui_SuperCAD):
@@ -69,13 +97,12 @@ class MainWindow(QtWidgets.QMainWindow, design.Ui_SuperCAD):
         super(MainWindow, self).__init__()
         self.setupUi(self)  # Это нужно для инициализации нашего дизайна
 
+        # Дописываем design под себя
+        self.listView.hide()
+        self.actionShow_elements_table.triggered['bool'].connect(self.triggered_list_view)
+
         helper = Helper()
         openGL = GLWidget(helper, self)
-
-
-        # layout = QGridLayout()
-        # layout.addWidget(openGL, 0, 1)
-        # self.setLayout(layout)
 
         timer = QTimer(self)
         timer.timeout.connect(openGL.animate)
