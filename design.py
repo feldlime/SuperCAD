@@ -1,0 +1,2 @@
+class UiSuperCAD:
+    pass

@@ -1,16 +1,14 @@
+"""Module with classes of geometry figures."""
+
 import numpy as np
 
-
-class IncorrectParamError(Exception):
-    pass
-
-
-class IncorrectParamType(IncorrectParamError, TypeError):
-    pass
-
-
-class IncorrectParamValue(IncorrectParamError, ValueError):
-    pass
+from utils import (
+    IncorrectParamError,
+    IncorrectParamType,
+    validate_num,
+    validate_positive_num,
+    validate_coordinates
+)
 
 
 class Figure:
@@ -25,13 +23,8 @@ class Figure:
     """
 
     def __init__(self, base=(0, 0), angle=0, **kwargs):
-        if not isinstance(base, tuple)\
-          or len(base) != 2\
-          or not (isinstance(base[0], int) or isinstance(base[0], float))\
-          or not (isinstance(base[1], int) or isinstance(base[1], float)):
-            raise IncorrectParamType('Incorrect type of base')
-
-        self._validate_num(angle, 'angle')
+        validate_coordinates(base, 'Base must be a tuple of 2 numbers.')
+        validate_num(angle, 'angle')
 
         self._base = (float(base[0]), float(base[1]))
         self._i_angle = self._simplify_angle(float(angle))
@@ -58,8 +51,8 @@ class Figure:
         ------
          self
         """
-        self._validate_num(dx, 'dx')
-        self._validate_num(dy, 'dy')
+        validate_num(dx, 'dx')
+        validate_num(dy, 'dy')
         self._base = self._base[0] + dx, self._base[1] + dy
         return self
 
@@ -75,7 +68,7 @@ class Figure:
         ------
          self
         """
-        self._validate_num(angle, 'angle')
+        validate_num(angle, 'angle')
         self._angle += angle
         return self
 
@@ -83,22 +76,33 @@ class Figure:
         """Return special representation of figure that not contains angles."""
         return NotImplemented
 
+    def set_params(self, base_x=None, base_y=None, angle=None, **kwargs):
+        """Set parameters of figure."""
+        if base_x is not None:
+            validate_num(base_x, 'base_x')
+        else:
+            base_x = self._base[0]
+
+        if base_y is not None:
+            validate_num(base_y, 'base_y')
+        else:
+            base_y = self._base[1]
+
+        if angle is not None:
+            validate_num(angle, 'angle')
+        else:
+            angle = self._angle
+
+        if kwargs:
+            raise IncorrectParamError(f'Unexpected parameters: '
+                                      f'{list(kwargs.keys())}')
+
+        self._base = (base_x, base_y)
+        self._angle = angle
+
     @staticmethod
     def _simplify_angle(angle):
         return angle % (2 * np.pi)
-
-    @staticmethod
-    def _validate_num(value, parameter_name):
-        if not (isinstance(value, int) or isinstance(value, float)):
-            raise IncorrectParamType(f'Incorrect type of {parameter_name}')
-
-    @staticmethod
-    def _validate_positive_num(value, parameter_name):
-        if not (isinstance(value, int) or isinstance(value, float)):
-            raise IncorrectParamType(f'Incorrect type of {parameter_name}')
-        if value <= 0:
-            raise IncorrectParamValue(f'{parameter_name.capitalize()} '
-                                      f'must be positive')
 
     def __repr__(self):
         desc = f'{self.__class__.__name__} with base representation: ' \
@@ -145,9 +149,39 @@ class Point(Figure):
         ------
         point: Point instance
         """
-        cls._validate_num(x, 'x')
-        cls._validate_num(y, 'y')
+        validate_num(x, 'x')
+        validate_num(y, 'y')
         return cls(coordinates=(x, y))
+
+    def set_params(self, base_x=None, base_y=None, x=None, y=None, **kwargs):
+        """Set parameters of figure."""
+        if base_x is not None:
+            if x is not None:
+                raise IncorrectParamError('You cannot set base_x and x'
+                                          'simultaneously')
+            validate_num(base_x, 'base_x')
+        elif x is not None:
+            validate_num(x, 'x')
+            base_x = x
+        else:
+            base_x = self._base[0]
+
+        if base_y is not None:
+            if y is not None:
+                raise IncorrectParamError('You cannot set base_y and y'
+                                          'simultaneously')
+            validate_num(base_y, 'base_y')
+        elif y is not None:
+            validate_num(y, 'y')
+            base_y = y
+        else:
+            base_y = self._base[1]
+
+        if kwargs:
+            raise IncorrectParamError(f'Unexpected parameters: '
+                                      f'{list(kwargs.keys())}')
+
+        self._base = (base_x, base_y)
 
 
 class Segment(Figure):
@@ -164,7 +198,7 @@ class Segment(Figure):
     """
     def __init__(self, start=(0, 0), angle=0, length=1):
         super().__init__(start, angle)
-        self._validate_positive_num(length, 'length')
+        validate_positive_num(length, 'length')
         self._i_length = float(length)
 
     @property
@@ -173,20 +207,8 @@ class Segment(Figure):
 
     @_length.setter
     def _length(self, value):
-        self._validate_positive_num(value, 'length')
+        validate_positive_num(value, 'length')
         self._i_length = float(value)
-
-    def get_base_representation(self):
-        """Return special representation of figure that not contains angles.
-
-        Return
-        ------
-        x1, y1, x2, y2: float
-        """
-        x1, y1 = self._base
-        x2 = x1 + self._length * np.cos(self._angle)
-        y2 = y1 + self._length * np.sin(self._angle)
-        return x1, y1, x2, y2
 
     @classmethod
     def from_points(cls, x1, y1, x2, y2):
@@ -201,15 +223,15 @@ class Segment(Figure):
         y2: int or float
             Coordinate y of the end of segment.
         """
-        cls._validate_num(x1, 'x1')
-        cls._validate_num(y1, 'y1')
-        cls._validate_num(x2, 'x2')
-        cls._validate_num(y2, 'y2')
+        validate_num(x1, 'x1')
+        validate_num(y1, 'y1')
+        validate_num(x2, 'x2')
+        validate_num(y2, 'y2')
 
         dx, dy = x2 - x1, y2 - y1
         length = np.sqrt(dx ** 2 + dy ** 2)
 
-        cls._validate_positive_num(length, 'length')
+        validate_positive_num(length, 'length')
 
         if dx == 0:
             angle = np.pi / 2 if dy > 0 else -np.pi / 2
@@ -219,3 +241,49 @@ class Segment(Figure):
             angle = np.arctan(dy / dx) + np.pi
 
         return cls(start=(x1, y1), angle=angle, length=length)
+
+    def get_base_representation(self):
+        """Return special representation of figure that not contains angles.
+
+        Return
+        ------
+        x1, y1, x2, y2: float
+        """
+        x1, y1 = self._base
+        x2 = x1 + self._length * np.cos(self._angle)
+        y2 = y1 + self._length * np.sin(self._angle)
+        return x1, y1, x2, y2
+
+    def set_params(self, base_x=None, base_y=None, angle=None, length=None,
+                   x1=None, x2=None, y1=None, y2=None, **kwargs):
+        """Set parameters of figure."""
+        # TODO
+        """
+        if base_x is not None:
+            if x is not None:
+                raise IncorrectParamError('You cannot set base_x and x'
+                                          'simultaneously')
+            validate_num(base_x, 'base_x')
+        elif x is not None:
+            validate_num(x, 'x')
+            base_x = x
+        else:
+            base_x = self._base[0]
+
+        if base_y is not None:
+            if y is not None:
+                raise IncorrectParamError('You cannot set base_y and y'
+                                          'simultaneously')
+            validate_num(base_y, 'base_y')
+        elif y is not None:
+            validate_num(y, 'y')
+            base_y = y
+        else:
+            base_y = self._base[1]
+
+        if kwargs:
+            raise IncorrectParamError(f'Unexpected parameters: '
+                                      f'{list(kwargs.keys())}')
+
+        self._base = (base_x, base_y)
+        """
