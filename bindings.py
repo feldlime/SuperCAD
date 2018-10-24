@@ -5,9 +5,15 @@ from utils import (
     validate_positive_num,
     validate_coordinates
 )
+from figures import Point, Segment
 
 
-class Binding:
+class BaseBinding:
+    def check(self, x, y):
+        raise NotImplemented
+
+
+class Binding(BaseBinding):
     """Class of simple binding with circle zone.
 
     coordinates: tuple or function
@@ -16,7 +22,7 @@ class Binding:
         If function, it must be function, that returns coordinates of point.
     """
 
-    def __init__(self, coordinates, radius):
+    def __init__(self, coordinates, radius, **kwargs):
         if isinstance(coordinates, tuple):
             validate_coordinates(coordinates,
                                  'If coordinates is tuple, it must contain '
@@ -62,5 +68,34 @@ class Binding:
             return self._coordinates
         else:
             return self._coordinates()
+
+
+class ObjectBinding(Binding):
+    def __init__(self, coordinates, radius, object_name):
+        super().__init__(coordinates, radius)
+        self.object_name = object_name
+
+
+class PointBinding(ObjectBinding):
+    pass
+
+
+class SegmentStartBinding(ObjectBinding):
+    pass
+
+
+class SegmentEndBinding(ObjectBinding):
+    pass
+
+
+class SegmentCenterBinding(ObjectBinding):
+    pass
+
+
+class SegmentsIntersectionsBinding(Binding):
+    def __init__(self, coordinates, radius, segment_1_name, segment_2_name):
+        super().__init__(coordinates, radius)
+        self.segment_1_name = segment_1_name
+        self.segment_2_name = segment_2_name
 
 

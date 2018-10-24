@@ -1,27 +1,37 @@
 """Module with main class of system (backend)."""
 
+from figures import Figure, Point, Segment
+from restrictions import Restriction
+
 
 class CADProject:
     def __init__(self):
-        self._history = ChangesStack()  # All changes (for undo and rede)
+        self._history = ChangesStack()  # All changes (for undo and redo)
+        self._figures = dict()
+        self._restrictions = dict()
 
-    def add_figure(self):
+    def add_figure(self, figure: Figure, name: str = None):
         pass
 
-    def add_restriction(self):
+    def change_figure(self, figure_name: str, parameter: str, value):
         pass
 
-    def change_figure(self, figure, change):
+    def move_figure(self, figure_name: str, cursor_x, cursor_y):
         pass
 
-    def move_figure(self, figure, coord):
+    def remove_figure(self, figure_name: str):
         pass
 
-    def get_updates(self):
-        """Return all changes from changes stack."""
+    def add_restriction(self, restriction: Restriction, figure_names,
+                        name: str = None):
+        """
+        """
         pass
 
-    def get_all(self):
+    def remove_restriction(self, restriction_name):
+        pass
+
+    def get_state(self):
         """Return current state of system."""
         pass
 
