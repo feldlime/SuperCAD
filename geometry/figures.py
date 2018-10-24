@@ -85,6 +85,30 @@ class Figure:
         """Return special representation of figure that not contains angles."""
         return NotImplemented
 
+    def set_params(self, base_x=None, base_y=None, angle=None, **kwargs):
+        """Set parameters of figure."""
+        if base_x is not None:
+            self._validate_num(base_x, 'base_x')
+        else:
+            base_x = self._base[0]
+
+        if base_y is not None:
+            self._validate_num(base_y, 'base_y')
+        else:
+            base_y = self._base[1]
+
+        if angle is not None:
+            self._validate_num(angle, 'angle')
+        else:
+            angle = self._angle
+
+        if kwargs:
+            raise IncorrectParamError(f'Unexpected parameters: '
+                                      f'{list(kwargs.keys())}')
+
+        self._base = (base_x, base_y)
+        self._angle = angle
+
     @staticmethod
     def _simplify_angle(angle):
         return angle % (2 * np.pi)
@@ -151,6 +175,36 @@ class Point(Figure):
         cls._validate_num(y, 'y')
         return cls(coordinates=(x, y))
 
+    def set_params(self, base_x=None, base_y=None, x=None, y=None, **kwargs):
+        """Set parameters of figure."""
+        if base_x is not None:
+            if x is not None:
+                raise IncorrectParamError('You cannot set base_x and x'
+                                          'simultaneously')
+            self._validate_num(base_x, 'base_x')
+        elif x is not None:
+            self._validate_num(x, 'x')
+            base_x = x
+        else:
+            base_x = self._base[0]
+
+        if base_y is not None:
+            if y is not None:
+                raise IncorrectParamError('You cannot set base_y and y'
+                                          'simultaneously')
+            self._validate_num(base_y, 'base_y')
+        elif y is not None:
+            self._validate_num(y, 'y')
+            base_y = y
+        else:
+            base_y = self._base[1]
+
+        if kwargs:
+            raise IncorrectParamError(f'Unexpected parameters: '
+                                      f'{list(kwargs.keys())}')
+
+        self._base = (base_x, base_y)
+
 
 class Segment(Figure):
     """Class of segment.
@@ -177,18 +231,6 @@ class Segment(Figure):
     def _length(self, value):
         self._validate_positive_num(value, 'length')
         self._i_length = float(value)
-
-    def get_base_representation(self):
-        """Return special representation of figure that not contains angles.
-
-        Return
-        ------
-        x1, y1, x2, y2: float
-        """
-        x1, y1 = self._base
-        x2 = x1 + self._length * np.cos(self._angle)
-        y2 = y1 + self._length * np.sin(self._angle)
-        return x1, y1, x2, y2
 
     @classmethod
     def from_points(cls, x1, y1, x2, y2):
@@ -221,3 +263,49 @@ class Segment(Figure):
             angle = np.arctan(dy / dx) + np.pi
 
         return cls(start=(x1, y1), angle=angle, length=length)
+
+    def get_base_representation(self):
+        """Return special representation of figure that not contains angles.
+
+        Return
+        ------
+        x1, y1, x2, y2: float
+        """
+        x1, y1 = self._base
+        x2 = x1 + self._length * np.cos(self._angle)
+        y2 = y1 + self._length * np.sin(self._angle)
+        return x1, y1, x2, y2
+
+    def set_params(self, base_x=None, base_y=None, angle=None, length=None,
+                   x1=None, x2=None, y1=None, y2=None, **kwargs):
+        """Set parameters of figure."""
+        # TODO
+        """
+        if base_x is not None:
+            if x is not None:
+                raise IncorrectParamError('You cannot set base_x and x'
+                                          'simultaneously')
+            self._validate_num(base_x, 'base_x')
+        elif x is not None:
+            self._validate_num(x, 'x')
+            base_x = x
+        else:
+            base_x = self._base[0]
+
+        if base_y is not None:
+            if y is not None:
+                raise IncorrectParamError('You cannot set base_y and y'
+                                          'simultaneously')
+            self._validate_num(base_y, 'base_y')
+        elif y is not None:
+            self._validate_num(y, 'y')
+            base_y = y
+        else:
+            base_y = self._base[1]
+
+        if kwargs:
+            raise IncorrectParamError(f'Unexpected parameters: '
+                                      f'{list(kwargs.keys())}')
+
+        self._base = (base_x, base_y)
+        """
