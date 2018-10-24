@@ -1,20 +1,23 @@
 """Module with classes of geometry restrictions."""
-
+import
 
 class Restriction:
-    def get_restriction_equation(self, objects):
+    def get_restriction_equation(self, **kwargs):
         # may be no objects
-        pass
+        raise NotImplementedError
 
 
 class FixedLength(Restriction):
-    def __init__(self, length=None):
+    def __init__(self, length):
         """
 
         length:
             If None use current length.
         """
         self._length = length
+
+    def get_restriction_equation(self, name_segment):
+
 
 
 # more
