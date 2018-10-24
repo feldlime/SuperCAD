@@ -1,14 +1,18 @@
 """Module with main class of system (backend)."""
 
 from figures import Figure, Point, Segment
+from bindings import Binding
 from restrictions import Restriction
+from solve import EquationsSystem
 
 
 class CADProject:
     def __init__(self):
         self._history = ChangesStack()  # All changes (for undo and redo)
         self._figures = dict()
+        self._bindings = dict()
         self._restrictions = dict()
+        self._system = EquationsSystem()
 
     def add_figure(self, figure: Figure, name: str = None):
         pass
