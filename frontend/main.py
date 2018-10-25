@@ -44,6 +44,9 @@ class Helper(object):
         for line in segments_array_view:
             to_draw = line.get_base_representation()
             painter.drawLine(*to_draw)
+            painter.drawEllipse(QPointF(to_draw[0], to_draw[1]), 4, 4)
+            painter.drawEllipse(QPointF(to_draw[2], to_draw[3]), 4, 4)
+
         for point in points_array_view:
             to_draw = point.get_base_representation()
             painter.drawEllipse(*to_draw, 4, 4)
@@ -55,7 +58,9 @@ class GLWidget(QOpenGLWidget):
     def __init__(self, helper, parent):
         super(GLWidget, self).__init__(parent.work_plane)
 
+        self.parent = parent
         self.helper = helper
+
         self.elapsed = 0
         self.setAutoFillBackground(True)
         self.setMouseTracking(True)
@@ -143,31 +148,32 @@ class GLWidget(QOpenGLWidget):
 
     # Отслеживание нажатия клавиши мыши
     def mousePressEvent(self, event):
-        # Рисование линий
         if event.button() == Qt.LeftButton:
-            x = event.x()
-            y = event.y()
-            self.drag_to_print = True
-            self.helper.point_start = [x - self.center_width, y - self.center_height]
-            self.helper.point_end = [x - self.center_width + 1, y - self.center_height + 1]
-            s = Segment.from_points(self.helper.point_start[0],
-                                    self.helper.point_start[1],
-                                    self.helper.point_end[0],
-                                    self.helper.point_end[1])
-            self.segments_array.append(s)
+            # Рисование линий
+            if not self.parent.Line_widget.isHidden():
+                x = event.x()
+                y = event.y()
+                self.drag_to_print = True
+                self.helper.point_start = [x - self.center_width, y - self.center_height]
+                self.helper.point_end = [x - self.center_width + 1, y - self.center_height + 1]
+                s = Segment.from_points(self.helper.point_start[0],
+                                        self.helper.point_start[1],
+                                        self.helper.point_end[0],
+                                        self.helper.point_end[1])
+                self.segments_array.append(s)
 
-        # Рисование точек
-        elif event.button() == Qt.RightButton:
-            self.drag_to_print = False
-            x = event.x()
-            y = event.y()
-            p = Point.from_coordinates(x - self.center_width, y - self.center_height)
-            self.points_array.append(p)
+            # Рисование точек
+            elif not self.parent.Point_widget.isHidden():
+                self.drag_to_print = False
+                x = event.x()
+                y = event.y()
+                p = Point.from_coordinates(x - self.center_width, y - self.center_height)
+                self.points_array.append(p)
 
-        # Для не_рисования линни, когда перетягиваем мышь
-        else:
-            self.drag_to_print = False
-            print('else')
+            # Для не_рисования линни, когда перетягиваем мышь
+            else:
+                self.drag_to_print = False
+                print('else')
 
     # Отслеживание отпускания клавиши мыши
     def mouseReleaseEvent(self, event):
@@ -184,8 +190,7 @@ class MainWindow(QtWidgets.QMainWindow, design.Ui_SuperCAD):
 
         # Дописываем design под себя
         self.listView.hide()
-        self.Point_widget.hide()
-        self.Line_widget.hide()
+        self.hide_all_footer_widgets()
         self.actionShow_elements_table.triggered['bool'].connect(self.triggered_list_view)
         self.point.clicked['bool'].connect(self.triggered_point_widget)
         self.line.clicked['bool'].connect(self.triggered_line_widget)
@@ -235,95 +240,118 @@ class MainWindow(QtWidgets.QMainWindow, design.Ui_SuperCAD):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose first point to combine')
-            self.Line_widget.show()
+            self.Combine_points_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Combine_points_widget.hide()
 
     def triggered_point_on_middle_line_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose line to combine with middle of line')
-            self.Line_widget.show()
+            self.Point_on_middle_line_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Point_on_middle_line_widget.hide()
 
     def triggered_point_on_line_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose line to combine with line')
-            self.Line_widget.show()
+            self.Point_on_line_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Point_on_line_widget.hide()
 
     def triggered_parallelism_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose changeable line')
-            self.Line_widget.show()
+            self.Parallelism_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Parallelism_widget.hide()
 
     def triggered_normal_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose changeable line')
-            self.Line_widget.show()
+            self.Normal_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Normal_widget.hide()
 
     def triggered_horizontally_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose changeable line')
-            self.Line_widget.show()
+            self.Horizontally_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Horizontally_widget.hide()
 
     def triggered_fix_size_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose line for fix size')
-            self.Line_widget.show()
+            self.Fix_size_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Fix_size_widget.hide()
 
     def triggered_fix_point_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose point for fix')
-            self.Line_widget.show()
+            self.Fix_point_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Fix_point_widget.hide()
 
     def triggered_fix_length_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose point for fix length')
-            self.Line_widget.show()
+            self.Fix_length_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Fix_length_widget.hide()
 
     def triggered_fix_angle_widget(self, change):
         self.hide_all_footer_widgets()
         if change:
             self.statusbar.showMessage('Choose first line for fix angle')
-            self.Line_widget.show()
+            self.Fix_angle_widget.show()
         else:
             self.statusbar.showMessage('')
-            self.Line_widget.hide()
+            self.Fix_angle_widget.hide()
 
     def hide_all_footer_widgets(self):
         self.Line_widget.hide()
         self.Point_widget.hide()
+        self.Combine_points_widget.hide()
+        self.Point_on_middle_line_widget.hide()
+        self.Point_on_line_widget.hide()
+        self.Parallelism_widget.hide()
+        self.Normal_widget.hide()
+        self.Horizontally_widget.hide()
+        self.Fix_size_widget.hide()
+        self.Fix_point_widget.hide()
+        self.Fix_length_widget.hide()
+        self.Fix_angle_widget.hide()
+
+        self.point.setChecked(False)
+        self.line.setChecked(False)
+        self.combine_points.setChecked(False)
+        self.point_on_middle_line.setChecked(False)
+        self.point_on_line.setChecked(False)
+        self.parallelism.setChecked(False)
+        self.normal.setChecked(False)
+        self.horizontally.setChecked(False)
+        self.fix_size.setChecked(False)
+        self.fix_point.setChecked(False)
+        self.fix_length.setChecked(False)
+        self.fix_angle.setChecked(False)
 
 def main():
     app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
