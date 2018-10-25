@@ -35,8 +35,29 @@ class CADProject:
     def remove_restriction(self, restriction_name):
         pass
 
+    def get_figures(self):
+        pass
+
+    def get_bindings(self):
+        pass
+
+    def get_restrictions(self):
+        pass
+
     def get_state(self):
         """Return current state of system."""
+        pass
+
+    def undo(self):
+        pass
+
+    def redo(self):
+        pass
+
+    def save(self, filename: str):
+        pass
+
+    def load(self, filename: str):
         pass
 
 
