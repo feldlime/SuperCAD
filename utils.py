@@ -49,7 +49,7 @@ class Coordinates:
                                  'If coordinates is tuple, it must contain '
                                  '2 numbers.')
 
-        elif isinstance(coordinates, function):
+        elif callable(coordinates):
             test_coordinates = coordinates()
             validate_coordinates(test_coordinates,
                                  'If coordinates is function, it must returns'

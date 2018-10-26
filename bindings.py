@@ -221,6 +221,8 @@ class SegmentBinding(Binding, ReferencedToObject):
     @classmethod
     def _get_min_distance(cls, x1, y1, x2, y2, x, y):
         """Calculate minimal distance from point to segment."""
+
+        # TODO
         pass
 
     @classmethod
