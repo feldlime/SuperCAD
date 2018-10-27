@@ -340,6 +340,3 @@ class CADProject:
         """Save current state to history."""
         self._history.push(self._state)
         self._cancelled.clear()
-
-
-
