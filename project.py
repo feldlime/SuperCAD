@@ -17,7 +17,9 @@ from solve import EquationsSystem
 from utils import (
     IncorrectParamError,
     IncorrectParamType,
-    IncorrectParamValue
+    IncorrectParamValue,
+    Stack,
+    EmptyStackError
 )
 
 
@@ -33,18 +35,29 @@ class IncorrectTypeOfLoadedObject(Exception):
     pass
 
 
+class ActionImpossible(Exception):
+    pass
+
 class ProjectState:
     def __init__(self):
         self.figures = dict()
-        self.bindings = []
         self.restrictions = dict()
+
+        # It's not necessary to save bindings and system to state
+        # But it's done for convenience and speed
+        self.bindings = []
         self.system = EquationsSystem()
+
+
+class ChangesStack(Stack):
+    pass
 
 
 class CADProject:
     def __init__(self):
         self._state = ProjectState()
-        self._history = ChangesStack()  # All changes (for undo and redo)
+        self._history = ChangesStack()  # All changes (for undo)
+        self._cancelled = ChangesStack()  # Cancelled changes (for redo)
 
     @property
     def _figures(self):
@@ -238,11 +251,19 @@ class CADProject:
 
     def undo(self):
         """Cancel action"""
-        pass
+        try:
+            last_state = self._history.pop()
+            self._cancelled.push(last_state)
+        except EmptyStackError:
+            raise ActionImpossible
 
     def redo(self):
         """Revert action"""
-        pass
+        try:
+            last_cancelled_state = self._cancelled.pop()
+            self._history.push(last_cancelled_state)
+        except EmptyStackError:
+            raise ActionImpossible
 
     @contract(filename='str')
     def save(self, filename: str):
@@ -318,25 +339,7 @@ class CADProject:
     def _commit(self):
         """Save current state to history."""
         self._history.push(self._state)
+        self._cancelled.clear()
 
 
-class EmptyStackError(Exception):
-    pass
 
-
-class Stack:
-    def __init__(self):
-        self._arr = []
-
-    def push(self, elem):
-        self._arr.append(elem)
-
-    def pop(self):
-        try:
-            return self._arr.pop()
-        except IndexError:
-            raise EmptyStackError
-
-
-class ChangesStack(Stack):
-    pass

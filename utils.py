@@ -78,3 +78,26 @@ def magnitude(x1, y1, x2, y2):
     return magnitude_sqr ** 0.5
 
 
+class EmptyStackError(Exception):
+    pass
+
+
+class Stack:
+    def __init__(self):
+        self._arr = []
+
+    def push(self, elem):
+        self._arr.append(elem)
+
+    def pop(self):
+        try:
+            return self._arr.pop()
+        except IndexError:
+            raise EmptyStackError
+
+    def clear(self):
+        self._arr = []
+
+    def __len__(self):
+        return len(self._arr)
+
