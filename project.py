@@ -1,5 +1,8 @@
 """Module with main class of system (backend)."""
 
+from contracts import contract
+import pickle
+
 from figures import Figure, Point, Segment
 from bindings import (
     Binding,
@@ -17,14 +20,16 @@ from utils import (
     IncorrectParamValue
 )
 
-from contracts import contract
-
 
 class IncorrectName(IncorrectParamValue):
     pass
 
 
 class IncorrectUserName(IncorrectName):
+    pass
+
+
+class IncorrectTypeOfLoadedObject(Exception):
     pass
 
 
@@ -162,7 +167,7 @@ class CADProject:
         """
         if not isinstance(restriction, Restriction):
             raise IncorrectParamType
-        
+
         if name is not None:
             if not self._is_valid_user_name(restriction, name):
                 raise IncorrectUserName
@@ -241,14 +246,16 @@ class CADProject:
 
     @contract(filename='str')
     def save(self, filename: str):
-        """Save system state to file.
+        """Save system state to .pkl file.
 
         Parameters
         ----------
         filename: str
-            Name of file to save.
+            Name of file to save (without extension).
         """
-        pass
+        filename = filename + '.pkl'
+        with open(filename, 'wb') as f:
+            pickle.dump(self._state, f)
 
     @contract(filename='str')
     def load(self, filename: str):
@@ -258,8 +265,19 @@ class CADProject:
         ----------
         filename: str
             Name of file to load.
+            Extension must be .pkl.
         """
-        pass
+        if not filename.endswith('.pkl'):
+            raise IncorrectParamValue('File must have .pkl extension.')
+
+        with open(filename, 'rb') as f:
+            state = pickle.load(f)
+
+        if not isinstance(state, ProjectState):
+            raise IncorrectTypeOfLoadedObject
+
+        self._state = state
+        self._history = ChangesStack()
 
     def _generate_name(self, obj) -> str:
         """Generate new names for figures and bindings"""
