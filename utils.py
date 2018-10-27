@@ -30,3 +30,51 @@ def validate_coordinates(coordinates, msg):
             or not (isinstance(coordinates[1], int) or
                     isinstance(coordinates[1], float)):
         raise IncorrectParamError(msg)
+
+
+class Coordinates:
+    """Class of coordinates.
+
+    Parameters
+    ----------
+    coordinates: tuple or function
+        If tuple, it must be coordinates of point.
+        If function, it must be function, that returns coordinates of point.
+    """
+
+    def __init__(self, coordinates):
+        super().__init__()
+        if isinstance(coordinates, tuple):
+            validate_coordinates(coordinates,
+                                 'If coordinates is tuple, it must contain '
+                                 '2 numbers.')
+
+        elif callable(coordinates):
+            test_coordinates = coordinates()
+            validate_coordinates(test_coordinates,
+                                 'If coordinates is function, it must returns'
+                                 'tuple that contains 2 numbers.')
+
+        else:
+            raise IncorrectParamType('Coordinates must be tuple or function.')
+
+        self._coordinates = coordinates
+
+    def get(self):
+        """Return coordinates.
+
+        Returns
+        -------
+        x, y: int or float
+        """
+        if isinstance(self._coordinates, tuple):
+            return self._coordinates
+        else:
+            return self._coordinates()
+
+
+def magnitude(x1, y1, x2, y2):
+    magnitude_sqr = (x2 - x1) ** 2 + (y2 - y1) ** 2
+    return magnitude_sqr ** 0.5
+
+
