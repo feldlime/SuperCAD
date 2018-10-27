@@ -4,22 +4,60 @@ from figures import Figure, Point, Segment
 from bindings import (
     Binding,
     CentralBinding,
+    SegmentStartBinding,
+    SegmentEndBinding,
+    SegmentCenterBinding,
+    PointBinding
 )
 from restrictions import Restriction
 from solve import EquationsSystem
+from utils import (
+    IncorrectParamError,
+    IncorrectParamType,
+    IncorrectParamValue
+)
 
 from contracts import contract
 
 
+class IncorrectName(IncorrectParamValue):
+    pass
+
+
+class IncorrectUserName(IncorrectName):
+    pass
+
+
+class ProjectState:
+    def __init__(self):
+        self.figures = dict()
+        self.bindings = []
+        self.restrictions = dict()
+        self.system = EquationsSystem()
+
+
 class CADProject:
     def __init__(self):
+        self._state = ProjectState()
         self._history = ChangesStack()  # All changes (for undo and redo)
-        self._figures = dict()
-        self._bindings = []
-        self._restrictions = dict()
-        self._system = EquationsSystem()
 
-    @contract(figure='Figure', name='str')
+    @property
+    def _figures(self):
+        return self._state.figures
+
+    @property
+    def _bindings(self):
+        return self._state.bindings
+
+    @property
+    def _restrictions(self):
+        return self._state.restrictions
+
+    @property
+    def _system(self):
+        return self._state.system
+
+    @contract(figure='$Point|$Segment', name='str|None')
     def add_figure(self, figure: Figure, name: str = None):
         """Add figure to system.
 
@@ -30,10 +68,19 @@ class CADProject:
         name: str or None, optional, default None
             Name of figure. If None or empty, will be generated automatically.
         """
+        if name is not None:
+            if not self._is_valid_user_name(figure, name):
+                raise IncorrectUserName
+        else:
+            name = self._generate_name(figure)
+        if self._is_name_exists('figure', name):
+            raise IncorrectName(f'Name {name} is already exists.')
 
-        name = name or self._generate_name()
+        # TODO: Add bindings
+        self._figures[name] = figure
+        self._commit()
 
-    @contract(figure_name='str', parameter='str', value='int|float')
+    @contract(figure_name='str', parameter='str', value='number')
     def change_figure(self, figure_name: str, parameter: str, value: float):
         """Change one parameter of one figure.
 
@@ -47,10 +94,15 @@ class CADProject:
             New value for parameter.
         """
 
-        pass
+        if figure_name not in self._figures:
+            raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
-    @contract(figure_name='CentralBinding', cursor_x='int|float',
-              cursor_y='int|float')
+        # TODO: Check that parameter is valid
+        # TODO: Change
+        # TODO: Update system
+        self._commit()
+
+    @contract(cursor_x='number', cursor_y='number')
     def move_figure(self, binding: CentralBinding,
                     cursor_x: float, cursor_y: float):
         """Move figure.
@@ -62,7 +114,17 @@ class CADProject:
         cursor_x, cursor_y: int or float
             Coordinates of cursor.
         """
-        pass
+        if not (
+            isinstance(binding, SegmentStartBinding)
+            or isinstance(binding, SegmentEndBinding)
+            or isinstance(binding, SegmentCenterBinding)
+            or isinstance(binding, PointBinding)
+        ):
+            raise IncorrectParamType
+        # TODO: Check figures names
+        # TODO: Make all
+        # TODO: Update system
+        self._commit()
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
@@ -73,10 +135,15 @@ class CADProject:
         figure_name: str
             Name of figure to remove.
         """
+        if figure_name not in self._figures:
+            raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
-        pass
+        self._figures.pop(figure_name)
+        # TODO: Remove bindings
+        # TODO: Remove restrictions
+        self._commit()
 
-    @contract(restriction='Restriction', figure_names='tuple')
+    @contract(figure_names='tuple(str) | tuple(str,str)', name='str|None')
     def add_restriction(self, restriction: Restriction, figure_names: tuple,
                         name: str = None):
         """Add restriction to system.
@@ -93,7 +160,27 @@ class CADProject:
             Name of restriction. If None or empty, will be generated
             automatically.
         """
-        pass
+        if not isinstance(restriction, Restriction):
+            raise IncorrectParamType
+        
+        if name is not None:
+            if not self._is_valid_user_name(restriction, name):
+                raise IncorrectUserName
+        else:
+            name = self._generate_name(restriction)
+        if self._is_name_exists('restriction', name):
+            raise IncorrectName(f'Name {name} is already exists.')
+
+        for figure_name in figure_names:
+            if figure_name not in self._figures:
+                raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
+
+        # TODO: Check that this restriction requires this number and types of
+        # TODO: figures
+
+        # TODO: Make all
+        # TODO: Update system
+        self._commit()
 
     @contract(restriction_name='str')
     def remove_restriction(self, restriction_name: str):
@@ -104,7 +191,13 @@ class CADProject:
         restriction_name: str
             Name of restriction to remove.
         """
-        pass
+        if restriction_name not in self._restrictions:
+            raise IncorrectParamValue(f'Invalid restriction_name'
+                                      f' {restriction_name}')
+
+        self._restrictions.pop(restriction_name)
+        # TODO: Update system
+        self._commit()
 
     @contract(returns='dict')
     def get_figures(self) -> dict:
@@ -115,11 +208,17 @@ class CADProject:
         figures: dict
             Keys are figures names, values are Figure instances.
         """
-        pass
+        return dict(self._figures)
 
     @contract(returns='list')
     def get_bindings(self) -> list:
-        pass
+        """Get list of bindings.
+
+        Returns
+        -------
+        bindings: list
+        """
+        return list(self._bindings)
 
     @contract(returns='dict')
     def get_restrictions(self) -> dict:
@@ -130,7 +229,7 @@ class CADProject:
         restrictions: dict
             Keys are restrictions names, values are Restriction instances.
         """
-        pass
+        return dict(self._restrictions)
 
     def undo(self):
         """Cancel action"""
@@ -164,22 +263,44 @@ class CADProject:
 
     def _generate_name(self, obj) -> str:
         """Generate new names for figures and bindings"""
-        count = 0
-        type_ = type(obj)
+        type_str = str(type(obj))
 
         if isinstance(obj, Figure):
-            for figure in self._figures.values():
-                if type(figure) is type_:
-                    count += 1
+            names_list = list(self._figures.keys())
         elif isinstance(obj, Restriction):
-            for restriction in self._restrictions.values():
-                if type(restriction) is type_:
-                    count += 1
+            names_list = list(self._restrictions.keys())
         else:
-            raise ValueError(f'Incorrect obj type {type_}')
+            raise ValueError(f'Incorrect obj type {type_str}')
 
-        name = f'{type_}_{count + 1}'
+        nums = [int(name.split('_')[-1])
+                for name in names_list if name.startswith(type_str)]
+
+        name = f'{type_str}_{max(nums) + 1}'
         return name
+
+    @staticmethod
+    @contract(name='str')
+    def _is_valid_user_name(obj, name: str):
+        """Check if name that was given by user is valid"""
+        if not name:
+            return False
+
+        type_str = str(type(obj))
+        return not name.startswith(type_str)
+
+    @contract(type_='str', name='str')
+    def _is_name_exists(self, type_: str, name: str):
+        if type_ == 'figure':
+            return name in self._figures.keys()
+        elif type_ == 'restriction':
+            return name in self._restrictions.keys()
+        else:
+            raise ValueError(f'Incorrect type_ {type_}')
+
+    def _commit(self):
+        """Save current state to history."""
+        self._history.push(self._state)
+
 
 class EmptyStackError(Exception):
     pass
