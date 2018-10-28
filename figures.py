@@ -76,6 +76,10 @@ class Figure:
         """Return special representation of figure that not contains angles."""
         return NotImplemented
 
+    def get_params(self):
+        """Return parameters of figure."""
+        return NotImplemented
+
     def set_params(self, base_x=None, base_y=None, angle=None, **kwargs):
         """Set parameters of figure."""
         if base_x is not None:
@@ -152,6 +156,10 @@ class Point(Figure):
         validate_num(x, 'x')
         validate_num(y, 'y')
         return cls(coordinates=(x, y))
+
+    def get_params(self):
+        return {'x': self._base[0],
+                'y': self._base[1]}
 
     def set_params(self, base_x=None, base_y=None, x=None, y=None, **kwargs):
         """Set parameters of figure."""
@@ -254,7 +262,10 @@ class Segment(Figure):
         y2 = y1 + self._length * np.sin(self._angle)
         return x1, y1, x2, y2
 
-    def set_params(self, base_x=None, base_y=None, angle=None, length=None,
+    def get_params(self):
+        pass
+
+    def set_params(self, angle=None, length=None,
                    x1=None, x2=None, y1=None, y2=None, **kwargs):
         """Set parameters of figure."""
         # TODO

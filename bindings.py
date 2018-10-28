@@ -5,8 +5,11 @@ from utils import (
     Coordinates,
     magnitude
 )
+from figures import Point, Segment
 
 import numpy as np
+from contracts import contract
+from itertools import combinations
 
 
 class ReferencedToObject:
@@ -165,7 +168,8 @@ class SegmentCenterBinding(CircleBinding, ReferencedToObject):
     pass
 
 
-class SegmentsIntersectionsBinding(CircleBinding, ReferencedToObjects):
+class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
+    # TODO: in check() and bind() check None
     pass
 
 
@@ -262,3 +266,95 @@ def choose_best_binding(bindings: list, x, y):
     bindings = sorted(bindings, key=key_fun)
     best_binding = bindings[0] if not np.isinf(bindings[0]) else None
     return best_binding
+
+
+@contract(figures='dict[N]', circle_bindings_radius='number',
+          segment_bindings_radius='number', returns='list[>=N]')
+def create_bindings(figures: dict, circle_bindings_radius=8,
+                    segment_bindings_radius=2) -> list:
+    """Create all bindings for all figures.
+
+    Parameters
+    ----------
+    figures: dict
+        Dictionary of all figures to create bindings.
+
+    Returns
+    -------
+    bindings: list
+        List of bindings.
+    """
+
+    segments = dict()  # For SegmentsIntersectionsBinding
+    bindings = []
+
+    for name, figure in figures.items():
+        if isinstance(figure, Point):
+            def point_coo():
+                return figure.get_base_representation()
+            binding = PointBinding(point_coo, circle_bindings_radius)
+            binding.set_object_name(name)
+            bindings.append(binding)
+
+        elif isinstance(figure, Segment):
+            def segment_start_coo():
+                x1, y1, x2, y2 = figure.get_base_representation()
+                return x1, y1
+            binding = SegmentStartBinding(segment_start_coo,
+                                          circle_bindings_radius)
+            binding.set_object_name(name)
+            bindings.append(binding)
+
+            def segment_end_coo():
+                x1, y1, x2, y2 = figure.get_base_representation()
+                return x2, y1
+            binding = SegmentEndBinding(segment_end_coo,
+                                        circle_bindings_radius)
+            binding.set_object_name(name)
+            bindings.append(binding)
+
+            def segment_center_coo():
+                x1, y1, x2, y2 = figure.get_base_representation()
+                return (x1 + x2) / 2, (y1 + y2) / 2
+            binding = SegmentCenterBinding(segment_center_coo,
+                                        circle_bindings_radius)
+            binding.set_object_name(name)
+            bindings.append(binding)
+
+            def segment_full():
+                pass
+            # TODO:
+            binding =
+            segments[name] = figure
+
+        else:
+            TypeError(f'Incorrect type of figure: {type(figure)}')
+
+    # Intersection bindings
+    for (name1, segment1), (name2, segment2) \
+            in combinations(segments.items(), 2):
+        def segments_intersection_coo():
+            # See original code here:
+            # https://stackoverflow.com/questions/3252194/numpy-and-line-intersections
+
+            ax1, ay1, ax2, ay2 = segment1.get_base_representation()
+            bx1, by1, bx2, by2 = segment2.get_base_representation()
+
+            a1, a2 = np.array([ax1, ay1]), np.array([ax2, ay2])
+            b1, b2 = np.array([bx1, by1]), np.array([bx2, by2])
+
+            da = a2 - a1
+            db = b2 - b1
+            dp = a1 - b1
+            dap = np.array([-da[1], da[0]])
+
+            denominator = np.dot(dap, db)
+            if np.isclose(denominator, 0):
+                return None
+
+            numerator = np.dot(dap, dp)
+            return (numerator / denominator) * db + b1
+        binding = SegmentsIntersectionBinding(segments_intersection_coo,
+                                              circle_bindings_radius)
+        binding.set_object_names([name1, name2])
+        bindings.append(binding)
