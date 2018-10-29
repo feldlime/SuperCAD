@@ -10,7 +10,8 @@ from bindings import (
     SegmentStartBinding,
     SegmentEndBinding,
     SegmentCenterBinding,
-    PointBinding
+    PointBinding,
+    create_bindings
 )
 from restrictions import Restriction
 from solve import EquationsSystem
@@ -37,6 +38,7 @@ class IncorrectTypeOfLoadedObject(Exception):
 
 class ActionImpossible(Exception):
     pass
+
 
 class ProjectState:
     def __init__(self):
@@ -67,6 +69,10 @@ class CADProject:
     def _bindings(self):
         return self._state.bindings
 
+    @_bindings.setter
+    def _bindings(self, value):
+        self._state.bindings = value
+
     @property
     def _restrictions(self):
         return self._state.restrictions
@@ -94,8 +100,8 @@ class CADProject:
         if self._is_name_exists('figure', name):
             raise IncorrectName(f'Name {name} is already exists.')
 
-        # TODO: Add bindings
         self._figures[name] = figure
+        self._bindings = create_bindings(self._figures)  # Slow but easy
         self._commit()
 
     @contract(figure_name='str', parameter='str', value='number')
@@ -157,7 +163,7 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         self._figures.pop(figure_name)
-        # TODO: Remove bindings
+        self._bindings = create_bindings(self._figures)  # Slow but easy
         # TODO: Remove restrictions
         self._commit()
 

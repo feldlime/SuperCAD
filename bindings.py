@@ -3,7 +3,8 @@
 from utils import (
     validate_positive_num,
     Coordinates,
-    magnitude
+    magnitude,
+    BIG_DISTANCE,
 )
 from figures import Point, Segment
 
@@ -80,9 +81,11 @@ class CentralBinding(Binding):
         If function, it must be function, that returns coordinates of point.
     """
 
-    def __init__(self, coordinates, *args, **kwargs):
+    def __init__(self, coordinates, coordinates_kwargs=None, *args, **kwargs):
         super().__init__()
-        self._coordinates = Coordinates(coordinates)
+        if coordinates_kwargs is None:
+            coordinates_kwargs = {}
+        self._coordinates = Coordinates(coordinates, **coordinates_kwargs)
 
     def bind(self, *args):
         """ Return coordinates to bind cursor.
@@ -92,7 +95,7 @@ class CentralBinding(Binding):
         x, y: float
             Coordinates to bind
         """
-        return self._coordinates()
+        return self._coordinates.get()
 
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
@@ -124,8 +127,10 @@ class CircleBinding(CentralBinding):
         Radius of zone to bind.
     """
 
-    def __init__(self, coordinates, radius):
-        super().__init__(coordinates)
+    def __init__(self, coordinates, radius, coordinates_kwargs=None):
+        if coordinates_kwargs is None:
+            coordinates_kwargs = {}
+        super().__init__(coordinates, coordinates_kwargs=coordinates_kwargs)
 
         validate_positive_num(radius, 'radius')
         self._radius = radius
@@ -140,14 +145,14 @@ class CircleBinding(CentralBinding):
 
         Returns
         -------
-        checking_result: int or None
+        checking_result: float or None
             None if cursor is out of binding zone.
             Distance between cursor and point of binding.
         """
         base_x, base_y = self._coordinates.get()
         distance = magnitude(x, y, base_x, base_y)
         if distance > self._radius:
-            return False
+            return None
         else:
             return distance
 
@@ -169,18 +174,45 @@ class SegmentCenterBinding(CircleBinding, ReferencedToObject):
 
 
 class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
-    # TODO: in check() and bind() check None
-    pass
+    def __init__(self, coordinates, radius):
+        coordinates_kwargs = {'allow_none': True}
+        super().__init__(coordinates, radius,
+                         coordinates_kwargs=coordinates_kwargs)
+
+    def check(self, x, y):
+        """Check if given coordinates places in zone of binding.
+
+        Parameters
+        ----------
+        x, y: int or float
+            Coordinates of cursor.
+
+        Returns
+        -------
+        checking_result: float or None
+            None if cursor is out of binding zone or binding doesn't exist.
+            Otherwise distance between cursor and point of binding.
+        """
+        coo = self._coordinates.get()
+        if coo is None:
+            return None
+
+        base_x, base_y = coo
+        distance = magnitude(x, y, base_x, base_y)
+        if distance > self._radius:
+            return None
+        else:
+            return distance
 
 
-class SegmentBinding(Binding, ReferencedToObject):
+class FullSegmentBinding(Binding, ReferencedToObject):
     """Binding to all segment (not to point) to highlight it."""
-    def __init__(self, coordinates_1, coordinates_2, radius):
+    def __init__(self, coordinates_1, coordinates_2, margin):
         super().__init__()
         self._coordinates_1 = Coordinates(coordinates_1)
         self._coordinates_2 = Coordinates(coordinates_2)
-        validate_positive_num(radius, 'radius')
-        self._radius = radius
+        validate_positive_num(margin, 'margin')
+        self._margin = margin
 
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
@@ -200,7 +232,7 @@ class SegmentBinding(Binding, ReferencedToObject):
         x2, y2 = self._coordinates_2.get()
         distance = self._get_min_distance(x1, y1, x2, y2, x, y)
 
-        if distance > self._radius:
+        if distance > self._margin:
             return None
         else:
             return distance
@@ -239,6 +271,7 @@ class SegmentBinding(Binding, ReferencedToObject):
         pass
 
 
+@contract(bindings='list', x='number', y='number')
 def choose_best_binding(bindings: list, x, y):
     """Choose the nearest binding.
     Choose only if coordinates are in binding zone.
@@ -261,6 +294,8 @@ def choose_best_binding(bindings: list, x, y):
 
     def key_fun(binding):
         dist = binding.check(x, y)
+        if isinstance(binding, FullSegmentBinding):
+            dist += BIG_DISTANCE  # Prefer point bindings to segment
         return dist if dist is not None else np.inf
 
     bindings = sorted(bindings, key=key_fun)
@@ -268,16 +303,20 @@ def choose_best_binding(bindings: list, x, y):
     return best_binding
 
 
-@contract(figures='dict[N]', circle_bindings_radius='number',
-          segment_bindings_radius='number', returns='list[>=N]')
+@contract(figures='dict[N]', circle_bindings_radius='number,>0',
+          segment_bindings_radius='number,>0', returns='list[>=N]')
 def create_bindings(figures: dict, circle_bindings_radius=8,
-                    segment_bindings_radius=2) -> list:
+                    segment_bindings_margin=2) -> list:
     """Create all bindings for all figures.
 
     Parameters
     ----------
     figures: dict
         Dictionary of all figures to create bindings.
+    circle_bindings_radius: int or float, optional, default 8
+        Radius of binding zone for circle bindings.
+    segment_bindings_margin: int or float
+        Margin of binding zone for full segment bindings.
 
     Returns
     -------
@@ -317,14 +356,17 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 x1, y1, x2, y2 = figure.get_base_representation()
                 return (x1 + x2) / 2, (y1 + y2) / 2
             binding = SegmentCenterBinding(segment_center_coo,
-                                        circle_bindings_radius)
+                                           circle_bindings_radius)
             binding.set_object_name(name)
             bindings.append(binding)
 
-            def segment_full():
-                pass
-            # TODO:
-            binding =
+            # Segment full
+            binding = FullSegmentBinding(segment_start_coo, segment_end_coo,
+                                         segment_bindings_margin)
+            binding.set_object_name(name)
+            bindings.append(binding)
+
+            # For intersection bindings
             segments[name] = figure
 
         else:
@@ -358,3 +400,5 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                                               circle_bindings_radius)
         binding.set_object_names([name1, name2])
         bindings.append(binding)
+
+    return bindings
