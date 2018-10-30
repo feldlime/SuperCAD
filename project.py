@@ -304,7 +304,8 @@ class CADProject:
             raise IncorrectTypeOfLoadedObject
 
         self._state = state
-        self._history = ChangesStack()
+        self._history.clear()
+        self._cancelled.clear()
 
     def _generate_name(self, obj) -> str:
         """Generate new names for figures and bindings"""
