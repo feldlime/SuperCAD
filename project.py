@@ -102,6 +102,9 @@ class CADProject:
 
         self._figures[name] = figure
         self._bindings = create_bindings(self._figures)  # Slow but easy
+
+        # TODO: Add to system
+
         self._commit()
 
     @contract(figure_name='str', parameter='str', value='number')
@@ -122,8 +125,9 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         # TODO: Check that parameter is valid
-        # TODO: Change
-        # TODO: Update system
+
+        # TODO: Change (use system, of course)
+
         self._commit()
 
     @contract(cursor_x='number', cursor_y='number')
@@ -145,9 +149,9 @@ class CADProject:
             or isinstance(binding, PointBinding)
         ):
             raise IncorrectParamType
-        # TODO: Check figures names
+
         # TODO: Make all
-        # TODO: Update system
+
         self._commit()
 
     @contract(figure_name='str')
@@ -162,9 +166,22 @@ class CADProject:
         if figure_name not in self._figures:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
+        # Remove figure
         self._figures.pop(figure_name)
+
+        # Remove bindings
         self._bindings = create_bindings(self._figures)  # Slow but easy
-        # TODO: Remove restrictions
+
+        # Remove restrictions
+        restrictions_to_remove = []
+        for name, restriction in self._restrictions.items():
+            if figure_name in restriction.get_objects_name():
+                restrictions_to_remove.append(name)
+        for restriction_name in restrictions_to_remove:
+            self._restrictions.pop(restriction_name)
+
+        # TODO: Remove from system
+
         self._commit()
 
     @contract(figure_names='tuple(str) | tuple(str,str)', name='str|None')
@@ -187,6 +204,7 @@ class CADProject:
         if not isinstance(restriction, Restriction):
             raise IncorrectParamType
 
+        # Define restriction name
         if name is not None:
             if not self._is_valid_user_name(restriction, name):
                 raise IncorrectUserName
@@ -195,15 +213,23 @@ class CADProject:
         if self._is_name_exists('restriction', name):
             raise IncorrectName(f'Name {name} is already exists.')
 
+        # Check figures names
         for figure_name in figure_names:
             if figure_name not in self._figures:
                 raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
-        # TODO: Check that this restriction requires this number and types of
-        # TODO: figures
+        # Check figures types
+        types = restriction.object_types
+        if len(figure_names) != len(types):
+            raise IncorrectParamValue(f'Must be {len(types)} figures.')
+        for figure_name, type_ in zip(figure_names, types):
+            if not isinstance(self._figures[figure_name], type_):
+                raise IncorrectParamValue(
+                    f'Given figures must have types {types}')
 
-        # TODO: Make all
-        # TODO: Update system
+        # TODO: Add to system
+        # TODO: Solve
+
         self._commit()
 
     @contract(restriction_name='str')
@@ -220,7 +246,9 @@ class CADProject:
                                       f' {restriction_name}')
 
         self._restrictions.pop(restriction_name)
-        # TODO: Update system
+
+        # TODO: Remove from system
+
         self._commit()
 
     @contract(returns='dict')

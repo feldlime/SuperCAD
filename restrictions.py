@@ -3,20 +3,21 @@
 from utils import ReferencedToObjects
 from figures import Point, Segment
 
+# noinspection PyUnresolvedReferences
 from numpy import pi
 from sympy import Eq
 from contracts import contract
 
 
 class Restriction:
-    _object_types = []
+    object_types = []
 
     def __init__(self):
         pass
 
     @property
     def _n_objects(self):
-        return len(self._object_types)
+        return len(self.object_types)
 
     def get_equations(self, **kwargs) -> list:
         raise NotImplementedError
@@ -25,7 +26,7 @@ class Restriction:
 # Point
 
 class PointFixed(Restriction, ReferencedToObjects):
-    _object_types = [Point]
+    object_types = [Point]
 
     @contract(x='number', y='number')
     def __init__(self, x, y):
@@ -46,7 +47,7 @@ class PointFixed(Restriction, ReferencedToObjects):
 # Two points
 
 class PointsJoint(Restriction, ReferencedToObjects):
-    _object_types = [Point, Point]
+    object_types = [Point, Point]
 
     @contract(symbols_point_1='dict', symbols_point_2='dict')
     def get_equations(self, symbols_point_1: dict, symbols_point_2: dict):
@@ -62,7 +63,7 @@ class PointsJoint(Restriction, ReferencedToObjects):
 # Segment
 
 class SegmentFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(x1='number', y1='number', x2='number', y2='number')
     def __init__(self, x1, y1, x2, y2):
@@ -86,7 +87,7 @@ class SegmentFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentStartFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(x='number', y='number')
     def __init__(self, x, y):
@@ -105,7 +106,7 @@ class SegmentStartFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentEndFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(x='number', y='number')
     def __init__(self, x, y):
@@ -124,7 +125,7 @@ class SegmentEndFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentCenterFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(x='number', y='number')
     def __init__(self, x, y):
@@ -141,7 +142,7 @@ class SegmentCenterFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentLengthFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(length='number,>0')
     def __init__(self, length):
@@ -155,7 +156,7 @@ class SegmentLengthFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentAngleFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(angle='number, > 0, < 2 * $pi')
     def __init__(self, angle):
@@ -169,7 +170,7 @@ class SegmentAngleFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentsHorizontal(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(symbols='dict')
     def get_equations(self, symbols: dict):
@@ -178,7 +179,7 @@ class SegmentsHorizontal(Restriction, ReferencedToObjects):
 
 
 class SegmentsVertical(Restriction, ReferencedToObjects):
-    _object_types = [Segment]
+    object_types = [Segment]
 
     @contract(symbols='dict')
     def get_equations(self, symbols: dict):
@@ -189,7 +190,7 @@ class SegmentsVertical(Restriction, ReferencedToObjects):
 # Segments
 
 class SegmentsAngleBetweenFixed(Restriction, ReferencedToObjects):
-    _object_types = [Segment, Segment]
+    object_types = [Segment, Segment]
 
     @contract(symbols_segment_1='dict', symbols_segment_2='dict')
     def get_equations(self, symbols_segment_1: dict, symbols_segment_2: dict):
@@ -198,7 +199,7 @@ class SegmentsAngleBetweenFixed(Restriction, ReferencedToObjects):
 
 
 class SegmentsParallel(Restriction, ReferencedToObjects):
-    _object_types = [Segment, Segment]
+    object_types = [Segment, Segment]
 
     @contract(symbols_segment_1='dict', symbols_segment_2='dict')
     def get_equations(self, symbols_segment_1: dict, symbols_segment_2: dict):
@@ -207,7 +208,7 @@ class SegmentsParallel(Restriction, ReferencedToObjects):
 
 
 class SegmentsPerpendicular(Restriction, ReferencedToObjects):
-    _object_types = [Segment, Segment]
+    object_types = [Segment, Segment]
 
     @contract(symbols_segment_1='dict', symbols_segment_2='dict')
     def get_equations(self, symbols_segment_1: dict, symbols_segment_2: dict):
@@ -218,7 +219,7 @@ class SegmentsPerpendicular(Restriction, ReferencedToObjects):
 # Point and Segment
 
 class PointFixedOnSegment(Restriction, ReferencedToObjects):
-    _object_types = [Point, Segment]
+    object_types = [Point, Segment]
 
     @contract(ratio='number,>0,<1')
     def __init__(self, ratio: float):
@@ -231,7 +232,7 @@ class PointFixedOnSegment(Restriction, ReferencedToObjects):
 
 
 class PointOnSegmentLine(Restriction, ReferencedToObjects):
-    _object_types = [Point, Segment]
+    object_types = [Point, Segment]
 
     @contract(symbols_point='dict', symbols_segment='dict')
     def get_equations(self, symbols_point: dict, symbols_segment: dict):
@@ -240,7 +241,7 @@ class PointOnSegmentLine(Restriction, ReferencedToObjects):
 
 
 class PointAndSegmentStartJoint(Restriction, ReferencedToObjects):
-    _object_types = [Point, Segment]
+    object_types = [Point, Segment]
 
     @contract(symbols_point='dict', symbols_segment='dict')
     def get_equations(self, symbols_point: dict, symbols_segment: dict):
@@ -249,7 +250,7 @@ class PointAndSegmentStartJoint(Restriction, ReferencedToObjects):
 
 
 class PointAndSegmentEndJoint(Restriction, ReferencedToObjects):
-    _object_types = [Point, Segment]
+    object_types = [Point, Segment]
 
     @contract(symbols_point='dict', symbols_segment='dict')
     def get_equations(self, symbols_point: dict, symbols_segment: dict):
@@ -258,7 +259,7 @@ class PointAndSegmentEndJoint(Restriction, ReferencedToObjects):
 
 
 class PointAndSegmentCenterJoint(Restriction, ReferencedToObjects):
-    _object_types = [Point, Segment]
+    object_types = [Point, Segment]
 
     @contract(symbols_point='dict', symbols_segment='dict')
     def get_equations(self, symbols_point: dict, symbols_segment: dict):

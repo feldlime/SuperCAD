@@ -4,7 +4,6 @@ import numpy as np
 
 from utils import (
     IncorrectParamError,
-    IncorrectParamType,
     validate_num,
     validate_positive_num,
     validate_coordinates
