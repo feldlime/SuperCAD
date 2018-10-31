@@ -1,3 +1,6 @@
+BIG_DISTANCE = 10000
+
+
 class IncorrectParamError(Exception):
     pass
 
@@ -42,7 +45,7 @@ class Coordinates:
         If function, it must be function, that returns coordinates of point.
     """
 
-    def __init__(self, coordinates):
+    def __init__(self, coordinates, allow_none=False):
         super().__init__()
         if isinstance(coordinates, tuple):
             validate_coordinates(coordinates,
@@ -51,9 +54,10 @@ class Coordinates:
 
         elif callable(coordinates):
             test_coordinates = coordinates()
-            validate_coordinates(test_coordinates,
-                                 'If coordinates is function, it must returns'
-                                 'tuple that contains 2 numbers.')
+            if test_coordinates is not None or not allow_none:
+                validate_coordinates(test_coordinates,
+                                     'If coordinates is function, it must '
+                                     'returns tuple that contains 2 numbers.')
 
         else:
             raise IncorrectParamType('Coordinates must be tuple or function.')
@@ -77,4 +81,27 @@ def magnitude(x1, y1, x2, y2):
     magnitude_sqr = (x2 - x1) ** 2 + (y2 - y1) ** 2
     return magnitude_sqr ** 0.5
 
+
+class EmptyStackError(Exception):
+    pass
+
+
+class Stack:
+    def __init__(self):
+        self._arr = []
+
+    def push(self, elem):
+        self._arr.append(elem)
+
+    def pop(self):
+        try:
+            return self._arr.pop()
+        except IndexError:
+            raise EmptyStackError
+
+    def clear(self):
+        self._arr = []
+
+    def __len__(self):
+        return len(self._arr)
 
