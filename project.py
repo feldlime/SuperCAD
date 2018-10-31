@@ -103,7 +103,7 @@ class CADProject:
         self._figures[name] = figure
         self._bindings = create_bindings(self._figures)  # Slow but easy
 
-        # TODO: Add to system
+        self._system.add_symbols(name, figure.base_parameters)
 
         self._commit()
 
@@ -124,14 +124,17 @@ class CADProject:
         if figure_name not in self._figures:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
-        # TODO: Check that parameter is valid
+        figure = self._figures[figure_name]
+        if parameter not in figure.all_parameters:
+            raise IncorrectParamValue(
+                f'Parameter must be one of {figure.all_parameters}')
 
         # TODO: Change (use system, of course)
 
         self._commit()
 
     @contract(cursor_x='number', cursor_y='number')
-    def move_figure(self, binding: CentralBinding,
+    def move_figure(self, binding: PointBinding,
                     cursor_x: float, cursor_y: float):
         """Move figure.
 
@@ -180,7 +183,7 @@ class CADProject:
         for restriction_name in restrictions_to_remove:
             self._restrictions.pop(restriction_name)
 
-        # TODO: Remove from system
+        # TODO: Remove from system (and restrictions too)
 
         self._commit()
 

@@ -7,7 +7,8 @@ from scipy.optimize import (
     broyden1,
     broyden2,
     newton_krylov,
-    anderson
+    anderson,
+    root
 )
 
 from contracts import contract
@@ -100,5 +101,6 @@ class EquationsSystem:
 
 
 def solve(system: function):
-    pass
+    result = root(system)
+    return result
 
