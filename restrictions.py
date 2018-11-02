@@ -19,7 +19,7 @@ class Restriction:
     def _n_objects(self):
         return len(self.object_types)
 
-    def get_equations(self, **kwargs) -> list:
+    def get_equations(self, *args) -> list:
         raise NotImplementedError
 
 

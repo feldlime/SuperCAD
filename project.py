@@ -103,7 +103,7 @@ class CADProject:
         self._figures[name] = figure
         self._bindings = create_bindings(self._figures)  # Slow but easy
 
-        self._system.add_symbols(name, figure.base_parameters)
+        self._system.add_figure_symbols(name, figure.base_parameters)
 
         self._commit()
 
@@ -183,12 +183,15 @@ class CADProject:
         for restriction_name in restrictions_to_remove:
             self._restrictions.pop(restriction_name)
 
-        # TODO: Remove from system (and restrictions too)
+        # Remove from system
+        self._system.remove_figure_symbols(figure_name)
+        for restriction_name in restrictions_to_remove:
+            self._system.remove_restriction_equations(restriction_name)
 
         self._commit()
 
     @contract(figure_names='tuple(str) | tuple(str,str)', name='str|None')
-    def add_restriction(self, restriction: Restriction, figure_names: tuple,
+    def add_restriction(self, restriction: Restriction, figures_names: tuple,
                         name: str = None):
         """Add restriction to system.
 
@@ -197,7 +200,7 @@ class CADProject:
         restriction: Restriction instance
             Restriction to add. Must be object of correct class with correct
             parameters.
-        figure_names: tuple
+        figures_names: tuple
             Names of figures to apply restriction. If figure is only one,
             must be a tuple of one element.
         name: str or None, optional, default None
@@ -217,21 +220,30 @@ class CADProject:
             raise IncorrectName(f'Name {name} is already exists.')
 
         # Check figures names
-        for figure_name in figure_names:
+        for figure_name in figures_names:
             if figure_name not in self._figures:
                 raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         # Check figures types
         types = restriction.object_types
-        if len(figure_names) != len(types):
+        if len(figures_names) != len(types):
             raise IncorrectParamValue(f'Must be {len(types)} figures.')
-        for figure_name, type_ in zip(figure_names, types):
+        for figure_name, type_ in zip(figures_names, types):
             if not isinstance(self._figures[figure_name], type_):
                 raise IncorrectParamValue(
                     f'Given figures must have types {types}')
 
-        # TODO: Add to system
-        # TODO: Solve
+        # Add
+        self._restrictions[name] = restriction
+
+        # Add to system
+        figures_symbols = [self._system.get_symbols(figure_name)
+                           for figure_name in figures_names]
+        equations = restriction.get_equations(*figures_symbols)
+        self._system.add_restriction_equations(name, equations)
+
+        # Solve
+        # TODO
 
         self._commit()
 
@@ -250,7 +262,7 @@ class CADProject:
 
         self._restrictions.pop(restriction_name)
 
-        # TODO: Remove from system
+        self._system.remove_restriction_equations(restriction_name)
 
         self._commit()
 
