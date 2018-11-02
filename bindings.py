@@ -256,8 +256,8 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
         pass
 
 
-@contract(bindings='list', x='number', y='number')
-def choose_best_binding(bindings: list, x, y):
+@contract(bindings='list', x='number', y='number', returns='list')
+def choose_best_bindings(bindings: list, x, y) -> list:
     """Choose the nearest binding.
     Choose only if coordinates are in binding zone.
 
@@ -270,22 +270,30 @@ def choose_best_binding(bindings: list, x, y):
 
     Returns
     -------
-    best_binding: Binding or None
-        Nearest binding to given coordinates.
-        None if no bindings near the coordinates.
+    best_bindings: list[Binding]
+        Nearest bindings to given coordinates.
+        If no close bindings, list will be empty.
     """
-    if not bindings:
-        return None
+    atol = 10 ** (-3)
+    min_dist = np.inf
+    best_bindings = []
 
-    def key_fun(binding):
+    for binding in bindings:
         dist = binding.check(x, y)
+
+        if dist is None:
+            continue
+
         if isinstance(binding, FullSegmentBinding):
             dist += BIG_DISTANCE  # Prefer point bindings to segment
-        return dist if dist is not None else np.inf
 
-    bindings = sorted(bindings, key=key_fun)
-    best_binding = bindings[0] if not np.isinf(bindings[0]) else None
-    return best_binding
+        if np.isclose(dist, min_dist, atol=atol):
+            best_bindings.append(binding)
+        elif dist < min_dist:
+            min_dist = dist
+            best_bindings = [binding]
+
+    return best_bindings
 
 
 @contract(figures='dict[N]', circle_bindings_radius='number,>0',
