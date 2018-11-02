@@ -4,7 +4,6 @@ import numpy as np
 
 from utils import (
     IncorrectParamError,
-    IncorrectParamType,
     validate_num,
     validate_positive_num,
     validate_coordinates
@@ -21,6 +20,8 @@ class Figure:
     angle: int or float, optional, default 0
         Angle (in radians) of rotation of figure with response to Ox.
     """
+    all_parameters = ['base_x', 'base_y', 'angle']
+    base_parameters = []
 
     def __init__(self, base=(0, 0), angle=0, **kwargs):
         validate_coordinates(base, 'Base must be a tuple of 2 numbers.')
@@ -122,6 +123,9 @@ class Point(Figure):
     coordinates: tuple, optional, default (0, 0)
         Pair of point coordinates (int or float).
     """
+    all_parameters = ['x', 'y']
+    base_parameters = ['x', 'y']
+
     def __init__(self, coordinates=(0, 0)):
         super().__init__(base=coordinates)
 
@@ -161,8 +165,10 @@ class Point(Figure):
         return {'x': self._base[0],
                 'y': self._base[1]}
 
-    def set_params(self, base_x=None, base_y=None, x=None, y=None, **kwargs):
+    def set_params(self, x=None, y=None, **kwargs):
         """Set parameters of figure."""
+
+        # TODO: Remove base_x and base_y
         if base_x is not None:
             if x is not None:
                 raise IncorrectParamError('You cannot set base_x and x'
@@ -204,6 +210,9 @@ class Segment(Figure):
     length: int or float, optional, default 1
         Length of segment.
     """
+    all_parameters = ['x1', 'y1', 'x2', 'y2', 'length', 'angle']
+    base_parameters = ['x1', 'y1', 'x2', 'y2']
+
     def __init__(self, start=(0, 0), angle=0, length=1):
         super().__init__(start, angle)
         validate_positive_num(length, 'length')

@@ -7,7 +7,8 @@ from scipy.optimize import (
     broyden1,
     broyden2,
     newton_krylov,
-    anderson
+    anderson,
+    root
 )
 
 from contracts import contract
@@ -83,6 +84,7 @@ class EquationsSystem:
     def _update_graph(self):
         pass
 
+
     @contract(system='list[N>0]($sympy.Eq)')
     def _system_to_function(self, system):
         system = [eq.lhs - eq.rhs for eq in system.values()]
@@ -99,5 +101,6 @@ class EquationsSystem:
 
 
 def solve(system: function):
-    pass
+    result = root(system)
+    return result
 

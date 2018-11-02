@@ -24,7 +24,10 @@ def test_coordinates():
     assert all(isclose(res, answer))
 
     a = 5
-    fun = lambda: (a, 3)
+
+    def fun():
+        return a, 3
+
     coo = Coordinates(fun)
     res = coo.get()
     answer = (5, 3)

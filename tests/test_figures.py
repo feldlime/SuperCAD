@@ -1,8 +1,16 @@
 import pytest
-from numpy import isclose
-from figures import *
+from numpy import isclose, pi
+import numpy.random as random
+
+from figures import Figure, Point, Segment
+from utils import (
+    IncorrectParamType,
+    IncorrectParamValue,
+    IncorrectParamError
+)
 
 
+# noinspection PyTypeChecker
 class TestFigure:
     def test_normal_creation(self):
         f = Figure((1, 2), 1)
@@ -15,10 +23,10 @@ class TestFigure:
         assert isinstance(f, Figure)
 
     def test_incorrect_creation(self):
+        with pytest.raises(IncorrectParamValue):
+            Figure(('1', 2), 1)
         with pytest.raises(IncorrectParamType):
-            f = Figure(('1', 2), 1)
-        with pytest.raises(IncorrectParamType):
-            f = Figure((1, 2), '1')
+            Figure((1, 2), '1')
 
     def test_representation(self):
         f = Figure()
@@ -38,6 +46,7 @@ class TestFigure:
             f.rotate('2')
 
 
+# noinspection PyArgumentList
 class TestPoint:
     def test_normal_creation(self):
         p = Point((1, 2))
@@ -46,7 +55,7 @@ class TestPoint:
 
     def test_incorrect_creation(self):
         with pytest.raises(TypeError):
-            p = Point((1, 2), 1)
+            Point((1, 2), 1)
 
     def test_moving(self):
         p = Point((1, 2))
@@ -67,9 +76,10 @@ class TestPoint:
 
     def test_incorrect_creation_from_coordinates(self):
         with pytest.raises(TypeError):
-            p = Point.from_coordinates(y=10)
+            Point.from_coordinates(y=10)
 
 
+# noinspection PyTypeChecker
 class TestSegment:
     def test_default_creation(self):
         s = Segment()
@@ -81,12 +91,12 @@ class TestSegment:
         rep = s.get_base_representation()
         assert all(isclose((1, 2, 4, 2), rep))
 
-        s = Segment((1, 2), np.pi / 2, 3)
+        s = Segment((1, 2), pi / 2, 3)
         rep = s.get_base_representation()
         assert all(isclose((1, 2, 1, 5), rep))
 
     def test_incorrect_creation(self):
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(IncorrectParamValue):
             Segment(('1', 2), 1)
         with pytest.raises(IncorrectParamType):
             Segment((1, 2), '1')
@@ -97,7 +107,7 @@ class TestSegment:
                 Segment((1, 2), 0, i)
 
     def test_create_from_point(self):
-        for coo in np.random.random((10, 4)) * 100 - 50:
+        for coo in random.random((10, 4)) * 100 - 50:
             s = Segment.from_points(*coo)
             assert all(isclose(coo, s.get_base_representation()))
 
@@ -109,18 +119,20 @@ class TestSegment:
                 Segment.from_points(*a)
 
     def test_move(self):
-        for coo in np.random.random((10, 4)) * 100 - 50:
+        for coo in random.random((10, 4)) * 100 - 50:
             s = Segment((coo[2], coo[3]), 0, 1)
-            s.move(coo[0],coo[1])
-            assert all(isclose((coo[0]+coo[2], coo[1]+coo[3], coo[0]+coo[2]+1, coo[1]+coo[3]), s.get_base_representation()))
+            s.move(coo[0], coo[1])
+            assert all(isclose(
+                (coo[0]+coo[2], coo[1]+coo[3], coo[0]+coo[2]+1, coo[1]+coo[3]),
+                s.get_base_representation()))
 
     def test_rotate(self):
         s = Segment((1, 1), 0, 1)
-        s.rotate(np.pi)
+        s.rotate(pi)
         assert all(isclose((1, 1, 0, 1), s.get_base_representation()))
-        s.rotate(np.pi/2)
+        s.rotate(pi/2)
         assert all(isclose((1, 1, 1, 0), s.get_base_representation()))
-        s.rotate(-np.pi)
+        s.rotate(-pi)
         assert all(isclose((1, 1, 1, 2), s.get_base_representation()))
-        s.rotate(-np.pi/2)
+        s.rotate(-pi/2)
         assert all(isclose((1, 1, 2, 1), s.get_base_representation()))

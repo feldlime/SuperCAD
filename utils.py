@@ -1,3 +1,5 @@
+from contracts import contract
+
 BIG_DISTANCE = 10000
 
 
@@ -26,13 +28,15 @@ def validate_positive_num(value, parameter_name):
 
 
 def validate_coordinates(coordinates, msg):
-    if not isinstance(coordinates, tuple) \
-            or len(coordinates) != 2 \
-            or not (isinstance(coordinates[0], int) or
-                    isinstance(coordinates[0], float)) \
-            or not (isinstance(coordinates[1], int) or
-                    isinstance(coordinates[1], float)):
-        raise IncorrectParamError(msg)
+    if not isinstance(coordinates, tuple):
+        raise IncorrectParamType(msg)
+
+    if len(coordinates) != 2 \
+        or not (isinstance(coordinates[0], int) or
+                isinstance(coordinates[0], float)) \
+        or not (isinstance(coordinates[1], int) or
+                isinstance(coordinates[1], float)):
+        raise IncorrectParamValue(msg)
 
 
 class Coordinates:
@@ -105,3 +109,42 @@ class Stack:
     def __len__(self):
         return len(self._arr)
 
+
+class ReferencedToObject:
+    """Interface for objects that are referenced to other object"""
+
+    def __init__(self):
+        self._object_name = None
+
+    @contract(object_name='str')
+    def set_object_name(self, object_name: str):
+        """Set host object name."""
+        self._object_name = object_name
+
+    @contract(returns='str')
+    def get_object_name(self) -> str:
+        """Get host object name."""
+        return self._object_name
+
+
+class ReferencedToObjects:
+    """Interface for objects that are referenced to other object"""
+    _n_objects = None
+
+    def __init__(self):
+        self._object_names = None
+
+    @contract(object_names='list(str)')
+    def set_object_names(self, object_names: list):
+        """Set host object name."""
+        if self._n_objects is not None:
+            if len(object_names) != self._n_objects:
+                raise ValueError(
+                    f'Len of object_names must be {self._n_objects}')
+
+        self._object_names = object_names
+
+    @contract(returns='list(str)')
+    def get_object_names(self) -> list:
+        """Get host object name."""
+        return self._object_names

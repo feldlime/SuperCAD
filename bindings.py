@@ -4,6 +4,7 @@ from utils import (
     validate_positive_num,
     Coordinates,
     magnitude,
+    ReferencedToObjects,
     BIG_DISTANCE,
 )
 from figures import Point, Segment
@@ -11,30 +12,6 @@ from figures import Point, Segment
 import numpy as np
 from contracts import contract
 from itertools import combinations
-
-
-class ReferencedToObject:
-    """Interface for objects that are referenced to other object"""
-
-    def set_object_name(self, object_name: str):
-        """Set host object name."""
-        self._object_name = object_name
-
-    def get_object_name(self) -> str:
-        """Get host object name."""
-        return self._object_name
-
-
-class ReferencedToObjects:
-    """Interface for objects that are referenced to other object"""
-
-    def set_object_names(self, object_names: list):
-        """Set host object name."""
-        self._object_names = object_names
-
-    def get_object_names(self) -> list:
-        """Get host object name."""
-        return self._object_names
 
 
 class Binding:
@@ -157,23 +134,29 @@ class CircleBinding(CentralBinding):
             return distance
 
 
-class PointBinding(CircleBinding, ReferencedToObject):
+class PointBinding(CircleBinding, ReferencedToObjects):
+    _n_objects = 1
     pass
 
 
-class SegmentStartBinding(CircleBinding, ReferencedToObject):
+class SegmentStartBinding(CircleBinding, ReferencedToObjects):
+    _n_objects = 1
     pass
 
 
-class SegmentEndBinding(CircleBinding, ReferencedToObject):
+class SegmentEndBinding(CircleBinding, ReferencedToObjects):
+    _n_objects = 1
     pass
 
 
-class SegmentCenterBinding(CircleBinding, ReferencedToObject):
+class SegmentCenterBinding(CircleBinding, ReferencedToObjects):
+    _n_objects = 1
     pass
 
 
 class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
+    _n_objects = 2
+
     def __init__(self, coordinates, radius):
         coordinates_kwargs = {'allow_none': True}
         super().__init__(coordinates, radius,
@@ -205,8 +188,10 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
             return distance
 
 
-class FullSegmentBinding(Binding, ReferencedToObject):
+class FullSegmentBinding(Binding, ReferencedToObjects):
     """Binding to all segment (not to point) to highlight it."""
+    _n_objects = 1
+
     def __init__(self, coordinates_1, coordinates_2, margin):
         super().__init__()
         self._coordinates_1 = Coordinates(coordinates_1)
@@ -271,8 +256,8 @@ class FullSegmentBinding(Binding, ReferencedToObject):
         pass
 
 
-@contract(bindings='list', x='number', y='number')
-def choose_best_binding(bindings: list, x, y):
+@contract(bindings='list', x='number', y='number', returns='list')
+def choose_best_bindings(bindings: list, x, y) -> list:
     """Choose the nearest binding.
     Choose only if coordinates are in binding zone.
 
@@ -285,22 +270,30 @@ def choose_best_binding(bindings: list, x, y):
 
     Returns
     -------
-    best_binding: Binding or None
-        Nearest binding to given coordinates.
-        None if no bindings near the coordinates.
+    best_bindings: list[Binding]
+        Nearest bindings to given coordinates.
+        If no close bindings, list will be empty.
     """
-    if not bindings:
-        return None
+    atol = 10 ** (-3)
+    min_dist = np.inf
+    best_bindings = []
 
-    def key_fun(binding):
+    for binding in bindings:
         dist = binding.check(x, y)
+
+        if dist is None:
+            continue
+
         if isinstance(binding, FullSegmentBinding):
             dist += BIG_DISTANCE  # Prefer point bindings to segment
-        return dist if dist is not None else np.inf
 
-    bindings = sorted(bindings, key=key_fun)
-    best_binding = bindings[0] if not np.isinf(bindings[0]) else None
-    return best_binding
+        if np.isclose(dist, min_dist, atol=atol):
+            best_bindings.append(binding)
+        elif dist < min_dist:
+            min_dist = dist
+            best_bindings = [binding]
+
+    return best_bindings
 
 
 @contract(figures='dict[N]', circle_bindings_radius='number,>0',
@@ -332,7 +325,7 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
             def point_coo():
                 return figure.get_base_representation()
             binding = PointBinding(point_coo, circle_bindings_radius)
-            binding.set_object_name(name)
+            binding.set_object_names(name)
             bindings.append(binding)
 
         elif isinstance(figure, Segment):
@@ -341,7 +334,7 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return x1, y1
             binding = SegmentStartBinding(segment_start_coo,
                                           circle_bindings_radius)
-            binding.set_object_name(name)
+            binding.set_object_names(name)
             bindings.append(binding)
 
             def segment_end_coo():
@@ -349,7 +342,7 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return x2, y1
             binding = SegmentEndBinding(segment_end_coo,
                                         circle_bindings_radius)
-            binding.set_object_name(name)
+            binding.set_object_names(name)
             bindings.append(binding)
 
             def segment_center_coo():
@@ -357,13 +350,13 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return (x1 + x2) / 2, (y1 + y2) / 2
             binding = SegmentCenterBinding(segment_center_coo,
                                            circle_bindings_radius)
-            binding.set_object_name(name)
+            binding.set_object_names(name)
             bindings.append(binding)
 
             # Segment full
             binding = FullSegmentBinding(segment_start_coo, segment_end_coo,
                                          segment_bindings_margin)
-            binding.set_object_name(name)
+            binding.set_object_names(name)
             bindings.append(binding)
 
             # For intersection bindings
