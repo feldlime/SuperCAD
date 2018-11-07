@@ -3,15 +3,14 @@
 import numpy as np
 import sympy
 import networkx as nx
-from scipy.optimize import root
+import scipy.optimize as sp_optimize
 
 from contracts import contract
 from itertools import combinations
+from collections import OrderedDict
 
 DELIMITER = '___'
 SPECIAL_NAME = 'special_name'
-
-system = [eq.lhs - eq.rhs for eq in system.values()]
 
 
 def get_full_name(base_name, object_name):
@@ -26,16 +25,34 @@ def get_object_name_from_full(full_name):
     return full_name.split(DELIMITER, maxsplit=2)[1]
 
 
-def get_equation_symbols(equation, symbols_names):
+def get_equation_symbols_names(equation, symbols_names):
     return set([w for w in str(equation).split() if w in symbols_names])
 
 
 class Substitutor:
+    """Class for simplification systems of equations by using substitution of
+    simple equations (like x = y or x = 5) to other equations.
+    """
+
     def __init__(self):
         self._subs = dict()
         self._symbols_names = None
 
+    @contract(system='list($sympy.Eq)', symbols_names='list(str)')
     def fit(self, system: list, symbols_names: list):
+        """Fit substitutor: save symbols and substitutions.
+
+        Parameters
+        ----------
+        system: list[sympy.Eq]
+            List of equations.
+        symbols_names: list[str]
+            List of names of all symbols that can be used in equations.
+
+        Returns
+        -------
+        self
+        """
         self._symbols_names = symbols_names
 
         for eq in system:
@@ -48,20 +65,55 @@ class Substitutor:
 
         return self
 
+    @contract(system='list($sympy.Eq)', returns='list($sympy.Eq)')
     def sub(self, system: list):
+        """Substitute simple equations to others.
+
+        Parameters
+        ----------
+        system: list[sympy.Eq]
+            List of equations.
+
+        Returns
+        -------
+        new_system: list[sympy.Eq]
+            System with substitutions.
+        """
         new_system = []
         for eq in system:
             if not self._is_simple_equation(eq):
+                new_eq = eq
                 for k, v in self._subs.items():
-                    new_system.append(eq.subs(k, v))
+                    new_eq = new_eq.subs(k, v)
+                new_system.append(new_eq)
         return new_system
 
-    def restore(self, solution: dict):
+    @contract(solution='dict', returns='dict')
+    def restore(self, solution: dict) -> dict:
+        """Restore system solution - add to solution variables that have been
+        substituted.
+
+        Parameters
+        ----------
+        solution: dict (str -> float)
+            Solution (symbol_name -> value).
+
+        Returns
+        -------
+        full_solution: dict (str -> float)
+            Given solution with added items - variables that were substituted.
+        """
+        full_solution = solution.copy()
+
         for k, v in self._subs.items():
             if isinstance(v, str):
                 self._subs[k] = solution[k]
 
+        full_solution.update(self._subs)
+        return full_solution
+
     def _is_simple_equation(self, eq):
+        """Check if equation is simple (looks like x = y or x = 5)."""
         l_str, r_str = str(eq.lhs), str(eq.rhs)
         if l_str in self._symbols_names \
                 and (r_str in self._symbols_names or r_str.isnumeric()):
@@ -73,7 +125,6 @@ class EquationsSystem:
     def __init__(self):
         self._symbols = dict()
         self._equations = dict()
-
         self._graph = nx.Graph()
 
     @contract(figure_name='str', symbols_names='list(str)')
@@ -165,23 +216,75 @@ class EquationsSystem:
         equations = [self._equations[name] for name in equations_names]
         res = self._solve_system(equations)
 
-    def _solve_system(self, system):
-        # Do subs
-        pass
+    @classmethod
+    @contract(system='list($sympy.Eq)')
+    def _solve_system(cls, system: list, symbols_dict: dict):
+        symbols_names = list(symbols_dict.keys())
+
+        # Simplify by substitutions
+        substitutor = Substitutor()
+        simplified_system = substitutor\
+            .fit(system, symbols_names)\
+            .sub(system)
+
+        # Define symbols that are used
+        used_symbols_names = set()
+        for eq in simplified_system:
+            used_symbols_names\
+                .add(get_equation_symbols_names(eq, symbols_names))
+        used_symbols_names = list(used_symbols_names)
+        used_symbols = [symbols_dict[name] for name in used_symbols_names]
+
+        # Prepare
+        canonical_system = cls._system_to_canonical(simplified_system)
+        system_function = \
+            cls._system_to_function(canonical_system, used_symbols)
+
+        # Solve
+        init = np.random.random(len(used_symbols))  # TODO: use current values
+        solution = cls._solve_numeric(system_function, init)
+
+        # Add values for symbols that were substituted
+        solution_dict = dict(zip(used_symbols_names, solution))
+        full_solution_dict = substitutor.restore(solution_dict)
+
+        return full_solution_dict
+
+    @staticmethod
+    @contract(system='list[N>0]($sympy.Eq)', symbols='list[N]($sympy.Symbol)')
+    def _system_to_function(system: list, symbols: list):
+        functions = [sympy.lambdify(symbols, f) for f in system]
+
+        def fun(x):
+            if len(x) != len(symbols):
+                raise ValueError
+            res = np.array([f(*x) for f in functions])
+            return res
+
+        return fun
+
+    @staticmethod
+    @contract(system='list[N>0]($sympy.Eq)')
+    def _system_to_canonical(system: list):
+        return [eq.lhs - eq.rhs for eq in system]
+
+    @staticmethod
+    def _solve_numeric(fun: function, init: np.ndarray) -> np.ndarray:
+        result = sp_optimize.fsolve(fun, init)
+        return result[0]
 
     def _update_graph(self):
         graph = nx.Graph()
-
         graph.add_nodes_from(self._symbols)
-
         for eq_name, eq in self._equations.items():
             self._add_equation_to_graph(graph, eq, equation_name=eq_name)
-
         self._graph = graph
 
-    def _add_equation_to_graph(self, graph, equation, equation_name=None):
+    @staticmethod
+    @contract(equation='$sympy.Eq', equation_name='str | None')
+    def _add_equation_to_graph(graph, equation, equation_name=None):
         g = graph.copy()
-        eq_symbols = self._get_equation_symbols(equation, g.nodes)
+        eq_symbols = get_equation_symbols_names(equation, g.nodes)
 
         if len(eq_symbols) < 2:
             # raise RuntimeError('To few symbols in equation.')
@@ -191,20 +294,3 @@ class EquationsSystem:
                 graph.add_edge(u, v, equation_name=equation_name)
 
         return g
-
-    @contract(system='list[N>0]($sympy.Eq)')
-    def _system_to_function(self, system):
-        functions = [sympy.lambdify(self._symbols, f) for f in system]
-
-        def fun(x):
-            if len(x) != len(self._symbols):
-                raise ValueError
-            res = np.array([f(*x) for f in functions])
-            return res
-
-        return fun
-
-
-def solve(system: function):
-    result = root(system)
-    return result
