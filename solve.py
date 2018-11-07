@@ -216,9 +216,44 @@ class EquationsSystem:
         equations = [self._equations[name] for name in equations_names]
         res = self._solve_system(equations)
 
+    def _solve_system(self, system: list, symbols: dict, figures: dict = None):
+        pass
+
+    @contract(system='list[N]', symbols='dict[M], M >= N',
+              best_values='dict[M]', returns='dict[M]')
+    def _solve_optimization_task(self, system: list, symbols: dict,
+                                 best_values: dict):
+        assert set(symbols.keys()) == set(best_values.keys()), \
+            'symbols.keys() must be equal to best_values.keys()'
+
+        # TODO: Check if M == N
+
+        lambdas_names = [get_full_name('lambda', str(i))
+                         for i in range(len(system))]
+        lambdas_dict = {name: sympy.symbols(name) for name in lambdas_names}
+        lambdas = lambdas_dict.values()
+
+        # Loss function: F = 1/2 * sum((xi - xi0) ** 2) + sum(lambda_j * eqj)
+        # Derivatives by xi: dF/dxi = (xi - xi0) + d(sum(lambda_j * eqj)) / dxi
+        # Derivatives by lambda_j: dF/d lambda_j = eqj (source system)
+
+        canonical = self._system_to_canonical(system)
+        loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
+        equations = [sympy.Eq((x - best_values[name]) + loss_part2.diff(x), 0)
+                     for name, x in symbols.items()]
+
+        equations.extend(system)
+        lambdas_dict.update(symbols)
+        result = self._solve_square_system(equations, lambdas_dict)
+
+        result = {name: value for name, value in result.items()
+                  if get_base_name_from_full(name) != 'lambda'}
+        return result
+
     @classmethod
-    @contract(system='list($sympy.Eq)')
-    def _solve_system(cls, system: list, symbols_dict: dict):
+    @contract(system='list[N]($sympy.Eq)', symbols_dict='dict[N]',
+              returns='dict[N]')
+    def _solve_square_system(cls, system: list, symbols_dict: dict):
         symbols_names = list(symbols_dict.keys())
 
         # Simplify by substitutions
@@ -234,6 +269,12 @@ class EquationsSystem:
                 .add(get_equation_symbols_names(eq, symbols_names))
         used_symbols_names = list(used_symbols_names)
         used_symbols = [symbols_dict[name] for name in used_symbols_names]
+
+        if len(used_symbols) != len(simplified_system):
+            raise RuntimeError(
+                f'len(used_symbols) = {len(used_symbols)},'
+                f'len(simplified_system) = {len(simplified_system)}'
+            )
 
         # Prepare
         canonical_system = cls._system_to_canonical(simplified_system)
