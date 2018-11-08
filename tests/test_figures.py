@@ -121,18 +121,16 @@ class TestSegment:
     def test_move(self):
         for coo in random.random((10, 4)) * 100 - 50:
             s = Segment((coo[2], coo[3]), 0, 1)
-            s.move(coo[0], coo[1])
-            assert all(isclose(
-                (coo[0]+coo[2], coo[1]+coo[3], coo[0]+coo[2]+1, coo[1]+coo[3]),
-                s.get_base_representation()))
+            s.move(coo[0],coo[1])
+            assert all(isclose((coo[0]+coo[2], coo[1]+coo[3], coo[0]+coo[2]+1, coo[1]+coo[3]), s.get_base_representation()))
 
     def test_rotate(self):
         s = Segment((1, 1), 0, 1)
         s.rotate(pi)
         assert all(isclose((1, 1, 0, 1), s.get_base_representation()))
-        s.rotate(pi/2)
+        s.rotate(np.pi/2)
         assert all(isclose((1, 1, 1, 0), s.get_base_representation()))
         s.rotate(-pi)
         assert all(isclose((1, 1, 1, 2), s.get_base_representation()))
-        s.rotate(-pi/2)
+        s.rotate(-np.pi/2)
         assert all(isclose((1, 1, 2, 1), s.get_base_representation()))
