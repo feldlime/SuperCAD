@@ -277,6 +277,25 @@ class CADProject:
         """
         return dict(self._figures)
 
+    @contract(name='str')
+    def get_figure(self, name: str) -> Figure:
+        """Get figure by its name.
+
+        Parameters
+        ----------
+        name: str
+            Name of figure to return.
+
+        Returns
+        -------
+        figure: Figure
+            Figure instance.
+        """
+        if name not in self._figures:
+            raise IncorrectParamValue(f'Invalid figure_name {name}')
+
+        return self._figures[name]
+
     @contract(returns='list')
     def get_bindings(self) -> list:
         """Get list of bindings.

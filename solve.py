@@ -8,23 +8,29 @@ import scipy.optimize as sp_optimize
 from contracts import contract, new_contract
 from itertools import combinations
 from collections import defaultdict
+import re
 
 DELIMITER = '___'
 SPECIAL_NAME = 'special_name'
 
 figures_values_contract = new_contract('figures_values',
-                                       'dict(str: dict(str: number))')
+                                       'dict(str: dict(str: float))')
+
+number_pattern = re.compile(r'-?[ ]?\d+\.?\d*')
 
 
-def compose_full_name(base_name, object_name):
+@contract(base_name='str', object_name='str', returns='str')
+def compose_full_name(base_name: str, object_name: str) -> str:
     return f'{base_name}{DELIMITER}{object_name}'
 
 
-def split_full_name(full_symbol_name: str) -> (str, str):
-    return full_symbol_name.split(DELIMITER, maxsplit=2)
+@contract(full_name='str', returns='list[2](str)')
+def split_full_name(full_name: str) -> (str, str):
+    return full_name.split(DELIMITER, maxsplit=2)
 
 
-def roll_up_values_dict(flatten_dict):
+@contract(flatten_dict='dict(str: float)', returns='figures_values')
+def roll_up_values_dict(flatten_dict: dict) -> dict:
     """Make hierarchical dictionary from flatten.
 
     Parameters
@@ -44,7 +50,8 @@ def roll_up_values_dict(flatten_dict):
     return dict(result)
 
 
-def unroll_values_dict(hierarchical_dict):
+@contract(hierarchical_dict='figures_values', returns='dict(str: float)')
+def unroll_values_dict(hierarchical_dict: dict) -> dict:
     """Make flatten dictionary from hierarchical.
 
     Parameters
@@ -65,8 +72,9 @@ def unroll_values_dict(hierarchical_dict):
     return result
 
 
-def get_equation_symbols_names(equation, symbols_names):
-    return set([w for w in str(equation).split() if w in symbols_names])
+@contract(symbols_names='list(str)', returns='set(str)')
+def get_equation_symbols_names(equation: sympy.Eq, symbols_names: list) -> set:
+    return set([w for w in symbols_names if w in str(equation)])
 
 
 class CannotSolveSystemError(Exception):
@@ -82,7 +90,7 @@ class Substitutor:
         self._subs = dict()
         self._symbols_names = None
 
-    @contract(system='list($sympy.Eq)', symbols_names='list(str)')
+    @contract(system='list', symbols_names='list(str)')
     def fit(self, system: list, symbols_names: list):
         """Fit substitutor: save symbols and substitutions.
 
@@ -109,8 +117,8 @@ class Substitutor:
 
         return self
 
-    @contract(system='list($sympy.Eq)', returns='list($sympy.Eq)')
-    def sub(self, system: list):
+    @contract(system='list', returns='list')
+    def sub(self, system: list) -> list:
         """Substitute simple equations to others.
 
         Parameters
@@ -149,9 +157,12 @@ class Substitutor:
         """
         full_solution = solution.copy()
 
-        for k, v in self._subs.items():
-            if isinstance(v, str):
-                self._subs[k] = solution[k]
+        try:
+            for k, v in self._subs.items():
+                if isinstance(v, str):
+                    self._subs[k] = solution[v]  # v must be in solution
+        except KeyError:
+            raise RuntimeError(f'Symbol {v} not in solution')
 
         full_solution.update(self._subs)
         return full_solution
@@ -160,7 +171,8 @@ class Substitutor:
         """Check if equation is simple (looks like x = y or x = 5)."""
         l_str, r_str = str(eq.lhs), str(eq.rhs)
         if l_str in self._symbols_names \
-                and (r_str in self._symbols_names or r_str.isnumeric()):
+                and (r_str in self._symbols_names
+                     or re.fullmatch(number_pattern, r_str)):
             return True
         return False
 
@@ -204,17 +216,17 @@ class EquationsSystem:
             self._symbols.pop(symbol_name)
         self._update_graph()
 
-    @contract(restriction_name='str', symbols_names='list($sympy.Eq)')
+    @contract(restriction_name='str', equations='list')
     def add_restriction_equations(self, restriction_name: str,
                                   equations: list):
-        equations_names = [compose_full_name(restriction_name, i)
+        equations_names = [compose_full_name(restriction_name, str(i))
                            for i in range(len(equations))]
         new_equations = {name: eq
                          for name, eq in zip(equations_names, equations)}
         self._equations.update(new_equations)
         self._update_graph()
 
-    @contract(restriction_name='str', symbols_names='list($sympy.Eq)')
+    @contract(restriction_name='str')
     def remove_restriction_equations(self, restriction_name: str):
         equations_to_delete = [
             name for name in self._equations.keys()
@@ -263,8 +275,7 @@ class EquationsSystem:
 
         return roll_up_values_dict(result)
 
-    @contract(equation='$sympy.Eq',
-              current_values='figures_values', returns='figures_values')
+    @contract(current_values='figures_values', returns='figures_values')
     def solve_new(self, equation: sympy.Eq, current_values: dict) -> dict:
         """Solve subsystem with new equation.
 
@@ -310,7 +321,7 @@ class EquationsSystem:
         result = self._solve_system(equations, symbols, desired_values)
         return roll_up_values_dict(result)
 
-    @contract(optimizing_vaues='figures_values',
+    @contract(optimizing_values='figures_values',
               current_values='figures_values', returns='figures_values')
     def solve_optimization_task(self, optimizing_values: dict,
                                 current_values: dict) -> dict:
@@ -362,7 +373,7 @@ class EquationsSystem:
 
         return roll_up_values_dict(result)
 
-    @contract(system='list($sympy.Eq)', symbols='dict(str: $sympy.Symbol)',
+    @contract(system='list', symbols='dict(str: *)',
               desired_values='figures_values', returns='dict(str: number)')
     def _solve_system(self, system: list, symbols: dict,
                       desired_values: dict) -> dict:
@@ -370,7 +381,7 @@ class EquationsSystem:
         return self._solve_optimization_task(system, symbols, desired_values)
 
     @contract(system='list[N]', symbols='dict[M], M >= N',
-              best_values='dict[M]', returns='dict[M]')
+              desired_values='dict[M]', returns='dict[M]')
     def _solve_optimization_task(self, system: list, symbols: dict,
                                  desired_values: dict) -> dict:
         assert set(symbols.keys()) == set(desired_values.keys()), \
@@ -401,8 +412,7 @@ class EquationsSystem:
         return result
 
     @classmethod
-    @contract(system='list[N]($sympy.Eq)', symbols_dict='dict[N]',
-              returns='dict[N]')
+    @contract(system='list[N]', symbols_dict='dict[N]', returns='dict[N]')
     def _solve_square_system(cls, system: list, symbols_dict: dict):
         symbols_names = list(symbols_dict.keys())
 
@@ -442,7 +452,7 @@ class EquationsSystem:
         return full_solution_dict
 
     @staticmethod
-    @contract(system='list[N>0]($sympy.Eq)', symbols='list[N]($sympy.Symbol)')
+    @contract(system='list[N>0]', symbols='list[N]')
     def _system_to_function(system: list, symbols: list):
         functions = [sympy.lambdify(symbols, f) for f in system]
 
@@ -455,12 +465,12 @@ class EquationsSystem:
         return fun
 
     @staticmethod
-    @contract(system='list[N>0]($sympy.Eq)')
+    @contract(system='list[N>0]')
     def _system_to_canonical(system: list):
         return [eq.lhs - eq.rhs for eq in system]
 
     @staticmethod
-    def _solve_numeric(fun: function, init: np.ndarray) -> np.ndarray:
+    def _solve_numeric(fun: callable, init: np.ndarray) -> np.ndarray:
         result = sp_optimize.fsolve(fun, init)
         return result[0]
 
@@ -472,7 +482,7 @@ class EquationsSystem:
         self._graph = graph
 
     @staticmethod
-    @contract(equation='$sympy.Eq', equation_name='str | None')
+    @contract(equation_name='str | None')
     def _add_equation_to_graph(graph, equation, equation_name=None):
         g = graph.copy()
         eq_symbols = get_equation_symbols_names(equation, g.nodes)
