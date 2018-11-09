@@ -1,5 +1,8 @@
 from solve import *
+from utils import IncorrectParamValue
+
 import sympy
+import pytest
 
 
 def assert_flat_dicts_equal(d1, d2):
@@ -9,6 +12,13 @@ def assert_flat_dicts_equal(d1, d2):
     for k, v1 in d1.items():
         v2 = d2[k]
         assert v1 == v2
+
+
+def assert_sequences_equal(s1, s2):
+    assert type(s1) == type(s2)
+    assert len(s1) == len(s2)
+    for e1, e2 in zip(sorted(s1), sorted(s2)):
+        assert e1 == e2
 
 
 # noinspection PyTypeChecker
@@ -102,3 +112,72 @@ class TestSubstitutor:
         result = substitutor.restore(simplified_answer)
         assert_flat_dicts_equal(answer, result)
 
+
+class TestEquationsSystem:
+    def test_addition_and_removing_symbols(self):
+        system = EquationsSystem()
+        system.add_figure_symbols('figure1', ['x', 'y'])
+        system.add_figure_symbols('figure2', ['x1', 'y1', 'x2', 'y2'])
+        system.add_figure_symbols('figure3', ['z'])
+
+        with pytest.raises(IncorrectParamValue):
+            system.add_figure_symbols('figure1', ['z', 'w'])
+
+        symbols_ = system.get_symbols('figure1')
+        assert isinstance(symbols_, dict)
+        assert_sequences_equal(list(symbols_), ['x', 'y'])
+
+        symbols_ = system.get_symbols('figure2', 'x2')
+        assert isinstance(symbols_, sympy.Symbol)
+
+        with pytest.raises(IncorrectParamValue):
+            system.get_symbols('figure2', 'x3')
+
+        symbols_ = system.get_symbols('figure3')
+        assert isinstance(symbols_, dict)
+        assert_sequences_equal(list(symbols_.keys()), ['z'])
+
+        system.remove_figure_symbols('figure1')
+        with pytest.raises(IncorrectParamValue):
+            system.get_symbols('figure1')
+
+        with pytest.raises(IncorrectParamValue):
+            system.remove_figure_symbols('figure1')
+
+    def test_addition_and_removing_equations(self):
+        system = EquationsSystem()
+        system.add_figure_symbols('figure1', ['x', 'y'])
+        system.add_figure_symbols('figure2', ['x1', 'y1', 'x2', 'y2'])
+        system.add_figure_symbols('figure3', ['z'])
+
+        f1_ = system.get_symbols('figure1')
+        f1_x, f1_y = f1_['x'], f1_['y']
+
+        f2_ = system.get_symbols('figure2')
+        f2_x1, f2_y1, f2_x2, f2_y2 = f2_['x1'], f2_['y1'], f2_['x2'], f2_['y2']
+
+        fixed_f1 = [
+            sympy.Eq(f1_x, 1),
+            sympy.Eq(f1_y, 2)
+         ]
+        joint_f1_f21 = [
+            sympy.Eq(f2_x1, f1_x),
+            sympy.Eq(f2_y1, f1_y)
+        ]
+        fixed_length_f2 = [
+            sympy.Eq((f2_x2 - f2_x1) ** 2 + (f2_y2 - f2_y1) ** 2, 5 ** 2)
+        ]
+
+        system.add_restriction_equations('fixed_f1', fixed_f1)
+        system.add_restriction_equations('joint_f1_f21', joint_f1_f21)
+        system.add_restriction_equations('fixed_length_f2', fixed_length_f2)
+
+        with pytest.raises(IncorrectParamValue):
+            system.add_restriction_equations('fixed_f1', fixed_f1)
+
+        system.remove_restriction_equations('fixed_f1')
+        system.remove_restriction_equations('joint_f1_f21')
+        system.remove_restriction_equations('fixed_length_f2')
+
+        with pytest.raises(IncorrectParamValue):
+            system.remove_restriction_equations('fixed_f1')

@@ -10,6 +10,8 @@ from itertools import combinations
 from collections import defaultdict
 import re
 
+from utils import IncorrectParamValue
+
 DELIMITER = '___'
 SPECIAL_NAME = 'special_name'
 
@@ -72,7 +74,7 @@ def unroll_values_dict(hierarchical_dict: dict) -> dict:
     return result
 
 
-@contract(symbols_names='list(str)', returns='set(str)')
+@contract(symbols_names='list(str)')
 def get_equation_symbols_names(equation: sympy.Eq, symbols_names: list) -> set:
     return set([w for w in symbols_names if w in str(equation)])
 
@@ -183,8 +185,35 @@ class EquationsSystem:
         self._equations = dict()
         self._graph = nx.Graph()
 
+    @property
+    def _figures_names(self):
+        return [split_full_name(name)[0] for name in self._symbols]
+
+    @property
+    def _restrictions_names(self):
+        return [split_full_name(name)[0] for name in self._equations]
+
     @contract(figure_name='str', symbols_names='list(str)')
     def add_figure_symbols(self, figure_name: str, symbols_names: list):
+        """
+        Add symbols for one figure.
+        Cannot add symbols for existing figure.
+
+        Parameters
+        ----------
+        figure_name: str
+            Name of figure.
+        symbols_names: list[str]
+            Names f symbols for figure.
+
+        Raises
+        ------
+        IncorrectParamValue: if given figure has already exist.
+        """
+        if figure_name in self._figures_names:
+            raise IncorrectParamValue(
+                f'Figure {figure_name} has already exist.')
+
         symbols_names = [compose_full_name(figure_name, sym)
                          for sym in symbols_names]
         new_symbols = {name: sympy.symbols(name) for name in symbols_names}
@@ -193,25 +222,64 @@ class EquationsSystem:
 
     @contract(figure_name='str', symbol_name='str | None')
     def get_symbols(self, figure_name: str, symbol_name: str = None):
+        """
+        Return symbols for one figure.
+
+        Parameters
+        ----------
+        figure_name: str
+            Name of figure.
+        symbol_name: str or None, optional, default None
+            If string, returns symbol with this name.
+            If None, returns dictionary with all symbols of given figure.
+
+        Returns
+        -------
+            symbols or symbol: dict(str -> sympy.Symbol) or sympy.Symbol
+
+        Raises
+        ------
+            IncorrectParamValue: if there is no such figure or if symbol name
+            is given, but such symbol for such figure does not exist.
+        """
+        if figure_name not in self._figures_names:
+            raise IncorrectParamValue(f'Figure {figure_name} does not exist.')
+
         if symbol_name is not None:
             symbol_name = compose_full_name(figure_name, symbol_name)
             if symbol_name not in self._symbols:
-                raise ValueError('No such symbol.')
+                raise IncorrectParamValue('No such symbol.')
             return self._symbols[symbol_name]
         else:
-            result = {split_full_name(name)[1]: sym
-                      for name, sym in self._symbols
-                      if split_full_name(name)[0] == figure_name}
+            result = dict()
+            for name, sym in self._symbols.items():
+                base_name, object_name = split_full_name(name)
+                if base_name == figure_name:
+                    result[object_name] = sym
             return result
 
     @contract(figure_name='str')
     def remove_figure_symbols(self, figure_name: str):
+        """
+        Remove all symbols for given figure.
+
+        Parameters
+        ----------
+        figure_name: str
+            Name of figure.
+
+        Raises
+        -------
+        IncorrectParamValue: if there is no figure with such name.
+        """
+        if figure_name not in self._figures_names:
+            raise IncorrectParamValue(f'Figure {figure_name} does not exist.')
+
         symbols_to_delete = [
             name for name in self._symbols.keys()
             if split_full_name(name)[0] == figure_name
         ]
-        if not symbols_to_delete:
-            raise RuntimeError('No symbols were found.')
+
         for symbol_name in symbols_to_delete:
             self._symbols.pop(symbol_name)
         self._update_graph()
@@ -219,6 +287,24 @@ class EquationsSystem:
     @contract(restriction_name='str', equations='list')
     def add_restriction_equations(self, restriction_name: str,
                                   equations: list):
+        """
+        Add equations for one restriction.
+
+        Parameters
+        ----------
+        restriction_name: str
+
+        equations: list[sympy.Eq]
+            List of equations.
+
+        Raises
+        ------
+        IncorrectParamValue: if given restriction has already exist.
+        """
+        if restriction_name in self._restrictions_names:
+            raise IncorrectParamValue(
+                f'Restriction {restriction_name} has already exist.')
+
         equations_names = [compose_full_name(restriction_name, str(i))
                            for i in range(len(equations))]
         new_equations = {name: eq
@@ -228,12 +314,28 @@ class EquationsSystem:
 
     @contract(restriction_name='str')
     def remove_restriction_equations(self, restriction_name: str):
+        """
+        Remove all equations for given restriction.
+
+        Parameters
+        ----------
+        restriction_name: str
+            Name of restriction.
+
+        Raises
+        -------
+        IncorrectParamValue: if there is no such restriction.
+        """
+
+        if restriction_name not in self._restrictions_names:
+            raise IncorrectParamValue(
+                f'Restriction {restriction_name} does not exists.')
+
         equations_to_delete = [
             name for name in self._equations.keys()
             if split_full_name(name)[0] == restriction_name
         ]
-        if not equations_to_delete:
-            raise RuntimeError('No equations were found.')
+
         for equation_name in equations_to_delete:
             self._equations.pop(equation_name)
         self._update_graph()
@@ -485,7 +587,7 @@ class EquationsSystem:
     @contract(equation_name='str | None')
     def _add_equation_to_graph(graph, equation, equation_name=None):
         g = graph.copy()
-        eq_symbols = get_equation_symbols_names(equation, g.nodes)
+        eq_symbols = get_equation_symbols_names(equation, list(g.nodes))
 
         if len(eq_symbols) < 2:
             # raise RuntimeError('To few symbols in equation.')
