@@ -3,15 +3,28 @@ from utils import IncorrectParamValue
 
 import sympy
 import pytest
+import numpy as np
 
 
-def assert_flat_dicts_equal(d1, d2):
+def assert_flat_dicts_equal(d1, d2, is_close=False):
     assert isinstance(d1, dict)
     assert isinstance(d2, dict)
     assert set(d1.keys()) == set(d2.keys())
     for k, v1 in d1.items():
         v2 = d2[k]
-        assert v1 == v2
+        if is_close:
+            assert np.isclose(v1, v2)
+        else:
+            assert v1 == v2
+
+
+def assert_2_level_dicts_equal(d1, d2, is_close=False):
+    assert isinstance(d1, dict)
+    assert isinstance(d2, dict)
+    assert set(d1.keys()) == set(d2.keys())
+    for k, v1 in d1.items():
+        v2 = d2[k]
+        assert_flat_dicts_equal(v1, v2, is_close)
 
 
 def assert_sequences_equal(s1, s2):
@@ -181,3 +194,147 @@ class TestEquationsSystem:
 
         with pytest.raises(IncorrectParamValue):
             system.remove_restriction_equations('fixed_f1')
+
+    def test_full_pass(self):
+        system = EquationsSystem()
+        system.add_figure_symbols('figure1', ['x', 'y'])
+        system.add_figure_symbols('figure2', ['x1', 'y1', 'x2', 'y2'])
+        system.add_figure_symbols('figure3', ['z'])
+
+        f1_ = system.get_symbols('figure1')
+        f1_x, f1_y = f1_['x'], f1_['y']
+
+        f2_ = system.get_symbols('figure2')
+        f2_x1, f2_y1, f2_x2, f2_y2 = f2_['x1'], f2_['y1'], f2_['x2'], f2_['y2']
+
+        f3_ = system.get_symbols('figure3')
+        f3_z = f3_['z']
+
+        values = {
+            'figure1': {
+                'x': 1.,
+                'y': 1.
+            },
+            'figure2': {
+                'x1': 5.,
+                'y1': 6.,
+                'x2': 10.,
+                'y2': 2.
+            },
+            'figure3': {
+                'z': 100.
+            }
+        }
+
+        # Check restriction 1
+        fixed_f1 = [
+            sympy.Eq(f1_x, 1.),
+            sympy.Eq(f1_y, 2.)
+        ]
+        system.add_restriction_equations('fixed_f1', fixed_f1)
+        result = system.solve(values)
+        answer = {
+            'figure1': {
+                'x': 1.,
+                'y': 2.
+            }
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'] = result['figure1'].copy()
+
+        # Check restriction 2
+        joint_f1_f21 = [
+            sympy.Eq(f2_x1, f1_x),
+            sympy.Eq(f2_y1, f1_y)
+        ]
+        system.add_restriction_equations('joint_f1_f21', joint_f1_f21)
+        result = system.solve(values)
+        answer = {
+            'figure1': {
+                'x': 1.,
+                'y': 2.
+            },
+            'figure2': {
+                'x1': 1.,
+                'y1': 2.,
+            },
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'] = result['figure1'].copy()
+        values['figure2'] = result['figure2'].copy()
+
+        # TODO: do next
+        # Check restriction 3
+        fixed_length_f2 = [
+            sympy.Eq((f2_x2 - f2_x1) ** 2 + (f2_y2 - f2_y1) ** 2, 5 ** 2)
+        ]
+        system.add_restriction_equations('fixed_length_f2', fixed_length_f2)
+        result = system.solve(values)
+        answer = {
+            'figure1': {
+                'x': 1.,
+                'y': 2.
+            },
+            'figure2': {
+                'x1': 1.,
+                'y1': 2.,
+                'x2': 6.,
+                'y2': 2.
+            },
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'] = result['figure1'].copy()
+        values['figure2'] = result['figure2'].copy()
+
+        # Check changing parameter
+
+        # rotate_30 = [
+        #     sympy.Eq((f2_y2 - f2_y1) / (f2_x2 - f2_x1), np.tan(np.pi / 6)),
+        # ]  # Undirected
+
+        angle = np.pi / 6
+        rotate_30 = [
+            sympy.Eq((f2_y2 - f2_y1) / (f2_x2 - f2_x1), np.tan(angle)),
+            sympy.Eq(sympy.sign(f2_x2 - f2_x1),
+                     sympy.sign(np.pi - angle))  # think about other angles
+        ]  # Directed
+        result = system.solve_new(rotate_30, values)
+        answer = {
+            'figure1': {
+                'x': 1.,
+                'y': 2.
+            },
+            'figure2': {
+                'x1': 1.,
+                'y1': 2.,
+                'x2': 1. + np.cos(np.pi / 6),
+                'y2': 2. + np.sin(np.pi / 6)
+            }
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'] = result['figure1'].copy()
+        values['figure2'] = result['figure2'].copy()
+
+        # Check moving
+        move_high = {
+            'figure2': {
+                'x2': 1.,
+                'y2': 100.
+            }
+        }
+        result = system.solve_optimization_task(move_high, values)
+        answer = {
+            'figure1': {
+                'x': 1.,
+                'y': 2.
+            },
+            'figure2': {
+                'x1': 1.,
+                'y1': 2.,
+                'x2': 1.,
+                'y2': 7.
+            }
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'] = result['figure1'].copy()
+        values['figure2'] = result['figure2'].copy()
