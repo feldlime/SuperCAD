@@ -360,3 +360,180 @@ class TestEquationsSystem:
         }
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure3'].update(result['figure3'])
+
+    def test_more_equations_than_symbols(self):
+        system = EquationsSystem()
+        system.add_figure_symbols('figure', ['x1', 'y1', 'x2', 'y2'])
+
+        f_ = system.get_symbols('figure')
+        f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
+
+        values = {
+            'figure': {
+                'x1': 5.,
+                'y1': 6.,
+                'x2': 10.,
+                'y2': 2.
+            }
+        }
+
+        # Fix start
+        fixed_f_1 = [
+            sympy.Eq(f_x1, 0.),
+            sympy.Eq(f_y1, 0.)
+        ]
+        system.add_restriction_equations('fixed_f_1', fixed_f_1)
+        result = system.solve(values)
+        values['figure'].update(result['figure'])
+
+        # Fix end
+        fixed_f_2 = [
+            sympy.Eq(f_x2, 1.),
+            sympy.Eq(f_y2, 1.)
+        ]
+        system.add_restriction_equations('fixed_f_2', fixed_f_2)
+        result = system.solve(values)
+        values['figure'].update(result['figure'])
+
+        # Try fix incorrect length
+        fixed_length_incorrect = [
+            sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 10 ** 2)
+        ]
+        system.add_restriction_equations('fixed_length_incorrect',
+                                         fixed_length_incorrect)
+        with pytest.raises(MoreEquationsThanSymbolsError):
+            system.solve(values)
+        system.remove_restriction_equations('fixed_length_incorrect')
+
+        # Try fix correct length
+        fixed_length_correct = [
+            sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 5 ** 2)
+        ]
+        system.add_restriction_equations('fixed_length_correct',
+                                         fixed_length_correct)
+        with pytest.raises(MoreEquationsThanSymbolsError):
+            system.solve(values)
+        system.remove_restriction_equations('fixed_length_correct')
+
+    def test_incompatible_equations(self):
+        system = EquationsSystem()
+        system.add_figure_symbols('figure', ['x1', 'y1', 'x2', 'y2'])
+
+        f_ = system.get_symbols('figure')
+        f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
+
+        values = {
+            'figure': {
+                'x1': 5.,
+                'y1': 6.,
+                'x2': 10.,
+                'y2': 2.
+            }
+        }
+
+        # Fix length
+        fixed_length = [
+            sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 5 ** 2)
+        ]
+        system.add_restriction_equations('fixed_length', fixed_length)
+        result = system.solve(values)
+        values['figure'].update(result['figure'])
+
+        # Fix vertical
+        fixed_vertical = [
+            sympy.Eq(f_x1, f_x2),
+        ]
+        system.add_restriction_equations('fixed_vertical', fixed_vertical)
+        result = system.solve(values)
+        values['figure'].update(result['figure'])
+
+        # Cannot be horizontal and vertical simultaneously if length > 0
+
+        # Try fix horizontal simple
+        fixed_horizontal_simple = [
+            sympy.Eq(f_y1, f_y2),
+        ]
+        system.add_restriction_equations('fixed_horizontal_simple',
+                                         fixed_horizontal_simple)
+        with pytest.raises(SystemIncompatibleError):
+            system.solve(values)
+        system.remove_restriction_equations('fixed_horizontal_simple')
+
+        # Try fix horizontal complex
+        length = (f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2
+        fixed_horizontal_complex = [
+            sympy.Eq(length * np.cos(0), f_x2 - f_x1),  # cheater (without y)
+        ]
+        system.add_restriction_equations('fixed_horizontal_complex',
+                                         fixed_horizontal_complex)
+        with pytest.raises(CannotSolveSystemError):
+            system.solve(values)
+        system.remove_restriction_equations('fixed_horizontal_complex')
+
+    def test_overfitted_equations_simple(self):
+        """Just try apply two same restrictions."""
+
+        system = EquationsSystem()
+        system.add_figure_symbols('figure', ['x1', 'y1', 'x2', 'y2'])
+
+        f_ = system.get_symbols('figure')
+        f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
+
+        values = {
+            'figure': {
+                'x1': 5.,
+                'y1': 6.,
+                'x2': 10.,
+                'y2': 2.
+            }
+        }
+
+        # Fix vertical 1
+        fixed_vertical_1 = [
+            sympy.Eq(f_x1, f_x2),
+        ]
+        system.add_restriction_equations('fixed_vertical_1', fixed_vertical_1)
+        result = system.solve(values)
+        values['figure'].update(result['figure'])
+
+        # Fix vertical 2
+        fixed_vertical_2 = [
+            sympy.Eq(f_x1, f_x2),
+        ]
+        system.add_restriction_equations('fixed_vertical_2', fixed_vertical_2)
+        with pytest.raises(SystemOverfittedError):
+            system.solve(values)
+
+    def test_overfitted_equations_complex(self):
+        """Just try apply two same restrictions."""
+
+        system = EquationsSystem()
+        system.add_figure_symbols('figure', ['x1', 'y1', 'x2', 'y2'])
+
+        f_ = system.get_symbols('figure')
+        f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
+
+        values = {
+            'figure': {
+                'x1': 5.,
+                'y1': 6.,
+                'x2': 10.,
+                'y2': 2.
+            }
+        }
+
+        # Fix length 1
+        fixed_length_1 = [
+            sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 5 ** 2)
+        ]
+        system.add_restriction_equations('fixed_length_1', fixed_length_1)
+        result = system.solve(values)
+        values['figure'].update(result['figure'])
+
+        # Fix length 2
+        fixed_length_2 = [
+            sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 5 ** 2)
+        ]
+        system.add_restriction_equations('fixed_length_2', fixed_length_2)
+        with pytest.raises(CannotSolveSystemError):
+            system.solve(values)

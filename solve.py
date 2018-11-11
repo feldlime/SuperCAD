@@ -84,6 +84,34 @@ class CannotSolveSystemError(Exception):
     pass
 
 
+class MoreEquationsThanSymbolsError(CannotSolveSystemError):
+    """
+    We don't now, can be system solved or not,
+    but we cannot try to solve it.
+    """
+    pass
+
+
+class SystemOverfittedError(CannotSolveSystemError):
+    """
+    System contains similar equations
+    e.g. [x = 5, x = 5] or [x = 5, x = 10]
+    """
+    pass
+
+
+class SystemIncompatibleError(SystemOverfittedError):
+    """
+    System contains conflicting equations,
+    e.g. [x = y, x = 5, y = 10].
+    """
+    pass
+
+
+class ExistingSubstitutionError(Exception):
+    pass
+
+
 class Substitutor:
     """Class for simplification systems of equations by using substitution of
     simple equations (like x = y or x = 5) to other equations.
@@ -117,7 +145,11 @@ class Substitutor:
                 value = str(eq.rhs)
                 if re.fullmatch(number_pattern, value):
                     value = float(value)
-                self._subs.update({key: value})
+
+                if key not in self._subs:
+                    self._subs.update({key: value})
+                else:
+                    raise ExistingSubstitutionError
 
         # Do substitutions into self._subs
         # E.g. {'x': 'y', 'y': 5.0} -> {'x': 5.0, 'y': 5.0}
@@ -375,7 +407,9 @@ class EquationsSystem:
         current_values = unroll_values_dict(current_values)
 
         result = {}
-        for subgraph in nx.connected_component_subgraphs(self._graph):
+        subgraphs = [self._graph.subgraph(c).copy()
+                     for c in nx.connected_components(self._graph)]
+        for subgraph in subgraphs:
             equations_names = set([edge[2]['equation_name']
                                    for edge in subgraph.edges(data=True)])
             equations = [self._equations[name] for name in equations_names]
@@ -419,7 +453,9 @@ class EquationsSystem:
             self._add_equation_to_graph(graph, equation, equation_name=name)
 
         result = {}
-        for subgraph in nx.connected_component_subgraphs(graph):
+        subgraphs = [graph.subgraph(c).copy()
+                     for c in nx.connected_components(graph)]
+        for subgraph in subgraphs:
             equations_in_subgraph_names = \
                 set([e[2]['equation_name'] for e in subgraph.edges(data=True)])
 
@@ -479,7 +515,9 @@ class EquationsSystem:
         current_values = unroll_values_dict(current_values)
 
         result = dict()
-        for subgraph in nx.connected_component_subgraphs(self._graph):
+        subgraphs = [self._graph.subgraph(c).copy()
+                     for c in nx.connected_components(self._graph)]
+        for subgraph in subgraphs:
             optimizing_values_in_subgraph = {
                 symbol_name: value
                 for symbol_name, value in optimizing_values.items()
@@ -509,9 +547,15 @@ class EquationsSystem:
               desired_values='dict(str: float)', returns='dict(str: float)')
     def _solve_system(self, system: list, symbols: dict,
                       desired_values: dict) -> dict:
-        # TODO: Check size
+
         if not system:  # no equations
             return {}
+
+        if len(system) > len(symbols):
+            raise MoreEquationsThanSymbolsError(
+                f'System contains {len(system)} equations, but only '
+                f'{len(symbols)} symbols.'
+            )
 
         return self._solve_optimization_task(system, symbols, desired_values)
 
@@ -559,9 +603,22 @@ class EquationsSystem:
 
         # Simplify by substitutions
         substitutor = Substitutor()
-        simplified_system = substitutor\
-            .fit(system, symbols_names)\
-            .sub(system)
+
+        try:
+            substitutor.fit(system, symbols_names)
+        except ExistingSubstitutionError:
+            raise SystemOverfittedError(
+                'Two substitutions with same keys were defined')
+
+        simplified_system = substitutor.sub(system)
+
+        # Check easy inconsistency
+        if sympy.false in simplified_system:
+            raise SystemIncompatibleError('Get BooleanFalse in system.')
+
+        # Check easy inconsistency
+        if sympy.true in simplified_system:
+            raise SystemOverfittedError('Get BooleanTrue in system.')
 
         # Define symbols that are used
         used_symbols_names = set()
@@ -614,8 +671,12 @@ class EquationsSystem:
 
     @staticmethod
     def _solve_numeric(fun: callable, init: np.ndarray) -> np.ndarray:
-        result = sp_optimize.fsolve(fun, init)
-        return result
+        result = sp_optimize.fsolve(fun, init, full_output=True)
+
+        if result[2] != 1:
+            raise CannotSolveSystemError(result[3])
+
+        return result[0]
 
     def _update_graph(self):
         graph = nx.MultiGraph()
