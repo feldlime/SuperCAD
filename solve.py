@@ -207,7 +207,7 @@ class EquationsSystem:
     def __init__(self):
         self._symbols = dict()
         self._equations = dict()
-        self._graph = nx.Graph()
+        self._graph = nx.MultiGraph()
 
     @property
     def _figures_names(self):
@@ -421,7 +421,7 @@ class EquationsSystem:
 
         current_values = unroll_values_dict(current_values)
 
-        graph = nx.Graph()
+        graph = self._graph.copy()
         for i, equation in enumerate(new_equations):
             name = compose_full_name(SPECIAL_NAME, str(i))
             self._add_equation_to_graph(graph, equation, equation_name=name)
@@ -455,7 +455,7 @@ class EquationsSystem:
 
             desired_values = {
                 symbol_name: current_values[symbol_name]
-                for symbol_name in subgraph.nodes()
+                for symbol_name in symbols
             }
 
             result.update(self._solve_system(
@@ -495,18 +495,17 @@ class EquationsSystem:
             }
 
             if optimizing_values_in_subgraph:
+                symbols = {name: sym for name, sym in self._symbols.items()
+                           if name in subgraph.nodes()}
                 desired_values = {
                     symbol_name: current_values[symbol_name]
-                    for symbol_name in subgraph.nodes()
+                    for symbol_name in symbols
                 }
                 desired_values.update(optimizing_values_in_subgraph)
 
                 equations_names = set([edge[2]['equation_name']
                                        for edge in subgraph.edges(data=True)])
                 equations = [self._equations[name] for name in equations_names]
-
-                symbols = {name: sym for name, sym in self._symbols.items()
-                           if name in desired_values}
 
                 res = self._solve_optimization_task(equations, symbols,
                                                     desired_values)
@@ -545,8 +544,13 @@ class EquationsSystem:
 
         canonical = self._system_to_canonical(system)
         loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
+        # equations = []
+        # for name, x in symbols.items():
+        #     equations.append(sympy.Eq(x - desired_values[name] + loss_part2.diff(x), 0))
         equations = [sympy.Eq(x - desired_values[name] + loss_part2.diff(x), 0)
                      for name, x in symbols.items()]
+
+        # TODO simplify ???
 
         equations.extend(system)
         lambdas_dict.update(symbols)
@@ -619,7 +623,7 @@ class EquationsSystem:
         return result
 
     def _update_graph(self):
-        graph = nx.Graph()
+        graph = nx.MultiGraph()
         graph.add_nodes_from(self._symbols)
         for eq_name, eq in self._equations.items():
             self._add_equation_to_graph(graph, eq, equation_name=eq_name)
