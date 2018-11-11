@@ -110,6 +110,7 @@ class Substitutor:
         """
         self._symbols_names = symbols_names
 
+        # Define and save simple equations
         for eq in system:
             if self._is_simple_equation(eq):
                 key = str(eq.lhs)
@@ -118,6 +119,8 @@ class Substitutor:
                     value = float(value)
                 self._subs.update({key: value})
 
+        # Do substitutions into self._subs
+        # E.g. {'x': 'y', 'y': 5.0} -> {'x': 5.0, 'y': 5.0}
         were_changes = True
         while were_changes:
             were_changes = False
@@ -144,24 +147,13 @@ class Substitutor:
         new_system: list[sympy.Eq]
             System with substitutions.
         """
-
         new_system = []
 
         for eq in system:
             if not self._is_simple_equation(eq):
                 new_eq = eq
-                subs_will_be_done = True
-
-                while subs_will_be_done:
-                    subs_will_be_done = False
-                    eq_symbols = get_equation_symbols_names(
-                        new_eq, self._symbols_names)
-
-                    for k, v in self._subs.items():
-                        if k in eq_symbols:
-                            subs_will_be_done = True
-                            new_eq = new_eq.subs(k, v)
-
+                for k, v in self._subs.items():
+                    new_eq = new_eq.subs(k, v)
                 new_system.append(new_eq)
 
         return new_system
@@ -530,7 +522,10 @@ class EquationsSystem:
         assert set(symbols.keys()) == set(desired_values.keys()), \
             'symbols.keys() must be equal to best_values.keys()'
 
-        # TODO: Check if M == N
+        if len(system) == len(symbols):  # Optimization
+            result = self._solve_square_system(system, symbols)
+            result = {name: value for name, value in result.items()}
+            return result
 
         lambdas_names = [compose_full_name('lambda', str(i))
                          for i in range(len(system))]
@@ -544,13 +539,10 @@ class EquationsSystem:
 
         canonical = self._system_to_canonical(system)
         loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
-        # equations = []
-        # for name, x in symbols.items():
-        #     equations.append(sympy.Eq(x - desired_values[name] + loss_part2.diff(x), 0))
+        if loss_part2 == 0:  # System is empty -> no lambdas
+            loss_part2 = sympy.Integer(0)  # To be possible to diff
         equations = [sympy.Eq(x - desired_values[name] + loss_part2.diff(x), 0)
                      for name, x in symbols.items()]
-
-        # TODO simplify ???
 
         equations.extend(system)
         lambdas_dict.update(symbols)
@@ -584,14 +576,17 @@ class EquationsSystem:
                 f'len(simplified_system) = {len(simplified_system)}'
             )
 
-        # Prepare
-        canonical_system = cls._system_to_canonical(simplified_system)
-        system_function = \
-            cls._system_to_function(canonical_system, used_symbols)
+        if simplified_system:
+            # Prepare
+            canonical_system = cls._system_to_canonical(simplified_system)
+            system_function = \
+                cls._system_to_function(canonical_system, used_symbols)
 
-        # Solve
-        init = np.random.random(len(used_symbols))  # TODO: use current values
-        solution = cls._solve_numeric(system_function, init)
+            # Solve
+            init = np.random.random(len(used_symbols))
+            solution = cls._solve_numeric(system_function, init)
+        else:
+            solution = []
 
         # Add values for symbols that were substituted
         solution_dict = dict(zip(used_symbols_names, solution))
@@ -613,7 +608,7 @@ class EquationsSystem:
         return fun
 
     @staticmethod
-    @contract(system='list[>0]')
+    @contract(system='list')
     def _system_to_canonical(system: list):
         return [eq.lhs - eq.rhs for eq in system]
 

@@ -263,7 +263,6 @@ class TestEquationsSystem:
         values['figure1'].update(result['figure1'])
         values['figure2'].update(result['figure2'])
 
-        # TODO: do next
         # Check restriction 3
         fixed_length_f2 = [
             sympy.Eq((f2_x2 - f2_x1) ** 2 + (f2_y2 - f2_y1) ** 2, 5 ** 2)
@@ -287,11 +286,6 @@ class TestEquationsSystem:
         values['figure2'].update(result['figure2'])
 
         # Check changing parameter
-
-        # rotate_30 = [
-        #     sympy.Eq((f2_y2 - f2_y1) / (f2_x2 - f2_x1), np.tan(np.pi / 6)),
-        # ]  # Undirected
-
         angle = np.pi / 6
         rotate_30 = [
             sympy.Eq((f2_y2 - f2_y1) / (f2_x2 - f2_x1), np.tan(angle)),
@@ -338,3 +332,31 @@ class TestEquationsSystem:
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure1'].update(result['figure1'])
         values['figure2'].update(result['figure2'])
+
+        # Check changing z
+        change_z = [
+            sympy.Eq(f3_z, 0)
+        ]
+        result = system.solve_new(change_z, values)
+        answer = {
+            'figure3': {
+                'z': 0.
+            }
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure3'].update(result['figure3'])
+
+        # Check moving z
+        move_z = {
+            'figure3': {
+                'z': 1.
+            }
+        }
+        result = system.solve_optimization_task(move_z, values)
+        answer = {
+            'figure3': {
+                'z': 1.
+            }
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure3'].update(result['figure3'])
