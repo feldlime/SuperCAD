@@ -1,19 +1,21 @@
-"""Module with main class of application (or window?) that manage
- system and picture.
- """
-
+"""Module with main class of application that manage system and picture."""
 from PyQt5 import QtWidgets
-import design
-from project import CADProject
+from PyQt5.QtCore import QTimer
+
+from glwidget import GLWidget
+from painter import Painter
+from design_setup import UiAddDesign
 
 
-class CADWindow(QtWidgets.QMainWindow, design.UiSuperCAD):
+class MainWindow(QtWidgets.QMainWindow, UiAddDesign):
     def __init__(self):
+        # noinspection PyArgumentList
         super().__init__()
-        self._project = CADProject()
+        self.setup_ui(self)  # design init
 
-    def save(self):
-        raise NotImplementedError
+        painter = Painter()
+        open_gl = GLWidget(painter, self)
 
-    def load(self):
-        raise NotImplementedError
+        timer = QTimer(self)
+        timer.timeout.connect(open_gl.animate)
+        timer.start(1)

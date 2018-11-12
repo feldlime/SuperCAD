@@ -8,7 +8,8 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Ui_SuperCAD(object):
+
+class Ui_SuperCAD:
     def setupUi(self, SuperCAD):
         SuperCAD.setObjectName("SuperCAD")
         SuperCAD.resize(1280, 650)

@@ -1,26 +1,33 @@
+"""Module of OpenGL widget"""
 from math import sqrt, pow
 
 from PyQt5 import QtWidgets, QtCore
-
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import QOpenGLWidget
 
 
 class GLWidget(QOpenGLWidget):
-    def __init__(self, helper, parent):
+    def __init__(self, painter, parent):
+        # noinspection PyArgumentList
         super(GLWidget, self).__init__(parent.work_plane)
 
         self.parent = parent
-        self.helper = helper
+        self.helper = painter
 
         self.elapsed = 0
         self.setAutoFillBackground(True)
         self.setMouseTracking(True)
 
-        # Располагаем виджет в области work_plane и присваеваем ему те же паркаметры как в design
-        self.setGeometry(QtCore.QRect(0, 0, parent.work_plane.width(), parent.work_plane.height()))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        # Располагаем виджет в области work_plane и присваеваем ему те же
+        # паркаметры как в design
+        self.setGeometry(QtCore.QRect(0,
+                                      0,
+                                      parent.work_plane.width(),
+                                      parent.work_plane.height())
+                         )
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                           QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
@@ -31,8 +38,6 @@ class GLWidget(QOpenGLWidget):
 
         self.setSizePolicy(sizePolicy)
 
-        # Для рисования линнии, что бы знать, когда рисование окончено, можно так же найти как отслеживать отпускание
-        # левой кнопки мыши, но я не нашел
         self.drag_to_print = False
         # Массив линий и точек
         self.segments_array = []
@@ -50,8 +55,15 @@ class GLWidget(QOpenGLWidget):
         painter = QPainter()
         painter.begin(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        self.helper.paint(painter, event, self.center_width, self.center_height, self.segments_array, self.points_array,
-                          self.segments_array_view, self.points_array_view, self.mouse_xy)
+        self.helper.paint(painter,
+                          event,
+                          self.center_width,
+                          self.center_height,
+                          self.segments_array,
+                          self.points_array,
+                          self.segments_array_view,
+                          self.points_array_view,
+                          self.mouse_xy)
         painter.end()
 
     # Отслеживание передвижения мыши
@@ -70,7 +82,8 @@ class GLWidget(QOpenGLWidget):
         # Дэтектим мышку рядом с точкой
         for point in self.points_array:
             point_pos = point.get_base_representation()
-            if abs(x - point_pos[0]) < near_size and abs(y - point_pos[1]) < near_size:
+            if abs(x - point_pos[0]) < near_size and \
+                    abs(y - point_pos[1]) < near_size:
                 self.points_array_view.append(point)
 
         # Детектим мышку рядом с сегментом
@@ -85,13 +98,17 @@ class GLWidget(QOpenGLWidget):
             # Проверяем, находиться ли мышка в квадрате сегмента
             if x <= xx[1] and x >= xx[0] and y <= yy[1] and y >= yy[0]:
                 # Длинное уравнение нахождения расстояния от точки до прямой
-                d = ((segment_pos[1] - segment_pos[3]) * x + (segment_pos[2] - segment_pos[0]) * y + (
-                        segment_pos[0] * segment_pos[3] - segment_pos[2] * segment_pos[1])) / sqrt(
-                    pow(segment_pos[2] - segment_pos[0], 2) + pow(segment_pos[3] - segment_pos[1], 2))
+                d = ((segment_pos[1] - segment_pos[3]) * x +
+                     (segment_pos[2] - segment_pos[0]) * y + (
+                        segment_pos[0] * segment_pos[3] -
+                        segment_pos[2] * segment_pos[1])) / sqrt(
+                    pow(segment_pos[2] - segment_pos[0], 2) +
+                    pow(segment_pos[3] - segment_pos[1], 2))
                 if abs(d) - near_size < 0:
                     self.segments_array_view.append(segment)
 
-        # Это для отслеживания передвижения мышки, когда рисуем линию и нажата левая
+        # Это для отслеживания передвижения мышки, когда рисуем линию и
+        # нажата левая
         if self.drag_to_print:
             self.helper.point_end = [x, y]
             s = Segment.from_points(self.helper.point_start[0],
