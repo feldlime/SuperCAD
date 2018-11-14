@@ -2,6 +2,7 @@
 
 from contracts import contract
 import pickle
+from collections import defaultdict
 
 from figures import Figure, Point, Segment
 from bindings import (
@@ -81,6 +82,21 @@ class CADProject:
     def _system(self):
         return self._state.system
 
+    @property
+    def figures(self):
+        """Dictionary of figures."""
+        return dict(self._figures)
+
+    @property
+    def bindings(self):
+        """List of bindings."""
+        return list(self._bindings)
+
+    @property
+    def restrictions(self):
+        """Dictionary of restrictions."""
+        return dict(self._restrictions)
+
     @contract(figure='$Point|$Segment', name='str|None')
     def add_figure(self, figure: Figure, name: str = None):
         """Add figure to system.
@@ -103,7 +119,7 @@ class CADProject:
         self._figures[name] = figure
         self._bindings = create_bindings(self._figures)  # Slow but easy
 
-        self._system.add_symbols(name, figure.base_parameters)
+        self._system.add_figure_symbols(name, figure.base_parameters)
 
         self._commit()
 
@@ -151,9 +167,26 @@ class CADProject:
             or isinstance(binding, SegmentCenterBinding)
             or isinstance(binding, PointBinding)
         ):
-            raise IncorrectParamType
+            raise IncorrectParamType(f"Incorrect type {type(binding)}")
 
-        # TODO: Make all
+        obj_name = binding.get_object_names()[0]
+        if obj_name not in self._figures:
+            raise RuntimeError(
+                'Binding references to figure that does not exist.')
+
+        if isinstance(binding, PointBinding):
+            optimizing_values = {obj_name: {'x': cursor_x, 'y': cursor_y}}
+        elif isinstance(binding, SegmentStartBinding):
+            optimizing_values = {obj_name: {'x1': cursor_x, 'y1': cursor_y}}
+        elif isinstance(binding, SegmentEndBinding):
+            optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
+        else:
+            raise NotImplementedError
+
+        current_values = self._get_values()
+        new_values = self._system.solve_optimization_task(
+            optimizing_values, current_values)
+        self._set_values(new_values)
 
         self._commit()
 
@@ -183,12 +216,15 @@ class CADProject:
         for restriction_name in restrictions_to_remove:
             self._restrictions.pop(restriction_name)
 
-        # TODO: Remove from system (and restrictions too)
+        # Remove from system
+        self._system.remove_figure_symbols(figure_name)
+        for restriction_name in restrictions_to_remove:
+            self._system.remove_restriction_equations(restriction_name)
 
         self._commit()
 
     @contract(figure_names='tuple(str) | tuple(str,str)', name='str|None')
-    def add_restriction(self, restriction: Restriction, figure_names: tuple,
+    def add_restriction(self, restriction: Restriction, figures_names: tuple,
                         name: str = None):
         """Add restriction to system.
 
@@ -197,7 +233,7 @@ class CADProject:
         restriction: Restriction instance
             Restriction to add. Must be object of correct class with correct
             parameters.
-        figure_names: tuple
+        figures_names: tuple
             Names of figures to apply restriction. If figure is only one,
             must be a tuple of one element.
         name: str or None, optional, default None
@@ -217,21 +253,30 @@ class CADProject:
             raise IncorrectName(f'Name {name} is already exists.')
 
         # Check figures names
-        for figure_name in figure_names:
+        for figure_name in figures_names:
             if figure_name not in self._figures:
                 raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         # Check figures types
         types = restriction.object_types
-        if len(figure_names) != len(types):
+        if len(figures_names) != len(types):
             raise IncorrectParamValue(f'Must be {len(types)} figures.')
-        for figure_name, type_ in zip(figure_names, types):
+        for figure_name, type_ in zip(figures_names, types):
             if not isinstance(self._figures[figure_name], type_):
                 raise IncorrectParamValue(
                     f'Given figures must have types {types}')
 
-        # TODO: Add to system
-        # TODO: Solve
+        # Add
+        self._restrictions[name] = restriction
+
+        # Add to system
+        figures_symbols = [self._system.get_symbols(figure_name)
+                           for figure_name in figures_names]
+        equations = restriction.get_equations(*figures_symbols)
+        self._system.add_restriction_equations(name, equations)
+
+        # Solve
+        # TODO
 
         self._commit()
 
@@ -250,41 +295,9 @@ class CADProject:
 
         self._restrictions.pop(restriction_name)
 
-        # TODO: Remove from system
+        self._system.remove_restriction_equations(restriction_name)
 
         self._commit()
-
-    @contract(returns='dict')
-    def get_figures(self) -> dict:
-        """Get dictionary of figures.
-
-        Returns
-        -------
-        figures: dict
-            Keys are figures names, values are Figure instances.
-        """
-        return dict(self._figures)
-
-    @contract(returns='list')
-    def get_bindings(self) -> list:
-        """Get list of bindings.
-
-        Returns
-        -------
-        bindings: list
-        """
-        return list(self._bindings)
-
-    @contract(returns='dict')
-    def get_restrictions(self) -> dict:
-        """Get dictionary of restrictions.
-
-        Returns
-        -------
-        restrictions: dict
-            Keys are restrictions names, values are Restriction instances.
-        """
-        return dict(self._restrictions)
 
     def undo(self):
         """Cancel action"""
@@ -373,6 +386,40 @@ class CADProject:
             return name in self._restrictions.keys()
         else:
             raise ValueError(f'Incorrect type_ {type_}')
+
+    def _get_values(self) -> dict[str: dict[str: float]]:
+        """
+
+        Returns
+        -------
+        current_values: dict(str -> dict(str -> float))
+            figure_name -> (variable_name -> value)
+        """
+        values = dict()
+        for name, figure in self._figures.items():
+            repr_ = figure.get_base_representation()
+            if isinstance(figure, Point):
+                values[name] = dict(zip(['x', 'y'], repr_))
+            elif isinstance(figure, Segment):
+                values[name] = dict(zip(['x1', 'y1', 'x2', 'y2'], repr_))
+            else:
+                raise TypeError(f'Unexpected figure type {type(figure}}')
+        return values
+
+    def _set_values(self, values: dict[str: dict[str: float]]):
+        """
+        Parameters
+        -------
+        values: dict(str -> dict(str -> float))
+            figure_name -> (variable_name -> value)
+        """
+
+        for figure_name, figure_values in values.items():
+            if figure_name not in self._figures:
+                raise ValueError(
+                    f'Figure with name {figure_name} does not exist.')
+
+            self._figures[figure_name].set_params(**figure_values)
 
     def _commit(self):
         """Save current state to history."""
