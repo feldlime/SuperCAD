@@ -1,8 +1,8 @@
 """Module with functions for design"""
-import design_setup
+# from design_setup import UiAddDesign
 
 
-class Functionality(design_setup.UiAddDesign):
+class Functionality():
     def __init__(self, window):
         super().setupUi(window)
 

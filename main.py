@@ -2,7 +2,7 @@
 
 
 import sys
-from window import CADWindow
+from window import MainWindow
 from PyQt5 import QtWidgets
 
 
