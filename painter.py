@@ -20,14 +20,6 @@ class Painter(object):
         painter.drawText(QPointF(mouse_xy[0] + 15, mouse_xy[1] + 10),
                          str(mouse_xy[0]) + 'x' + str(mouse_xy[1] * (-1)))
 
-        # TODO: Для полчучения привязок
-        # project.get_bindings -> bindings.get_best_bindings
-        # TODO: Для подсветки анализируем класс привязки и вызываем
-        # bindings.object.bind
-        # TODO: Для получения фигуры
-        # bindinsg.object.get_object_names -> список имен объектов
-        # project.get_figure(object_name) -> object_figure
-
 
         # Рисуем все линии
         for line in segments_array:

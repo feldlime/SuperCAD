@@ -13,7 +13,7 @@ class GLWidget(QOpenGLWidget):
         super(GLWidget, self).__init__(parent.work_plane)
 
         self.parent = parent
-        self.helper = painter
+        self.painter = painter
 
         self.elapsed = 0
         self.setAutoFillBackground(True)
@@ -26,17 +26,17 @@ class GLWidget(QOpenGLWidget):
                                       parent.work_plane.width(),
                                       parent.work_plane.height())
                          )
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                           QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                            QtWidgets.QSizePolicy.Preferred)
+        size_policy.setHorizontalStretch(0)
+        size_policy.setVerticalStretch(0)
+        size_policy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
 
         # Вычисляем центр поля
         self.center_height = parent.work_plane.height() // 2
         self.center_width = parent.work_plane.width() // 2
 
-        self.setSizePolicy(sizePolicy)
+        self.setSizePolicy(size_policy)
 
         self.drag_to_print = False
         # Массив линий и точек
@@ -55,19 +55,27 @@ class GLWidget(QOpenGLWidget):
         painter = QPainter()
         painter.begin(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        self.helper.paint(painter,
-                          event,
-                          self.center_width,
-                          self.center_height,
-                          self.segments_array,
-                          self.points_array,
-                          self.segments_array_view,
-                          self.points_array_view,
-                          self.mouse_xy)
+        self.painter.paint(painter,
+                           event,
+                           self.center_width,
+                           self.center_height,
+                           self.segments_array,
+                           self.points_array,
+                           self.segments_array_view,
+                           self.points_array_view,
+                           self.mouse_xy)
         painter.end()
 
     # Отслеживание передвижения мыши
     def mouseMoveEvent(self, event):
+        # TODO: Для полчучения привязок
+        # project.get_bindings -> bindings.get_best_bindings
+        # TODO: Для подсветки анализируем класс привязки и вызываем
+        # bindings.object.bind
+        # TODO: Для получения фигуры
+        # bindinsg.object.get_object_names -> список имен объектов
+        # project.get_figure(object_name) -> object_figure
+
         # На каком расстоянии от мышки, объект будет выделяться
         near_size = 8
 
@@ -100,8 +108,8 @@ class GLWidget(QOpenGLWidget):
                 # Длинное уравнение нахождения расстояния от точки до прямой
                 d = ((segment_pos[1] - segment_pos[3]) * x +
                      (segment_pos[2] - segment_pos[0]) * y + (
-                        segment_pos[0] * segment_pos[3] -
-                        segment_pos[2] * segment_pos[1])) / sqrt(
+                             segment_pos[0] * segment_pos[3] -
+                             segment_pos[2] * segment_pos[1])) / sqrt(
                     pow(segment_pos[2] - segment_pos[0], 2) +
                     pow(segment_pos[3] - segment_pos[1], 2))
                 if abs(d) - near_size < 0:
@@ -110,11 +118,11 @@ class GLWidget(QOpenGLWidget):
         # Это для отслеживания передвижения мышки, когда рисуем линию и
         # нажата левая
         if self.drag_to_print:
-            self.helper.point_end = [x, y]
-            s = Segment.from_points(self.helper.point_start[0],
-                                    self.helper.point_start[1],
-                                    self.helper.point_end[0],
-                                    self.helper.point_end[1])
+            self.painter.point_end = [x, y]
+            s = Segment.from_points(self.painter.point_start[0],
+                                    self.painter.point_start[1],
+                                    self.painter.point_end[0],
+                                    self.painter.point_end[1])
             self.segments_array[-1] = s
             self.segments_array_view.append(s)
 
@@ -126,14 +134,14 @@ class GLWidget(QOpenGLWidget):
                 x = event.x()
                 y = event.y()
                 self.drag_to_print = True
-                self.helper.point_start = [x - self.center_width,
-                                           y - self.center_height]
-                self.helper.point_end = [x - self.center_width + 1,
-                                         y - self.center_height + 1]
-                s = Segment.from_points(self.helper.point_start[0],
-                                        self.helper.point_start[1],
-                                        self.helper.point_end[0],
-                                        self.helper.point_end[1])
+                self.painter.point_start = [x - self.center_width,
+                                            y - self.center_height]
+                self.painter.point_end = [x - self.center_width + 1,
+                                          y - self.center_height + 1]
+                s = Segment.from_points(self.painter.point_start[0],
+                                        self.painter.point_start[1],
+                                        self.painter.point_end[0],
+                                        self.painter.point_end[1])
                 self.segments_array.append(s)
 
             # Рисование точек
