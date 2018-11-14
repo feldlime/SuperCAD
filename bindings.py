@@ -297,7 +297,7 @@ def choose_best_bindings(bindings: list, x, y) -> list:
 
 
 @contract(figures='dict[N]', circle_bindings_radius='number,>0',
-          segment_bindings_radius='number,>0', returns='list[>=N]')
+          segment_bindings_margin='number,>0', returns='list[>=N]')
 def create_bindings(figures: dict, circle_bindings_radius=8,
                     segment_bindings_margin=2) -> list:
     """Create all bindings for all figures.
