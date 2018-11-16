@@ -1,4 +1,5 @@
 from contracts import contract
+import math
 
 BIG_DISTANCE = 10000
 
@@ -81,9 +82,20 @@ class Coordinates:
             return self._coordinates()
 
 
-def magnitude(x1, y1, x2, y2):
+def segment_length(x1, y1, x2, y2):
     magnitude_sqr = (x2 - x1) ** 2 + (y2 - y1) ** 2
     return magnitude_sqr ** 0.5
+
+
+def segment_angle(x1, y1, x2, y2):
+    dx, dy = x2 - x1, y2 - y1
+    if dx == 0:
+        angle = math.pi / 2 if dy > 0 else -math.pi / 2
+    elif dx > 0:
+        angle = math.atan(dy / dx)
+    else:
+        angle = math.atan(dy / dx) + math.pi
+    return angle
 
 
 class EmptyStackError(Exception):

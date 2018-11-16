@@ -61,7 +61,11 @@ class TestProject():
         # project.change_figure(segment2_name, 'angle', np.pi/2)
 
         # Check
-        figur
+        correct_figures = {
+            point1_name: {
+                'x': 1
+            }
+        }
         # Try move
         # project.move_figure()
 

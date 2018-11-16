@@ -449,7 +449,8 @@ class CADProject:
                 raise ValueError(
                     f'Figure with name {figure_name} does not exist.')
 
-            self._figures[figure_name].set_params(**figure_values)
+            for param_name, value in figure_values.items():
+                self._figures[figure_name].set_param(param_name, value)
 
     def _commit(self):
         """Save current state to history."""

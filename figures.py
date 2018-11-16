@@ -8,7 +8,9 @@ from utils import (
     IncorrectParamValue,
     validate_num,
     validate_positive_num,
-    validate_coordinates
+    validate_coordinates,
+    segment_length,
+    segment_angle
 )
 
 
@@ -81,31 +83,11 @@ class Figure:
 
     def get_params(self):
         """Return parameters of figure."""
-        return NotImplemented
+        raise NotImplementedError
 
-    def set_params(self, base_x=None, base_y=None, angle=None, **kwargs):
-        """Set parameters of figure."""
-        if base_x is not None:
-            validate_num(base_x, 'base_x')
-        else:
-            base_x = self._base[0]
-
-        if base_y is not None:
-            validate_num(base_y, 'base_y')
-        else:
-            base_y = self._base[1]
-
-        if angle is not None:
-            validate_num(angle, 'angle')
-        else:
-            angle = self._angle
-
-        if kwargs:
-            raise IncorrectParamError(f'Unexpected parameters: '
-                                      f'{list(kwargs.keys())}')
-
-        self._base = (float(base_x), float(base_y))
-        self._angle = float(angle)
+    def set_param(self, param_name, value, **kwargs):
+        """Set parameter of figure."""
+        raise NotImplementedError
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         raise NotImplementedError
@@ -177,24 +159,21 @@ class Point(Figure):
         return {'x': self._base[0],
                 'y': self._base[1]}
 
-    def set_params(self, x=None, y=None, **kwargs):
-        """Set parameters of figure."""
-
-        if x is not None:
-            validate_num(x, 'x')
-        else:
-            x = self._base[0]
-
-        if y is not None:
-            validate_num(y, 'y')
-        else:
-            y = self._base[1]
-
+    def set_param(self, param_name, value, **kwargs):
+        """Set parameter of figure."""
         if kwargs:
             raise IncorrectParamError(f'Unexpected parameters: '
                                       f'{list(kwargs.keys())}')
 
-        self._base = (float(x), float(y))
+        if param_name == 'x':
+            validate_num(value, 'x')
+            self._base = (float(value), self._base[1])
+        elif param_name == 'y':
+            validate_num(value, 'y')
+            self._base = (self._base[0], float(value))
+        else:
+            raise IncorrectParamValue(
+                f'Incorrect name of parameter: {param_name}.')
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         x, y = symbols
@@ -253,17 +232,8 @@ class Segment(Figure):
         validate_num(x2, 'x2')
         validate_num(y2, 'y2')
 
-        dx, dy = x2 - x1, y2 - y1
-        length = np.sqrt(dx ** 2 + dy ** 2)
-
-        validate_positive_num(length, 'length')
-
-        if dx == 0:
-            angle = np.pi / 2 if dy > 0 else -np.pi / 2
-        elif dx > 0:
-            angle = np.arctan(dy / dx)
-        else:
-            angle = np.arctan(dy / dx) + np.pi
+        length = segment_length(x1, y1, x2, y2)
+        angle = segment_angle(x1, y1, x2, y2)
 
         return cls(start=(x1, y1), angle=angle, length=length)
 
@@ -296,57 +266,37 @@ class Segment(Figure):
             'angle': self._angle
         }
 
-    def set_params(self, x1=None, y1=None, length=None, angle=None,
-                   x2=None,  y2=None, **kwargs):
-        """Set parameters of figure.
+    def set_param(self, param_name, value, **kwargs):
+        """Set parameter of figure.
         Maximum 4 parameters can be set.
         """
-
-        dof = 4
-
-        if x1 is not None:
-            validate_num(x1, 'x1')
-            dof -= 1
-        else:
-            x1 = self._base[0]
-
-        if y1 is not None:
-            validate_num(y1, 'y1')
-            dof -= 1
-        else:
-            y1 = self._base[1]
-
-        if length is not None:
-            validate_positive_num(length, 'length')
-            dof -= 1
-        else:
-            length = self._length
-
-        if angle is not None:
-            validate_num(angle, 'angle')
-            dof -= 1
-        else:
-            angle = self._angle
-
-        if x2 is not None:
-            validate_num(x2, 'x2')
-            dof -= 1
-        else:
-            x2 = self._base[0]
-
-        if y1 is not None:
-            if not dof:
-                raise IncorrectParamError('Too many ')
-            validate_num(y1, 'y1')
-            dof -= 1
-        else:
-            y1 = self._base[1]
 
         if kwargs:
             raise IncorrectParamError(f'Unexpected parameters: '
                                       f'{list(kwargs.keys())}')
 
-        self._base = (float(x), float(y))
+        validate_num(value, param_name)
+
+        if param_name == 'x1':
+            self._base = (float(value), self._base[1])
+        elif param_name == 'y1':
+            self._base = (self._base[0], float(value))
+        elif param_name == 'length':
+            self._length = float(value)
+        elif param_name == 'angle':
+            self._angle = float(value)
+        elif param_name in ('x2', 'y2'):
+            base_repr = list(self.get_base_representation())
+            if param_name == 'x2':
+                base_repr[2] = value
+            else:
+                base_repr[3] = value  # y2
+            length = segment_length(*base_repr)
+            angle = segment_angle(*base_repr)
+            self._length, self._angle = length, angle
+        else:
+            raise IncorrectParamValue(
+                f'Incorrect name of parameter: {param_name}.')
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         x1, y1, x2, y2 = symbols

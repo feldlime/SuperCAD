@@ -4,15 +4,15 @@ from utils import *
 
 
 def test_magnitude():
-    res = magnitude(1, 1, 4, 5)
+    res = segment_length(1, 1, 4, 5)
     answer = 5
     assert isclose(res, answer)
 
-    res = magnitude(1, 1, 4, -3)
+    res = segment_length(1, 1, 4, -3)
     answer = 5
     assert isclose(res, answer)
 
-    res = magnitude(1, 1, 1, 1)
+    res = segment_length(1, 1, 1, 1)
     answer = 0
     assert isclose(res, answer)
 

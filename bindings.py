@@ -3,7 +3,7 @@
 from utils import (
     validate_positive_num,
     Coordinates,
-    magnitude,
+    segment_length,
     ReferencedToObjects,
     BIG_DISTANCE,
 )
@@ -127,7 +127,7 @@ class CircleBinding(CentralBinding):
             Distance between cursor and point of binding.
         """
         base_x, base_y = self._coordinates.get()
-        distance = magnitude(x, y, base_x, base_y)
+        distance = segment_length(x, y, base_x, base_y)
         if distance > self._radius:
             return None
         else:
@@ -181,7 +181,7 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
             return None
 
         base_x, base_y = coo
-        distance = magnitude(x, y, base_x, base_y)
+        distance = segment_length(x, y, base_x, base_y)
         if distance > self._radius:
             return None
         else:
