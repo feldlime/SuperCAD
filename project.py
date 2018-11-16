@@ -3,11 +3,10 @@
 from contracts import contract
 import pickle
 from typing import Dict
+from copy import deepcopy
 
 from figures import Figure, Point, Segment
 from bindings import (
-    Binding,
-    CentralBinding,
     SegmentStartBinding,
     SegmentEndBinding,
     SegmentCenterBinding,
@@ -17,7 +16,6 @@ from bindings import (
 from restrictions import Restriction
 from solve import EquationsSystem, CannotSolveSystemError
 from utils import (
-    IncorrectParamError,
     IncorrectParamType,
     IncorrectParamValue,
     Stack,
@@ -217,13 +215,8 @@ class CADProject:
         except CannotSolveSystemError as e:
             raise e
 
-        try:
-            self._set_values(new_values)
-        except Exception as e:
-            self._rollback()
-            raise e
-        else:
-            self._commit()
+        # TODO: do commit / rollback from outside
+        self._set_values(new_values)
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
@@ -410,6 +403,14 @@ class CADProject:
         self._history.clear()
         self._cancelled.clear()
 
+    def commit(self):
+        """Commit changes."""
+        self._commit()
+
+    def rollback(self):
+        """Rollback changes."""
+        self._rollback()
+
     def _generate_name(self, obj) -> str:
         """Generate new names for figures and bindings"""
         type_str = str(type(obj))
@@ -483,7 +484,7 @@ class CADProject:
 
     def _commit(self):
         """Save current state to history."""
-        self._history.push(self._state)
+        self._history.push(deepcopy(self._state))
         self._cancelled.clear()
 
     def _rollback(self):
