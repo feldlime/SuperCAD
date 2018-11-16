@@ -243,17 +243,31 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
     def _get_min_distance(cls, x1, y1, x2, y2, x, y):
         """Calculate minimal distance from point to segment."""
 
-        # TODO
-        pass
+        nearest_x, nearest_y = cls._get_nearest_point(x1, y1, x2, y2, x, y)
+        _dx = nearest_x - x
+        _dy = nearest_y - y
+        square_dist = _dx ** 2 + _dy ** 2
+        return np.sqrt(square_dist)
 
     @classmethod
     def _get_nearest_point(cls, x1, y1, x2, y2, x, y):
         """Calculate point at the segment that are the nearest to the given
         point.
         """
+        dx = x2 - x1
+        dy = y2 - y1
+        dr2 = dx ** 2 + dy ** 2
 
-        # TODO
-        pass
+        lerp = ((x - x1) * dx + (y - y1) * dy) / dr2
+        if lerp < 0:
+            lerp = 0
+        elif lerp > 1:
+            lerp = 1
+
+        nearest_x = lerp * dx + x1
+        nearest_y = lerp * dy + y1
+
+        return nearest_x, nearest_y
 
 
 @contract(bindings='list', x='number', y='number', returns='list')

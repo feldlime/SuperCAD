@@ -2,6 +2,7 @@
 
 from contracts import contract
 import pickle
+from typing import Dict
 
 from figures import Figure, Point, Segment
 from bindings import (
@@ -14,7 +15,7 @@ from bindings import (
     create_bindings
 )
 from restrictions import Restriction
-from solve import EquationsSystem
+from solve import EquationsSystem, CannotSolveSystemError
 from utils import (
     IncorrectParamError,
     IncorrectParamType,
@@ -81,6 +82,21 @@ class CADProject:
     def _system(self):
         return self._state.system
 
+    @property
+    def figures(self):
+        """Dictionary of figures."""
+        return dict(self._figures)
+
+    @property
+    def bindings(self):
+        """List of bindings."""
+        return list(self._bindings)
+
+    @property
+    def restrictions(self):
+        """Dictionary of restrictions."""
+        return dict(self._restrictions)
+
     @contract(figure='$Point|$Segment', name='str|None')
     def add_figure(self, figure: Figure, name: str = None):
         """Add figure to system.
@@ -91,6 +107,11 @@ class CADProject:
             Figure to add. Must be already created with correct parameters.
         name: str or None, optional, default None
             Name of figure. If None or empty, will be generated automatically.
+
+        Returns
+        -------
+        name: str
+            Name that was given to figure.
         """
         if name is not None:
             if not self._is_valid_user_name(figure, name):
@@ -107,15 +128,17 @@ class CADProject:
 
         self._commit()
 
+        return name
+
     @contract(figure_name='str', parameter='str', value='number')
-    def change_figure(self, figure_name: str, parameter: str, value: float):
+    def change_figure(self, figure_name: str, param: str, value: float):
         """Change one parameter of one figure.
 
         Parameters
         ----------
         figure_name: str
             Name of figure to change.
-        parameter: str
+        param: str
             Name of parameter to change.
         value: int or float
             New value for parameter.
@@ -125,11 +148,20 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         figure = self._figures[figure_name]
-        if parameter not in figure.all_parameters:
+        if param not in figure.all_parameters:
             raise IncorrectParamValue(
                 f'Parameter must be one of {figure.all_parameters}')
 
-        # TODO: Change (use system, of course)
+        figure_symbols = self._system.get_symbols(figure_name)
+        equations = figure.get_setter_equations(figure_symbols, param, value)
+
+        current_values = self._get_values()
+        try:
+            new_values = self._system.solve_new(equations, current_values)
+        except CannotSolveSystemError as e:
+            raise e
+
+        self._set_values(new_values)
 
         self._commit()
 
@@ -151,9 +183,32 @@ class CADProject:
             or isinstance(binding, SegmentCenterBinding)
             or isinstance(binding, PointBinding)
         ):
-            raise IncorrectParamType
+            raise IncorrectParamType(f"Incorrect type {type(binding)}")
 
-        # TODO: Make all
+        obj_name = binding.get_object_names()[0]
+        if obj_name not in self._figures:
+            raise RuntimeError(
+                'Binding references to figure that does not exist.')
+
+        if isinstance(binding, PointBinding):
+            optimizing_values = {obj_name: {'x': cursor_x, 'y': cursor_y}}
+        elif isinstance(binding, SegmentStartBinding):
+            optimizing_values = {obj_name: {'x1': cursor_x, 'y1': cursor_y}}
+        elif isinstance(binding, SegmentEndBinding):
+            optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
+        else:
+            raise NotImplementedError
+
+        current_values = self._get_values()
+        try:
+            new_values = self._system.solve_optimization_task(
+                optimizing_values,
+                current_values
+            )
+        except CannotSolveSystemError as e:
+            raise e
+
+        self._set_values(new_values)
 
         self._commit()
 
@@ -190,7 +245,7 @@ class CADProject:
 
         self._commit()
 
-    @contract(figure_names='tuple(str) | tuple(str,str)', name='str|None')
+    @contract(figures_names='tuple(str) | tuple(str,str)', name='str|None')
     def add_restriction(self, restriction: Restriction, figures_names: tuple,
                         name: str = None):
         """Add restriction to system.
@@ -233,17 +288,25 @@ class CADProject:
                 raise IncorrectParamValue(
                     f'Given figures must have types {types}')
 
-        # Add
-        self._restrictions[name] = restriction
-
         # Add to system
         figures_symbols = [self._system.get_symbols(figure_name)
                            for figure_name in figures_names]
         equations = restriction.get_equations(*figures_symbols)
         self._system.add_restriction_equations(name, equations)
 
-        # Solve
-        # TODO
+        # Try solve
+        try:
+            new_values = self._system.solve()
+        except CannotSolveSystemError as e:
+            # Remove from system
+            self._system.remove_restriction_equations(name)
+            raise e
+
+        # Add
+        self._restrictions[name] = restriction
+
+        # Update values
+        self._set_values(new_values)
 
         self._commit()
 
@@ -265,57 +328,6 @@ class CADProject:
         self._system.remove_restriction_equations(restriction_name)
 
         self._commit()
-
-    @contract(returns='dict')
-    def get_figures(self) -> dict:
-        """Get dictionary of figures.
-
-        Returns
-        -------
-        figures: dict
-            Keys are figures names, values are Figure instances.
-        """
-        return dict(self._figures)
-
-    @contract(name='str')
-    def get_figure(self, name: str) -> Figure:
-        """Get figure by its name.
-
-        Parameters
-        ----------
-        name: str
-            Name of figure to return.
-
-        Returns
-        -------
-        figure: Figure
-            Figure instance.
-        """
-        if name not in self._figures:
-            raise IncorrectParamValue(f'Invalid figure_name {name}')
-
-        return self._figures[name]
-
-    @contract(returns='list')
-    def get_bindings(self) -> list:
-        """Get list of bindings.
-
-        Returns
-        -------
-        bindings: list
-        """
-        return list(self._bindings)
-
-    @contract(returns='dict')
-    def get_restrictions(self) -> dict:
-        """Get dictionary of restrictions.
-
-        Returns
-        -------
-        restrictions: dict
-            Keys are restrictions names, values are Restriction instances.
-        """
-        return dict(self._restrictions)
 
     def undo(self):
         """Cancel action"""
@@ -404,6 +416,40 @@ class CADProject:
             return name in self._restrictions.keys()
         else:
             raise ValueError(f'Incorrect type_ {type_}')
+
+    def _get_values(self) -> Dict[str, Dict[str, float]]:
+        """
+
+        Returns
+        -------
+        current_values: dict(str -> dict(str -> float))
+            figure_name -> (variable_name -> value)
+        """
+        values = dict()
+        for name, figure in self._figures.items():
+            repr_ = figure.get_base_representation()
+            if isinstance(figure, Point):
+                values[name] = dict(zip(['x', 'y'], repr_))
+            elif isinstance(figure, Segment):
+                values[name] = dict(zip(['x1', 'y1', 'x2', 'y2'], repr_))
+            else:
+                raise TypeError(f'Unexpected figure type {type(figure)}')
+        return values
+
+    def _set_values(self, values: Dict[str, Dict[str, float]]):
+        """
+        Parameters
+        -------
+        values: dict(str -> dict(str -> float))
+            figure_name -> (variable_name -> value)
+        """
+
+        for figure_name, figure_values in values.items():
+            if figure_name not in self._figures:
+                raise ValueError(
+                    f'Figure with name {figure_name} does not exist.')
+
+            self._figures[figure_name].set_params(**figure_values)
 
     def _commit(self):
         """Save current state to history."""
