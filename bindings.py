@@ -402,7 +402,9 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return None
 
             numerator = np.dot(dap, dp)
-            return (numerator / denominator) * db + b1
+            intersection_coo = (numerator / denominator) * db + b1
+            return tuple(intersection_coo)
+
         binding = SegmentsIntersectionBinding(segments_intersection_coo,
                                               circle_bindings_radius)
         binding.set_object_names([name1, name2])

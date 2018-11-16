@@ -215,7 +215,7 @@ class Segment(Figure):
         self._i_length = float(value)
 
     @classmethod
-    def from_points(cls, x1, y1, x2, y2):
+    def from_coordinates(cls, x1, y1, x2, y2):
         """Create segment from its end points.
 
         x1: int or float

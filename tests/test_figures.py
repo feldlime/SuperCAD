@@ -108,7 +108,7 @@ class TestSegment:
 
     def test_create_from_point(self):
         for coo in random.random((10, 4)) * 100 - 50:
-            s = Segment.from_points(*coo)
+            s = Segment.from_coordinates(*coo)
             assert all(isclose(coo, s.get_base_representation()))
 
     def test_incorrect_create_from_point(self):
@@ -116,7 +116,7 @@ class TestSegment:
             a = [1, 1, 1, 1]
             a[i] = '1'
             with pytest.raises(IncorrectParamError):
-                Segment.from_points(*a)
+                Segment.from_coordinates(*a)
 
     def test_move(self):
         for coo in random.random((10, 4)) * 100 - 50:

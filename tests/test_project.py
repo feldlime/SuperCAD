@@ -50,9 +50,9 @@ class TestProject():
         point1_name = project.add_figure(point1)
         point2 = Point((5, 6))
         point2_name = project.add_figure(point2)
-        segment1 = Segment((0, 0), 10, 0)
+        segment1 = Segment((0, 0), 0, 10)
         segment1_name = project.add_figure(segment1)
-        segment2 = Segment((0, 0), 5, 1.5)
+        segment2 = Segment((0, 0), 1.5, 5)
         segment2_name = project.add_figure(segment2)
 
         # Change parameter
