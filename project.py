@@ -2,6 +2,7 @@
 
 from contracts import contract
 import pickle
+from typing import Dict
 from collections import defaultdict
 
 from figures import Figure, Point, Segment
@@ -223,7 +224,7 @@ class CADProject:
 
         self._commit()
 
-    @contract(figure_names='tuple(str) | tuple(str,str)', name='str|None')
+    @contract(figures_names='tuple(str) | tuple(str,str)', name='str|None')
     def add_restriction(self, restriction: Restriction, figures_names: tuple,
                         name: str = None):
         """Add restriction to system.
@@ -387,7 +388,7 @@ class CADProject:
         else:
             raise ValueError(f'Incorrect type_ {type_}')
 
-    def _get_values(self) -> dict[str: dict[str: float]]:
+    def _get_values(self) -> Dict[str, Dict[str, float]]:
         """
 
         Returns
@@ -403,10 +404,10 @@ class CADProject:
             elif isinstance(figure, Segment):
                 values[name] = dict(zip(['x1', 'y1', 'x2', 'y2'], repr_))
             else:
-                raise TypeError(f'Unexpected figure type {type(figure}}')
+                raise TypeError(f'Unexpected figure type {type(figure)}')
         return values
 
-    def _set_values(self, values: dict[str: dict[str: float]]):
+    def _set_values(self, values: Dict[str, Dict[str, float]]):
         """
         Parameters
         -------

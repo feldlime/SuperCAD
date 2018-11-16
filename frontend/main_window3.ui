@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SuperCAD</class>
- <widget class="QMainWindow" name="SuperCAD">
+ <class>window</class>
+ <widget class="QMainWindow" name="window">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -382,7 +382,7 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="Point_widget" native="true">
+   <widget class="QWidget" name="point_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -467,7 +467,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="Line_widget" native="true">
+   <widget class="QWidget" name="line_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -585,7 +585,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Combine_points_widget" native="true">
+   <widget class="QWidget" name="combine_points_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -643,7 +643,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Point_on_middle_line_widget" native="true">
+   <widget class="QWidget" name="point_on_middle_line_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -701,7 +701,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Point_on_line_widget" native="true">
+   <widget class="QWidget" name="point_on_line_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -759,7 +759,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Parallelism_widget" native="true">
+   <widget class="QWidget" name="parallelism_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -835,7 +835,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Normal_widget" native="true">
+   <widget class="QWidget" name="normal_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -893,7 +893,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Horizontally_widget" native="true">
+   <widget class="QWidget" name="horizontally_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -935,7 +935,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_size_widget" native="true">
+   <widget class="QWidget" name="fix_size_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1000,7 +1000,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_point_widget" native="true">
+   <widget class="QWidget" name="fix_point_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1042,7 +1042,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_length_widget" native="true">
+   <widget class="QWidget" name="fix_length_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1084,7 +1084,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_angle_widget" native="true">
+   <widget class="QWidget" name="fix_angle_widget" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1146,18 +1146,18 @@
    <zorder>work_plane</zorder>
    <zorder>layoutWidget_2</zorder>
    <zorder>listView</zorder>
-   <zorder>Point_widget</zorder>
-   <zorder>Line_widget</zorder>
-   <zorder>Combine_points_widget</zorder>
-   <zorder>Point_on_middle_line_widget</zorder>
-   <zorder>Point_on_line_widget</zorder>
-   <zorder>Parallelism_widget</zorder>
-   <zorder>Normal_widget</zorder>
-   <zorder>Horizontally_widget</zorder>
-   <zorder>Fix_size_widget</zorder>
-   <zorder>Fix_point_widget</zorder>
-   <zorder>Fix_length_widget</zorder>
-   <zorder>Fix_angle_widget</zorder>
+   <zorder>point_widget</zorder>
+   <zorder>line_widget</zorder>
+   <zorder>combine_points_widget</zorder>
+   <zorder>point_on_middle_line_widget</zorder>
+   <zorder>point_on_line_widget</zorder>
+   <zorder>parallelism_widget</zorder>
+   <zorder>normal_widget</zorder>
+   <zorder>horizontally_widget</zorder>
+   <zorder>fix_size_widget</zorder>
+   <zorder>fix_point_widget</zorder>
+   <zorder>fix_length_widget</zorder>
+   <zorder>fix_angle_widget</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1173,27 +1173,27 @@
      <string>File</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionNew"/>
-    <addaction name="actionOpen"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSaveAs"/>
-    <addaction name="actionClose"/>
-    <addaction name="actionExit"/>
+    <addaction name="action_new"/>
+    <addaction name="action_open"/>
+    <addaction name="action_save"/>
+    <addaction name="action_save_as"/>
+    <addaction name="action_close"/>
+    <addaction name="action_exit"/>
    </widget>
-   <widget class="QMenu" name="menuMenu">
+   <widget class="QMenu" name="menu_menu">
     <property name="title">
      <string>Menu</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="actionShow_elements_table"/>
+    <addaction name="action_undo"/>
+    <addaction name="action_redo"/>
+    <addaction name="action_show_elements_table"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuMenu"/>
+   <addaction name="menu_menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionNew">
+  <action name="action_new">
    <property name="text">
     <string>New</string>
    </property>
@@ -1201,7 +1201,7 @@
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionOpen">
+  <action name="action_open">
    <property name="text">
     <string>Open</string>
    </property>
@@ -1209,7 +1209,7 @@
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionSave">
+  <action name="action_save">
    <property name="text">
     <string>Save</string>
    </property>
@@ -1217,7 +1217,7 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionSaveAs">
+  <action name="action_save_as">
    <property name="text">
     <string>Save As</string>
    </property>
@@ -1225,7 +1225,7 @@
     <string>Ctrl+Shift+S</string>
    </property>
   </action>
-  <action name="actionClose">
+  <action name="action_close">
    <property name="text">
     <string>Close</string>
    </property>
@@ -1233,7 +1233,7 @@
     <string>Ctrl+W</string>
    </property>
   </action>
-  <action name="actionUndo">
+  <action name="action_undo">
    <property name="text">
     <string>Undo</string>
    </property>
@@ -1241,7 +1241,7 @@
     <string>Ctrl+Z</string>
    </property>
   </action>
-  <action name="actionRedo">
+  <action name="action_redo">
    <property name="text">
     <string>Redo</string>
    </property>
@@ -1249,7 +1249,7 @@
     <string>Ctrl+Shift+Z</string>
    </property>
   </action>
-  <action name="actionShow_elements_table">
+  <action name="action_show_elements_table">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -1263,7 +1263,7 @@
     <string>Ctrl+T</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="action_exit">
    <property name="text">
     <string>Exit</string>
    </property>
@@ -1275,7 +1275,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>actionShow_elements_table</sender>
+   <sender>action_show_elements_table</sender>
    <signal>triggered(bool)</signal>
    <receiver>listView</receiver>
    <slot>hide()</slot>
@@ -1291,25 +1291,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>actionExit</sender>
-   <signal>changed()</signal>
-   <receiver>SuperCAD</receiver>
-   <slot>close()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>639</x>
-     <y>324</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>point</sender>
    <signal>clicked(bool)</signal>
-   <receiver>Point_widget</receiver>
+   <receiver>point_widget</receiver>
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1325,7 +1309,7 @@
   <connection>
    <sender>line</sender>
    <signal>clicked(bool)</signal>
-   <receiver>Line_widget</receiver>
+   <receiver>line_widget</receiver>
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">

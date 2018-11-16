@@ -1,48 +1,83 @@
 """Module with functions for design"""
 # from design_setup import UiAddDesign
+import design_setup
 
 
-class Functionality():
-    def __init__(self, window):
-        super().setupUi(window)
+class DesignFunctionality:
+    def __init__(self):
+        pass
 
-    def triggered_list_view(self, change):
-        if change:
+    def triggered_list_view(self, show):
+        if show:
             self.listView.show()
         else:
             self.listView.hide()
 
-    def triggered_widget(self, name, change):
-        dict_of = {'Point_widget': self.Point_widget,
+    def triggered_widget(self, name, show):
+        dict_of = {'Point_widget': self.point_widget,
                    'Line_widget':
-                       self.Line_widget,
+                       self.line_widget,
                    'Combine_points_widget':
-                       self.Combine_points_widget,
+                       self.combine_points_widget,
                    'Points_on_middle_line_widget':
-                       self.Point_on_middle_line_widget,
+                       self.point_on_middle_line_widget,
                    'Point_on_line_widget':
-                       self.Point_on_line_widget,
+                       self.point_on_line_widget,
                    'Parallelism_widget':
-                       self.Parallelism_widget,
+                       self.parallelism_widget,
                    'Normal_widget':
-                       self.Normal_widget,
+                       self.normal_widget,
                    'Horizontally_widget':
-                       self.Horizontally_widget,
+                       self.horizontally_widget,
                    'Fix_size_widget':
-                       self.Fix_size_widget,
+                       self.fix_size_widget,
                    'Fix_point_widget':
-                       self.Fix_point_widget,
+                       self.fix_point_widget,
                    'Fix_length_widget':
-                       self.Fix_length_widget,
+                       self.fix_length_widget,
                    'Fix_angle_widget':
-                       self.Fix_angle_widget
+                       self.fix_angle_widget
                    }
-        event = dict_of.get(name)
+        input_widget = dict_of.get(name)
         self.hide_all_footer_widgets()
-        if change:
-            event.show()
+        if show:
+            input_widget.show()
         else:
-            event.hide()
+            input_widget.hide()
+
+    def hide_all_footer_widgets(self):
+        self.line_widget.hide()
+        self.point_widget.hide()
+        self.combine_points_widget.hide()
+        self.point_on_middle_line_widget.hide()
+        self.point_on_line_widget.hide()
+        self.parallelism_widget.hide()
+        self.normal_widget.hide()
+        self.horizontally_widget.hide()
+        self.fix_size_widget.hide()
+        self.fix_point_widget.hide()
+        self.fix_length_widget.hide()
+        self.fix_angle_widget.hide()
+
+        self.point.setChecked(False)
+        self.line.setChecked(False)
+        self.combine_points.setChecked(False)
+        self.point_on_middle_line.setChecked(False)
+        self.point_on_line.setChecked(False)
+        self.parallelism.setChecked(False)
+        self.normal.setChecked(False)
+        self.horizontally.setChecked(False)
+        self.fix_size.setChecked(False)
+        self.fix_point.setChecked(False)
+        self.fix_length.setChecked(False)
+        self.fix_angle.setChecked(False)
+
+    def save(self):
+        raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
+
 
     # def triggered_point_widget(self, change):
     #     self.hide_all_footer_widgets()
@@ -153,35 +188,3 @@ class Functionality():
     #         self.statusbar.showMessage('')
     #         self.Fix_angle_widget.hide()
 
-    def hide_all_footer_widgets(self):
-        self.Line_widget.hide()
-        self.Point_widget.hide()
-        self.Combine_points_widget.hide()
-        self.Point_on_middle_line_widget.hide()
-        self.Point_on_line_widget.hide()
-        self.Parallelism_widget.hide()
-        self.Normal_widget.hide()
-        self.Horizontally_widget.hide()
-        self.Fix_size_widget.hide()
-        self.Fix_point_widget.hide()
-        self.Fix_length_widget.hide()
-        self.Fix_angle_widget.hide()
-
-        self.point.setChecked(False)
-        self.line.setChecked(False)
-        self.combine_points.setChecked(False)
-        self.point_on_middle_line.setChecked(False)
-        self.point_on_line.setChecked(False)
-        self.parallelism.setChecked(False)
-        self.normal.setChecked(False)
-        self.horizontally.setChecked(False)
-        self.fix_size.setChecked(False)
-        self.fix_point.setChecked(False)
-        self.fix_length.setChecked(False)
-        self.fix_angle.setChecked(False)
-
-    def save(self):
-        raise NotImplementedError
-
-    def load(self):
-        raise NotImplementedError
