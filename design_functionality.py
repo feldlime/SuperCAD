@@ -1,11 +1,9 @@
 """Module with functions for design"""
-# from design_setup import UiAddDesign
-import design_setup
 
 
 class DesignFunctionality:
-    def __init__(self):
-        pass
+    def __init__(self, window):
+        self._window = window
 
     def triggered_list_view(self, show):
         if show:

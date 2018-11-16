@@ -5,12 +5,10 @@ from PyQt5.QtCore import QTimer
 from glwidget import GLWidget
 from design_functionality import DesignFunctionality
 from project import CADProject
-from design_setup import UiAddDesign
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
-from design import Ui_SuperCAD
-
+from design import Ui_window
 
 
 class MainWindow(QMainWindow):
@@ -25,31 +23,39 @@ class MainWindow(QMainWindow):
         timer.start(1)
 
 
-class WindowContent(QOpenGLWidget, Ui_SuperCAD):
+class WindowContent(QOpenGLWidget, Ui_window):
     def __init__(self, window: QMainWindow):
         super().__init__()
+
+        self._window = window
         self._project = CADProject()
-
-        self.setupUi(window)
-
         self._glwindow = GLWidget(window)
         self._interface = DesignFunctionality(window)
 
-        # Массив линий и точек
-        self._window.segments_array = []
-        self._window.points_array = []
+        # # Массив линий и точек
+        # self._window.segments_array = []
+        # self._window.points_array = []
+        #
+        # # Массивы выделенных линий и точек
+        # self._window.segments_array_view = []
+        # self._window.points_array_view = []
+        #
+        # self._window.mouse_xy = [0, 0]
+        #
+        # # If now drawing smt, has coordinats of pooints
+        # self._window.now_drawing = []
 
-        # Массивы выделенных линий и точек
-        self._window.segments_array_view = []
-        self._window.points_array_view = []
+        self._buttons_to_widgets_dict = dict()
+        for name in dir(self):
+            if name.startswith('button_'):
+                widget_name = 'widget' + name[6:]
+                if widget_name in dir(self):
+                    self._buttons_to_widgets_dict[name] = widget_name
 
-        self._window.mouse_xy = [0, 0]
+        self._setup_ui()
+        self._setup_handlers()
 
-        # If now drawing smt, has coordinats of pooints
-        self._window.now_drawing = []
 
-        self.listView.hide()
-        self.hide_all_footer_widgets()
         self.actionShow_elements_table.triggered['bool'].connect(
             self.triggered_list_view)
         self.point.clicked['bool'].connect(
@@ -80,6 +86,11 @@ class WindowContent(QOpenGLWidget, Ui_SuperCAD):
         self._design.setup_ui(window=self)  # design init
 
         self.painter = QPainter()
+
+    def _setup_ui(self):
+        self.setupUi(self._window)
+        self.listView.hide()
+        self.hide_all_footer_widgets()
 
     def animate(self):
         self.update()
