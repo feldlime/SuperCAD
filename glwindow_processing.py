@@ -9,39 +9,13 @@ from figures import Point, Segment
 
 
 class GLWindowProcessor:
-    def __init__(self, window: QMainWindow):
+    def __init__(self, plane):
         # noinspection PyArgumentList
 
-        self._window = window
+        self._plane = plane
+        self._painter = QPainter()
 
-    def setup_window_properties(self):
-
-        self._window.setAutoFillBackground(True)
-        self._window.setMouseTracking(True)
-
-        # Располагаем виджет в области work_plane и присваеваем ему те же
-        # паркаметры как в design
-        self._window.setGeometry(QtCore.QRect(0,
-                                              0,
-                                              self._window.work_plane.width(),
-                                              self._window.work_plane.height())
-                                 )
-        size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                            QtWidgets.QSizePolicy.Preferred)
-        size_policy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(self._window.sizePolicy().hasHeightForWidth())
-        self._window.setSizePolicy(size_policy)
-
-        # Вычисляем центр поля
-        self._window.center_height = self._window.work_plane.height() // 2
-        self._window.center_width = self._window.work_plane.width() // 2
-
-
-
-
-
-    # def paintEvent(self, event):
+        # def paintEvent(self, event):
     #     painter = QPainter()
     #     painter.begin(self)
     #     painter.setRenderHint(QPainter.Antialiasing)

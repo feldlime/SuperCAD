@@ -320,7 +320,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QListView" name="widget_list_objects">
+   <widget class="QListView" name="widget_elements_table">
     <property name="enabled">
      <bool>true</bool>
     </property>
@@ -976,7 +976,7 @@
    <zorder>footer_widget</zorder>
    <zorder>work_plane</zorder>
    <zorder>layoutWidget_2</zorder>
-   <zorder>widget_list_objects</zorder>
+   <zorder>widget_elements_table</zorder>
    <zorder>widget_add_point</zorder>
    <zorder>widget_add_segment</zorder>
    <zorder>widget_restr_points_joint</zorder>
@@ -1106,7 +1106,7 @@
   <connection>
    <sender>action_show_elements_table</sender>
    <signal>triggered(bool)</signal>
-   <receiver>widget_list_objects</receiver>
+   <receiver>widget_elements_table</receiver>
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">

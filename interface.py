@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QMainWindow
 
 
 class InterfaceProcessor:
-    def __init__(self, window: QMainWindow):
-        # self._window = window
+    def __init__(self):
         pass
 
     @staticmethod
@@ -54,11 +53,7 @@ class InterfaceProcessor:
         button.setChecked(check)
 
 
-    def save(self):
-        raise NotImplementedError
 
-    def load(self):
-        raise NotImplementedError
 
 
     # def triggered_point_widget(self, change):

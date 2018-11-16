@@ -2,14 +2,23 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer
 
-from glwindow import GLWindowProcessor
+from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
-from project import CADProject
+from project import CADProject, ActionImpossible
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import Qt
+from PyQt5 import QtCore
 from design import Ui_window
 
+
+class Sts:
+    NOTHING = 0
+    DRAWING_POINT = 1
+    DRAWING_SEGMENT = 2
+    MOVING_FIGURE = 3
+
+class FS(Sts):  # Figure statuses
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -29,21 +38,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._window = window
         self._project = CADProject()
-        self._glwindow_proc = GLWindowProcessor(window)
-        self._interface_proc = InterfaceProcessor(window)
+        self._glwindow_proc = GLWindowProcessor(window.work_plane)
+        self._interface_proc = InterfaceProcessor()
 
-        # # Массив линий и точек
-        # self._window.segments_array = []
-        # self._window.points_array = []
-        #
-        # # Массивы выделенных линий и точек
-        # self._window.segments_array_view = []
-        # self._window.points_array_view = []
-        #
-        # self._window.mouse_xy = [0, 0]
-        #
-        # # If now drawing smt, has coordinats of pooints
-        # self._window.now_drawing = []
+        self._status = Sts.NOTHING
+
+        self._last_clicked_point = (0, 0)  # x, y
+
+        self._highlighted_figures_names = []
 
         self._buttons_to_widgets_dict = dict()
         for name in dir(self):
@@ -55,16 +57,42 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._setup_ui()
         self._setup_handlers()
 
-        self._design.setup_ui(window=self)  # design init
-
-        self.painter = QPainter()
-
     def _setup_ui(self):
         self.setupUi(self._window)
+
+        self.center = (
+                self._window.work_plane.height() // 2,
+                self._window.work_plane.height() // 2
+        )
+
         self.widget_list_objects.hide()
         self.hide_all_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
             self._interface_proc._trigger_)
+
+        # TODO: Remove unnecessary (duplicate design.py)
+        self._window.setAutoFillBackground(True)
+        self._window.setMouseTracking(True)
+
+            # Располагаем виджет в области work_plane и присваеваем ему те же
+            # паркаметры как в design
+        self._window.setGeometry(QtCore.QRect(
+            0,
+            0,
+            self._window.work_plane.width(),
+            self._window.work_plane.height())
+        )
+
+        size_policy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred,
+            QtWidgets.QSizePolicy.Preferred
+        )
+        size_policy.setHorizontalStretch(0)
+        size_policy.setVerticalStretch(0)
+        size_policy.setHeightForWidth(
+                self._window.sizePolicy().hasHeightForWidth()
+        )
+        self._window.setSizePolicy(size_policy)
 
     def _setup_handlers(self):
         for button_name, widget_name in self._buttons_to_widgets_dict.items():
@@ -79,6 +107,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
     @property
     def _left_buttons(self):
         return list(self._buttons_to_widgets_dict.keys())
+
+    def mouse_xy(self, event):
+        return event.x() - self.center[0], event.y() - self.center[1]
 
     def _trigger_widget(self, widget, show: bool = False):
         self._hide_footer_widgets()
@@ -165,3 +196,26 @@ class WindowContent(QOpenGLWidget, Ui_window):
     #             self.segments_array.append(s)
     #             self.now_drawing = []
 
+    def _save(self):
+        # TODO: window for saving, event -> get filename
+        filename = ''
+        self._project.save(filename)
+
+    def _load(self):
+        # TODO: window for loading, event -> get filename
+        filename = ''
+        self._project.load(filename)
+
+    def _undo(self):
+        try:
+            self._project.undo()
+        except ActionImpossible:
+            # TODO: Status bar / inactive
+            pass
+
+    def _redo(self):
+        try:
+            self._project.redo()
+        except ActionImpossible:
+            # TODO: Status bar / inactive
+            pass
