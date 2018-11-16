@@ -1,74 +1,58 @@
 """Module with functions for design"""
+from PyQt5.QtWidgets import QWidget, QPushButton, QAction
+from PyQt5.QtWidgets import QMainWindow
 
 
-class DesignFunctionality:
-    def __init__(self, window):
-        self._window = window
+class InterfaceProcessor:
+    def __init__(self, window: QMainWindow):
+        # self._window = window
+        pass
 
-    def triggered_list_view(self, show):
+    @staticmethod
+    def trigger_action(action: QAction, show: bool = False):
+        """ Show or hide widget.
+
+        Parameters
+        ----------
+        action: QAction
+            Widget to show or hide.
+        show: bool, default False
+            If True, show widget, if False, hide.
+        """
         if show:
-            self.listView.show()
+            action.show()
         else:
-            self.listView.hide()
+            action.hide()
 
-    def triggered_widget(self, name, show):
-        dict_of = {'Point_widget': self.point_widget,
-                   'Line_widget':
-                       self.line_widget,
-                   'Combine_points_widget':
-                       self.combine_points_widget,
-                   'Points_on_middle_line_widget':
-                       self.point_on_middle_line_widget,
-                   'Point_on_line_widget':
-                       self.point_on_line_widget,
-                   'Parallelism_widget':
-                       self.parallelism_widget,
-                   'Normal_widget':
-                       self.normal_widget,
-                   'Horizontally_widget':
-                       self.horizontally_widget,
-                   'Fix_size_widget':
-                       self.fix_size_widget,
-                   'Fix_point_widget':
-                       self.fix_point_widget,
-                   'Fix_length_widget':
-                       self.fix_length_widget,
-                   'Fix_angle_widget':
-                       self.fix_angle_widget
-                   }
-        input_widget = dict_of.get(name)
-        self.hide_all_footer_widgets()
+    @staticmethod
+    def trigger_widget(widget: QWidget, show: bool = False):
+        """ Show or hide widget.
+
+        Parameters
+        ----------
+        widget: QWidget
+            Widget to show or hide.
+        show: bool, default False
+            If True, show widget, if False, hide.
+        """
         if show:
-            input_widget.show()
+            widget.show()
         else:
-            input_widget.hide()
+            widget.hide()
 
-    def hide_all_footer_widgets(self):
-        self.line_widget.hide()
-        self.point_widget.hide()
-        self.combine_points_widget.hide()
-        self.point_on_middle_line_widget.hide()
-        self.point_on_line_widget.hide()
-        self.parallelism_widget.hide()
-        self.normal_widget.hide()
-        self.horizontally_widget.hide()
-        self.fix_size_widget.hide()
-        self.fix_point_widget.hide()
-        self.fix_length_widget.hide()
-        self.fix_angle_widget.hide()
+    @staticmethod
+    def trigger_button(button: QPushButton, check: bool = False):
+        """ Show or hide widget.
 
-        self.point.setChecked(False)
-        self.line.setChecked(False)
-        self.combine_points.setChecked(False)
-        self.point_on_middle_line.setChecked(False)
-        self.point_on_line.setChecked(False)
-        self.parallelism.setChecked(False)
-        self.normal.setChecked(False)
-        self.horizontally.setChecked(False)
-        self.fix_size.setChecked(False)
-        self.fix_point.setChecked(False)
-        self.fix_length.setChecked(False)
-        self.fix_angle.setChecked(False)
+        Parameters
+        ----------
+        button: QPushButton
+            Button to check or uncheck.
+        check: bool, default False
+            If True, check button, if False, uncheck.
+        """
+        button.setChecked(check)
+
 
     def save(self):
         raise NotImplementedError

@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QMainWindow
 from figures import Point, Segment
 
 
-class GLWidget:
+class GLWindowProcessor:
     def __init__(self, window: QMainWindow):
         # noinspection PyArgumentList
 

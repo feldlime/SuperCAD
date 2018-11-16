@@ -2,8 +2,8 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QTimer
 
-from glwidget import GLWidget
-from design_functionality import DesignFunctionality
+from glwindow import GLWindowProcessor
+from interface import InterfaceProcessor
 from project import CADProject
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow
 from PyQt5.QtGui import QPainter
@@ -29,8 +29,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._window = window
         self._project = CADProject()
-        self._glwindow = GLWidget(window)
-        self._interface = DesignFunctionality(window)
+        self._glwindow_proc = GLWindowProcessor(window)
+        self._interface_proc = InterfaceProcessor(window)
 
         # # Массив линий и точек
         # self._window.segments_array = []
@@ -55,42 +55,43 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._setup_ui()
         self._setup_handlers()
 
-
-        self.actionShow_elements_table.triggered['bool'].connect(
-            self.triggered_list_view)
-        self.point.clicked['bool'].connect(
-            self.triggered_widget("Point_widget"))
-        self.line.clicked['bool'].connect(
-            self.triggered_widget("Line_widget"))
-        self.combine_points.clicked['bool'].connect(
-            self.triggered_widget("Combine_points_widget"))
-        self.point_on_middle_line.clicked['bool'].connect(
-            self.triggered_widget("Point_on_middle_line_widget"))
-        self.point_on_line.clicked['bool'].connect(
-            self.triggered_widget("Point_on_line_widget"))
-        self.parallelism.clicked['bool'].connect(
-            self.triggered_widget("Parallelism_widget"))
-        self.normal.clicked['bool'].connect(
-            self.triggered_widget("Normal_widget"))
-        self.horizontally.clicked['bool'].connect(
-            self.triggered_widget("Horizontally_widget"))
-        self.fix_size.clicked['bool'].connect(
-            self.triggered_widget("Fix_size_widget"))
-        self.fix_point.clicked['bool'].connect(
-            self.triggered_widget("Fix_point_widget"))
-        self.fix_length.clicked['bool'].connect(
-            self.triggered_widget("Fix_length_widget"))
-        self.fix_angle.clicked['bool'].connect(
-            self.triggered_widget("Fix_angle_widget"))
-
         self._design.setup_ui(window=self)  # design init
 
         self.painter = QPainter()
 
     def _setup_ui(self):
         self.setupUi(self._window)
-        self.listView.hide()
+        self.widget_list_objects.hide()
         self.hide_all_footer_widgets()
+        self.action_show_elements_table.triggered['bool'].connect(
+            self._interface_proc._trigger_)
+
+    def _setup_handlers(self):
+        for button_name, widget_name in self._buttons_to_widgets_dict.items():
+            button = getattr(self, button_name)
+            widget = getattr(self, widget_name)
+            button.clicked['bool'].connect(self._trigger_widget(widget))
+
+    @property
+    def _footer_widgets(self):
+        return list(self._buttons_to_widgets_dict.values())
+
+    @property
+    def _left_buttons(self):
+        return list(self._buttons_to_widgets_dict.keys())
+
+    def _trigger_widget(self, widget, show: bool = False):
+        self._hide_footer_widgets()
+        self._uncheck_left_buttons()
+        self._interface_proc.trigger_widget(widget, show)
+
+    def _hide_footer_widgets(self):
+        for widget in self._footer_widgets:
+            self._interface_proc.trigger_widget(widget, False)
+
+    def _uncheck_left_buttons(self):
+        for button in self._left_buttons:
+            self._interface_proc.trigger_button(button, False)
 
     def animate(self):
         self.update()
