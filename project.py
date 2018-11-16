@@ -107,6 +107,11 @@ class CADProject:
             Figure to add. Must be already created with correct parameters.
         name: str or None, optional, default None
             Name of figure. If None or empty, will be generated automatically.
+
+        Returns
+        -------
+        name: str
+            Name that was given to figure.
         """
         if name is not None:
             if not self._is_valid_user_name(figure, name):
@@ -122,6 +127,8 @@ class CADProject:
         self._system.add_figure_symbols(name, figure.base_parameters)
 
         self._commit()
+
+        return name
 
     @contract(figure_name='str', parameter='str', value='number')
     def change_figure(self, figure_name: str, param: str, value: float):

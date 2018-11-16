@@ -104,8 +104,8 @@ class Figure:
             raise IncorrectParamError(f'Unexpected parameters: '
                                       f'{list(kwargs.keys())}')
 
-        self._base = (base_x, base_y)
-        self._angle = angle
+        self._base = (float(base_x), float(base_y))
+        self._angle = float(angle)
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         raise NotImplementedError
@@ -167,40 +167,34 @@ class Point(Figure):
         return cls(coordinates=(x, y))
 
     def get_params(self):
+        """Return all parameters.
+
+        Returns
+        -------
+        params: dict(str -> float)
+            Keys are ['x', 'y'].
+        """
         return {'x': self._base[0],
                 'y': self._base[1]}
 
     def set_params(self, x=None, y=None, **kwargs):
         """Set parameters of figure."""
 
-        # TODO: Remove base_x and base_y
-        if base_x is not None:
-            if x is not None:
-                raise IncorrectParamError('You cannot set base_x and x'
-                                          'simultaneously')
-            validate_num(base_x, 'base_x')
-        elif x is not None:
+        if x is not None:
             validate_num(x, 'x')
-            base_x = x
         else:
-            base_x = self._base[0]
+            x = self._base[0]
 
-        if base_y is not None:
-            if y is not None:
-                raise IncorrectParamError('You cannot set base_y and y'
-                                          'simultaneously')
-            validate_num(base_y, 'base_y')
-        elif y is not None:
+        if y is not None:
             validate_num(y, 'y')
-            base_y = y
         else:
-            base_y = self._base[1]
+            y = self._base[1]
 
         if kwargs:
             raise IncorrectParamError(f'Unexpected parameters: '
                                       f'{list(kwargs.keys())}')
 
-        self._base = (base_x, base_y)
+        self._base = (float(x), float(y))
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         x, y = symbols
@@ -286,41 +280,73 @@ class Segment(Figure):
         return x1, y1, x2, y2
 
     def get_params(self):
-        pass
+        """Return all parameters.
 
-    def set_params(self, angle=None, length=None,
-                   x1=None, x2=None, y1=None, y2=None, **kwargs):
-        """Set parameters of figure."""
-        # TODO
+       Returns
+       -------
+       params: dict(str -> float)
+           Keys are ['x1', 'y1', 'x2', 'y2', 'length', 'angle'].
+       """
+        return {
+            'x1': self._base[0],
+            'y1': self._base[1],
+            'x2': self._base[0] + self._length * np.cos(self._angle),
+            'y2': self._base[1] + self._length * np.sin(self._angle),
+            'length': self._length,
+            'angle': self._angle
+        }
+
+    def set_params(self, x1=None, y1=None, length=None, angle=None,
+                   x2=None,  y2=None, **kwargs):
+        """Set parameters of figure.
+        Maximum 4 parameters can be set.
         """
-        if base_x is not None:
-            if x is not None:
-                raise IncorrectParamError('You cannot set base_x and x'
-                                          'simultaneously')
-            validate_num(base_x, 'base_x')
-        elif x is not None:
-            validate_num(x, 'x')
-            base_x = x
-        else:
-            base_x = self._base[0]
 
-        if base_y is not None:
-            if y is not None:
-                raise IncorrectParamError('You cannot set base_y and y'
-                                          'simultaneously')
-            validate_num(base_y, 'base_y')
-        elif y is not None:
-            validate_num(y, 'y')
-            base_y = y
+        dof = 4
+
+        if x1 is not None:
+            validate_num(x1, 'x1')
+            dof -= 1
         else:
-            base_y = self._base[1]
+            x1 = self._base[0]
+
+        if y1 is not None:
+            validate_num(y1, 'y1')
+            dof -= 1
+        else:
+            y1 = self._base[1]
+
+        if length is not None:
+            validate_positive_num(length, 'length')
+            dof -= 1
+        else:
+            length = self._length
+
+        if angle is not None:
+            validate_num(angle, 'angle')
+            dof -= 1
+        else:
+            angle = self._angle
+
+        if x2 is not None:
+            validate_num(x2, 'x2')
+            dof -= 1
+        else:
+            x2 = self._base[0]
+
+        if y1 is not None:
+            if not dof:
+                raise IncorrectParamError('Too many ')
+            validate_num(y1, 'y1')
+            dof -= 1
+        else:
+            y1 = self._base[1]
 
         if kwargs:
             raise IncorrectParamError(f'Unexpected parameters: '
                                       f'{list(kwargs.keys())}')
 
-        self._base = (base_x, base_y)
-        """
+        self._base = (float(x), float(y))
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         x1, y1, x2, y2 = symbols
