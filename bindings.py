@@ -339,7 +339,7 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
             def point_coo():
                 return figure.get_base_representation()
             binding = PointBinding(point_coo, circle_bindings_radius)
-            binding.set_object_names(name)
+            binding.set_object_names([name])
             bindings.append(binding)
 
         elif isinstance(figure, Segment):
@@ -348,7 +348,7 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return x1, y1
             binding = SegmentStartBinding(segment_start_coo,
                                           circle_bindings_radius)
-            binding.set_object_names(name)
+            binding.set_object_names([name])
             bindings.append(binding)
 
             def segment_end_coo():
@@ -356,7 +356,7 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return x2, y1
             binding = SegmentEndBinding(segment_end_coo,
                                         circle_bindings_radius)
-            binding.set_object_names(name)
+            binding.set_object_names([name])
             bindings.append(binding)
 
             def segment_center_coo():
@@ -364,13 +364,13 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
                 return (x1 + x2) / 2, (y1 + y2) / 2
             binding = SegmentCenterBinding(segment_center_coo,
                                            circle_bindings_radius)
-            binding.set_object_names(name)
+            binding.set_object_names([name])
             bindings.append(binding)
 
             # Segment full
             binding = FullSegmentBinding(segment_start_coo, segment_end_coo,
                                          segment_bindings_margin)
-            binding.set_object_names(name)
+            binding.set_object_names([name])
             bindings.append(binding)
 
             # For intersection bindings
