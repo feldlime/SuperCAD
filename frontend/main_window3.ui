@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SuperCAD</class>
- <widget class="QMainWindow" name="SuperCAD">
+ <class>window</class>
+ <widget class="QMainWindow" name="window">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -62,11 +62,11 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>44</width>
+      <width>45</width>
       <height>471</height>
      </rect>
     </property>
-    <layout class="QVBoxLayout" name="Instruments" stretch="0,0,0,0,0,0,0,0,0,0,0,0">
+    <layout class="QVBoxLayout" name="Instruments" stretch="0,0,0,0,0,0,0,0,0,0">
      <property name="spacing">
       <number>0</number>
      </property>
@@ -80,7 +80,7 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QPushButton" name="point">
+      <widget class="QPushButton" name="button_add_point">
        <property name="enabled">
         <bool>true</bool>
        </property>
@@ -109,7 +109,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="line">
+      <widget class="QPushButton" name="button_add_segment">
        <property name="text">
         <string/>
        </property>
@@ -132,7 +132,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="combine_points">
+      <widget class="QPushButton" name="button_restr_points_joint">
        <property name="text">
         <string/>
        </property>
@@ -155,30 +155,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="point_on_middle_line">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>resources/point_on_middle_line.svg</normaloff>resources/point_on_middle_line.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>30</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       <property name="autoRepeat">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="point_on_line">
+      <widget class="QPushButton" name="button_restr_point_on_segment">
        <property name="text">
         <string/>
        </property>
@@ -201,7 +178,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="parallelism">
+      <widget class="QPushButton" name="button_restr_segments_parallel">
        <property name="text">
         <string/>
        </property>
@@ -224,7 +201,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="normal">
+      <widget class="QPushButton" name="button_restr_segments_normal">
        <property name="text">
         <string/>
        </property>
@@ -247,7 +224,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="horizontally">
+      <widget class="QPushButton" name="button_restr_segment_horizontal">
        <property name="text">
         <string/>
        </property>
@@ -270,30 +247,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="fix_size">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>resources/fix_size.svg</normaloff>resources/fix_size.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>30</width>
-         <height>30</height>
-        </size>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-       <property name="autoRepeat">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="fix_point">
+      <widget class="QPushButton" name="button_restr_point_fixed">
        <property name="text">
         <string/>
        </property>
@@ -316,7 +270,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="fix_length">
+      <widget class="QPushButton" name="button_restr_segment_length_fixed">
        <property name="text">
         <string/>
        </property>
@@ -339,7 +293,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="fix_angle">
+      <widget class="QPushButton" name="button_restr_segment_angle_fixed">
        <property name="focusPolicy">
         <enum>Qt::StrongFocus</enum>
        </property>
@@ -382,7 +336,7 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="Point_widget" native="true">
+   <widget class="QWidget" name="widget_add_point" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -467,7 +421,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="Line_widget" native="true">
+   <widget class="QWidget" name="widget_add_segment" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -585,7 +539,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Combine_points_widget" native="true">
+   <widget class="QWidget" name="widget_restr_points_joint" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -643,65 +597,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Point_on_middle_line_widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>580</y>
-      <width>241</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>true</bool>
-    </property>
-    <widget class="QPushButton" name="point_on_middle_line_submit">
-     <property name="geometry">
-      <rect>
-       <x>170</x>
-       <y>0</y>
-       <width>61</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Submit</string>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="point_on_middle_line_point">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>92</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Point</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="point_on_middle_line_line">
-     <property name="geometry">
-      <rect>
-       <x>90</x>
-       <y>0</y>
-       <width>92</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Line</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="Point_on_line_widget" native="true">
+   <widget class="QWidget" name="widget_restr_point_on_segment" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -759,7 +655,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Parallelism_widget" native="true">
+   <widget class="QWidget" name="widget_restr_segments_parallel" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -835,7 +731,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Normal_widget" native="true">
+   <widget class="QWidget" name="widget_restr_segments_normal" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -893,7 +789,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Horizontally_widget" native="true">
+   <widget class="QWidget" name="widget_restr_segment_horizontal" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -935,72 +831,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_size_widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>580</y>
-      <width>281</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>true</bool>
-    </property>
-    <widget class="QLabel" name="label_37">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>-10</y>
-       <width>51</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>length:</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="fix_size_submit">
-     <property name="geometry">
-      <rect>
-       <x>210</x>
-       <y>0</y>
-       <width>61</width>
-       <height>25</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Submit</string>
-     </property>
-    </widget>
-    <widget class="QDoubleSpinBox" name="fix_size_length">
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>0</y>
-       <width>69</width>
-       <height>26</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QCheckBox" name="fix_size_line">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>0</y>
-       <width>51</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Line</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="Fix_point_widget" native="true">
+   <widget class="QWidget" name="widget_restr_point_fixed" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1042,7 +873,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_length_widget" native="true">
+   <widget class="QWidget" name="widget_restr_segment_length_fixed" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1084,7 +915,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="Fix_angle_widget" native="true">
+   <widget class="QWidget" name="widget_restr_segment_angle_fixed" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -1146,18 +977,16 @@
    <zorder>work_plane</zorder>
    <zorder>layoutWidget_2</zorder>
    <zorder>listView</zorder>
-   <zorder>Point_widget</zorder>
-   <zorder>Line_widget</zorder>
-   <zorder>Combine_points_widget</zorder>
-   <zorder>Point_on_middle_line_widget</zorder>
-   <zorder>Point_on_line_widget</zorder>
-   <zorder>Parallelism_widget</zorder>
-   <zorder>Normal_widget</zorder>
-   <zorder>Horizontally_widget</zorder>
-   <zorder>Fix_size_widget</zorder>
-   <zorder>Fix_point_widget</zorder>
-   <zorder>Fix_length_widget</zorder>
-   <zorder>Fix_angle_widget</zorder>
+   <zorder>widget_add_point</zorder>
+   <zorder>widget_add_segment</zorder>
+   <zorder>widget_restr_points_joint</zorder>
+   <zorder>widget_restr_point_on_segment</zorder>
+   <zorder>widget_restr_segments_parallel</zorder>
+   <zorder>widget_restr_segments_normal</zorder>
+   <zorder>widget_restr_segment_horizontal</zorder>
+   <zorder>widget_restr_point_fixed</zorder>
+   <zorder>widget_restr_segment_length_fixed</zorder>
+   <zorder>widget_restr_segment_angle_fixed</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1165,7 +994,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1173,27 +1002,27 @@
      <string>File</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionNew"/>
-    <addaction name="actionOpen"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSaveAs"/>
-    <addaction name="actionClose"/>
-    <addaction name="actionExit"/>
+    <addaction name="action_new"/>
+    <addaction name="action_open"/>
+    <addaction name="action_save"/>
+    <addaction name="action_save_as"/>
+    <addaction name="action_close"/>
+    <addaction name="action_exit"/>
    </widget>
-   <widget class="QMenu" name="menuMenu">
+   <widget class="QMenu" name="menu_menu">
     <property name="title">
      <string>Menu</string>
     </property>
     <addaction name="separator"/>
-    <addaction name="actionUndo"/>
-    <addaction name="actionRedo"/>
-    <addaction name="actionShow_elements_table"/>
+    <addaction name="action_undo"/>
+    <addaction name="action_redo"/>
+    <addaction name="action_show_elements_table"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuMenu"/>
+   <addaction name="menu_menu"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionNew">
+  <action name="action_new">
    <property name="text">
     <string>New</string>
    </property>
@@ -1201,7 +1030,7 @@
     <string>Ctrl+N</string>
    </property>
   </action>
-  <action name="actionOpen">
+  <action name="action_open">
    <property name="text">
     <string>Open</string>
    </property>
@@ -1209,7 +1038,7 @@
     <string>Ctrl+O</string>
    </property>
   </action>
-  <action name="actionSave">
+  <action name="action_save">
    <property name="text">
     <string>Save</string>
    </property>
@@ -1217,7 +1046,7 @@
     <string>Ctrl+S</string>
    </property>
   </action>
-  <action name="actionSaveAs">
+  <action name="action_save_as">
    <property name="text">
     <string>Save As</string>
    </property>
@@ -1225,7 +1054,7 @@
     <string>Ctrl+Shift+S</string>
    </property>
   </action>
-  <action name="actionClose">
+  <action name="action_close">
    <property name="text">
     <string>Close</string>
    </property>
@@ -1233,7 +1062,7 @@
     <string>Ctrl+W</string>
    </property>
   </action>
-  <action name="actionUndo">
+  <action name="action_undo">
    <property name="text">
     <string>Undo</string>
    </property>
@@ -1241,7 +1070,7 @@
     <string>Ctrl+Z</string>
    </property>
   </action>
-  <action name="actionRedo">
+  <action name="action_redo">
    <property name="text">
     <string>Redo</string>
    </property>
@@ -1249,7 +1078,7 @@
     <string>Ctrl+Shift+Z</string>
    </property>
   </action>
-  <action name="actionShow_elements_table">
+  <action name="action_show_elements_table">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -1263,7 +1092,7 @@
     <string>Ctrl+T</string>
    </property>
   </action>
-  <action name="actionExit">
+  <action name="action_exit">
    <property name="text">
     <string>Exit</string>
    </property>
@@ -1275,7 +1104,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>actionShow_elements_table</sender>
+   <sender>action_show_elements_table</sender>
    <signal>triggered(bool)</signal>
    <receiver>listView</receiver>
    <slot>hide()</slot>
@@ -1307,9 +1136,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>point</sender>
+   <sender>button_add_point</sender>
    <signal>clicked(bool)</signal>
-   <receiver>Point_widget</receiver>
+   <receiver>widget_add_point</receiver>
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -1323,9 +1152,9 @@
    </hints>
   </connection>
   <connection>
-   <sender>line</sender>
+   <sender>button_add_segment</sender>
    <signal>clicked(bool)</signal>
-   <receiver>Line_widget</receiver>
+   <receiver>widget_add_segment</receiver>
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
