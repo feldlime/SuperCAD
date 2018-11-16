@@ -62,6 +62,8 @@ class CADProject:
         self._history = ChangesStack()  # All changes (for undo)
         self._cancelled = ChangesStack()  # Cancelled changes (for redo)
 
+        self._commit()
+
     @property
     def _figures(self):
         return self._state.figures
@@ -121,12 +123,15 @@ class CADProject:
         if self._is_name_exists('figure', name):
             raise IncorrectName(f'Name {name} is already exists.')
 
-        self._figures[name] = figure
-        self._bindings = create_bindings(self._figures)  # Slow but easy
-
-        self._system.add_figure_symbols(name, figure.base_parameters)
-
-        self._commit()
+        try:
+            self._figures[name] = figure
+            self._bindings = create_bindings(self._figures)  # Slow but easy
+            self._system.add_figure_symbols(name, figure.base_parameters)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
         return name
 
@@ -161,9 +166,13 @@ class CADProject:
         except CannotSolveSystemError as e:
             raise e
 
-        self._set_values(new_values)
-
-        self._commit()
+        try:
+            self._set_values(new_values)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     @contract(cursor_x='number', cursor_y='number')
     def move_figure(self, binding: PointBinding,
@@ -208,9 +217,13 @@ class CADProject:
         except CannotSolveSystemError as e:
             raise e
 
-        self._set_values(new_values)
-
-        self._commit()
+        try:
+            self._set_values(new_values)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
@@ -224,26 +237,30 @@ class CADProject:
         if figure_name not in self._figures:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
-        # Remove figure
-        self._figures.pop(figure_name)
+        try:
+            # Remove figure
+            self._figures.pop(figure_name)
 
-        # Remove bindings
-        self._bindings = create_bindings(self._figures)  # Slow but easy
+            # Remove bindings
+            self._bindings = create_bindings(self._figures)  # Slow but easy
 
-        # Remove restrictions
-        restrictions_to_remove = []
-        for name, restriction in self._restrictions.items():
-            if figure_name in restriction.get_objects_name():
-                restrictions_to_remove.append(name)
-        for restriction_name in restrictions_to_remove:
-            self._restrictions.pop(restriction_name)
+            # Remove restrictions
+            restrictions_to_remove = []
+            for name, restriction in self._restrictions.items():
+                if figure_name in restriction.get_objects_name():
+                    restrictions_to_remove.append(name)
+            for restriction_name in restrictions_to_remove:
+                self._restrictions.pop(restriction_name)
 
-        # Remove from system
-        self._system.remove_figure_symbols(figure_name)
-        for restriction_name in restrictions_to_remove:
-            self._system.remove_restriction_equations(restriction_name)
-
-        self._commit()
+            # Remove from system
+            self._system.remove_figure_symbols(figure_name)
+            for restriction_name in restrictions_to_remove:
+                self._system.remove_restriction_equations(restriction_name)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     @contract(figures_names='tuple(str) | tuple(str,str)', name='str|None')
     def add_restriction(self, restriction: Restriction, figures_names: tuple,
@@ -292,23 +309,29 @@ class CADProject:
         figures_symbols = [self._system.get_symbols(figure_name)
                            for figure_name in figures_names]
         equations = restriction.get_equations(*figures_symbols)
-        self._system.add_restriction_equations(name, equations)
 
-        # Try solve
         try:
-            new_values = self._system.solve()
-        except CannotSolveSystemError as e:
-            # Remove from system
-            self._system.remove_restriction_equations(name)
+            self._system.add_restriction_equations(name, equations)
+
+            # Try solve
+            try:
+                new_values = self._system.solve()
+            except CannotSolveSystemError as e:
+                # Remove from system
+                self._system.remove_restriction_equations(name)
+                raise e
+
+            # Add
+            self._restrictions[name] = restriction
+
+            # Update values
+            self._set_values(new_values)
+
+        except Exception as e:
+            self._rollback()
             raise e
-
-        # Add
-        self._restrictions[name] = restriction
-
-        # Update values
-        self._set_values(new_values)
-
-        self._commit()
+        else:
+            self._commit()
 
     @contract(restriction_name='str')
     def remove_restriction(self, restriction_name: str):
@@ -323,25 +346,31 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid restriction_name'
                                       f' {restriction_name}')
 
-        self._restrictions.pop(restriction_name)
+        try:
+            self._restrictions.pop(restriction_name)
+            self._system.remove_restriction_equations(restriction_name)
 
-        self._system.remove_restriction_equations(restriction_name)
-
-        self._commit()
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     def undo(self):
-        """Cancel action"""
-        try:
-            last_state = self._history.pop()
-            self._cancelled.push(last_state)
-        except EmptyStackError:
+        """Cancel action."""
+        if len(self._history) > 1:
+            self._history.pop()  # Current state (equal to self._state)
+            self._cancelled.push(self._state)
+            self._state = self._history.get_head()
+        else:
             raise ActionImpossible
 
     def redo(self):
-        """Revert action"""
+        """Revert action."""
         try:
             last_cancelled_state = self._cancelled.pop()
             self._history.push(last_cancelled_state)
+            self._state = last_cancelled_state
         except EmptyStackError:
             raise ActionImpossible
 
@@ -456,3 +485,8 @@ class CADProject:
         """Save current state to history."""
         self._history.push(self._state)
         self._cancelled.clear()
+
+    def _rollback(self):
+        """Load last state from history."""
+        self._state = self._history.get_head()
+        self._cancelled.clear()  # ???

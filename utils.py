@@ -110,9 +110,15 @@ class Stack:
         self._arr.append(elem)
 
     def pop(self):
-        try:
+        if self._arr:
             return self._arr.pop()
-        except IndexError:
+        else:
+            raise EmptyStackError
+
+    def get_head(self):
+        if self._arr:
+            return self._arr[-1]
+        else:
             raise EmptyStackError
 
     def clear(self):
