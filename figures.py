@@ -1,9 +1,11 @@
 """Module with classes of geometry figures."""
 
 import numpy as np
+import sympy
 
 from utils import (
     IncorrectParamError,
+    IncorrectParamValue,
     validate_num,
     validate_positive_num,
     validate_coordinates
@@ -105,6 +107,9 @@ class Figure:
         self._base = (base_x, base_y)
         self._angle = angle
 
+    def get_setter_equations(self, symbols: list, param: str, value: float):
+        raise NotImplementedError
+
     @staticmethod
     def _simplify_angle(angle):
         return angle % (2 * np.pi)
@@ -196,6 +201,15 @@ class Point(Figure):
                                       f'{list(kwargs.keys())}')
 
         self._base = (base_x, base_y)
+
+    def get_setter_equations(self, symbols: list, param: str, value: float):
+        x, y = symbols
+        if param == 'x':
+            return [sympy.Eq(x, value)]
+        elif param == 'y':
+            return [sympy.Eq(y, value)]
+        else:
+            raise IncorrectParamValue(f'Unexpected param {param}')
 
 
 class Segment(Figure):
@@ -307,3 +321,23 @@ class Segment(Figure):
 
         self._base = (base_x, base_y)
         """
+
+    def get_setter_equations(self, symbols: list, param: str, value: float):
+        x1, y1, x2, y2 = symbols
+        if param == 'x1':
+            return [sympy.Eq(x1, value)]
+        elif param == 'y1':
+            return [sympy.Eq(y1, value)]
+        elif param == 'x2':
+            return [sympy.Eq(x2, value)]
+        elif param == 'y2':
+            return [sympy.Eq(y2, value)]
+        elif param == 'length':
+            return [sympy.Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
+        elif param == 'angle':
+            raise NotImplementedError
+            # return [sympy.Eq(y1, value)]
+        else:
+            raise IncorrectParamValue(f'Unexpected param {param}')
+
+

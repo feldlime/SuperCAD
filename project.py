@@ -2,7 +2,6 @@
 
 from contracts import contract
 import pickle
-from collections import defaultdict
 from typing import Dict
 
 from figures import Figure, Point, Segment
@@ -16,7 +15,7 @@ from bindings import (
     create_bindings
 )
 from restrictions import Restriction
-from solve import EquationsSystem
+from solve import EquationsSystem, CannotSolveSystemError
 from utils import (
     IncorrectParamError,
     IncorrectParamType,
@@ -125,14 +124,14 @@ class CADProject:
         self._commit()
 
     @contract(figure_name='str', parameter='str', value='number')
-    def change_figure(self, figure_name: str, parameter: str, value: float):
+    def change_figure(self, figure_name: str, param: str, value: float):
         """Change one parameter of one figure.
 
         Parameters
         ----------
         figure_name: str
             Name of figure to change.
-        parameter: str
+        param: str
             Name of parameter to change.
         value: int or float
             New value for parameter.
@@ -142,11 +141,20 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         figure = self._figures[figure_name]
-        if parameter not in figure.all_parameters:
+        if param not in figure.all_parameters:
             raise IncorrectParamValue(
                 f'Parameter must be one of {figure.all_parameters}')
 
-        # TODO: Change (use system, of course)
+        figure_symbols = self._system.get_symbols(figure_name)
+        equations = figure.get_setter_equations(figure_symbols, param, value)
+
+        current_values = self._get_values()
+        try:
+            new_values = self._system.solve_new(equations, current_values)
+        except CannotSolveSystemError as e:
+            raise e
+
+        self._set_values(new_values)
 
         self._commit()
 
@@ -185,8 +193,14 @@ class CADProject:
             raise NotImplementedError
 
         current_values = self._get_values()
-        new_values = self._system.solve_optimization_task(
-            optimizing_values, current_values)
+        try:
+            new_values = self._system.solve_optimization_task(
+                optimizing_values,
+                current_values
+            )
+        except CannotSolveSystemError as e:
+            raise e
+
         self._set_values(new_values)
 
         self._commit()
@@ -267,17 +281,25 @@ class CADProject:
                 raise IncorrectParamValue(
                     f'Given figures must have types {types}')
 
-        # Add
-        self._restrictions[name] = restriction
-
         # Add to system
         figures_symbols = [self._system.get_symbols(figure_name)
                            for figure_name in figures_names]
         equations = restriction.get_equations(*figures_symbols)
         self._system.add_restriction_equations(name, equations)
 
-        # Solve
-        # TODO
+        # Try solve
+        try:
+            new_values = self._system.solve()
+        except CannotSolveSystemError as e:
+            # Remove from system
+            self._system.remove_restriction_equations(name)
+            raise e
+
+        # Add
+        self._restrictions[name] = restriction
+
+        # Update values
+        self._set_values(new_values)
 
         self._commit()
 
