@@ -1,28 +1,30 @@
-import pytest
-import numpy as np
 from numpy import isclose
 from bindings import *
 from figures import Point, Segment
-
-from utils import (
-    IncorrectParamType,
-    IncorrectParamValue,
-    IncorrectParamError
-)
+import numpy as np
 
 
-def is_sequences_equal(s1, s2, use_is=False):
+def is_sequences_equal(s1, s2, use: str = 'equal', sort=True):
+    """use can be {'equal', 'is', 'equal_types'}"""
     if type(s1) != type(s2):
         return False
     if len(s1) != len(s2):
         return False
-    for e1, e2 in zip(sorted(s1), sorted(s2)):
-        if use_is:
-            if e1 is not e2:
-                return False
-        else:
-            if e1 != e2:
-                return False
+
+    def equal(e1, e2):
+        if use == 'equal':
+            return e1 == e2
+        elif use == 'is':
+            return e1 == e2
+        elif use == 'equal_types':
+            return type(e1) == type(e2)
+
+    if sort:
+        s1 = sorted(s1)
+        s2 = sorted(s2)
+    for elem1, elem2 in zip(s1, s2):
+        if not equal(elem1, elem2):
+            return False
     return True
 
 
@@ -42,7 +44,21 @@ class TestBindings:
             segment_bindings_margin=0.2
         )
 
-        assert len(bindings) == 2 * 1 + 3 * 3 + 3
+        correct_bindings_types = \
+            [PointBinding] * 2 \
+            + [
+                SegmentStartBinding,
+                SegmentEndBinding,
+                SegmentCenterBinding,
+                FullSegmentBinding
+            ] * 3 \
+            + [SegmentsIntersectionBinding] * 3
+
+        assert is_sequences_equal(
+            list(map(type, bindings)),
+            correct_bindings_types,
+            sort=False
+        )
 
         def get_binding(figure_names, binding_type):
             for binding in bindings:
@@ -54,7 +70,7 @@ class TestBindings:
         # Point1
         point1_b = get_binding(['point1'], PointBinding)
         assert point1_b.check(10, 10) is None
-        assert all(isclose(point1_b.check(1.2, 1.2), 0.2 * 2**0.5))
+        assert isclose(point1_b.check(1.2, 1.2), 0.2 * 2**0.5)
         assert all(isclose(point1_b.bind(), (1, 1)))
 
         figures['point1'].move(dy=2)
@@ -63,14 +79,14 @@ class TestBindings:
 
         # Segment1
         segment1_center_b = get_binding(['segment1'], SegmentCenterBinding)
-        assert all(isclose(segment1_center_b.check(3.5, 0.1), 0.1))
+        assert isclose(segment1_center_b.check(3.5, 0.1), 0.1)
         assert all(isclose(segment1_center_b.bind(), (3.5, 0)))
 
         segment1_full_b = get_binding(['segment1'], FullSegmentBinding)
-        assert all(isclose(segment1_full_b.check(3, 0.15), 0.15))
-        assert all(isclose(segment1_full_b.check(7.15, 0), 0.15))
+        assert isclose(segment1_full_b.check(3, 0.15), 0.15)
+        assert isclose(segment1_full_b.check(7.15, 0), 0.15)
         assert segment1_full_b.check(7.15, 0.15) is None
-        assert all(isclose(segment1_center_b.bind(2.3, -0.7), (2.3, 0)))
+        assert all(isclose(segment1_full_b.bind(2.3, -0.7), (2.3, 0)))
 
         # Intersections
         s1_s2_b = get_binding(
@@ -109,25 +125,31 @@ class TestBindings:
 
         figures['point2'].set_param('x', 3).set_param('y', 8)
 
+        # No bindings
         bb = choose_best_bindings(bindings, 10, 10)
         assert is_sequences_equal(bb, [])
 
+        # Just point
         bb = choose_best_bindings(bindings, 1.1, 1.1)
         point1_b = get_binding(['point1'], PointBinding)
-        assert is_sequences_equal(bb, [point1_b], use_is=True)
+        assert is_sequences_equal(bb, [point1_b], use='is')
 
+        # Full segment
         bb = choose_best_bindings(bindings, 3, 0.15)
         segment1_full_b = get_binding(['segment1'], FullSegmentBinding)
-        assert is_sequences_equal(bb, [segment1_full_b], use_is=True)
+        assert is_sequences_equal(bb, [segment1_full_b], use='is')
 
+        # Segment center beat full segment
         bb = choose_best_bindings(bindings, 3.5, 0.15)
         segment1_center_b = get_binding(['segment1'], SegmentCenterBinding)
         # No full binding!
-        assert is_sequences_equal(bb, [segment1_center_b], use_is=True)
+        assert is_sequences_equal(bb, [segment1_center_b], use='is')
 
+        # To points with same coordinates
         bb = choose_best_bindings(bindings, 2.9, 7.9)
         s2_start_b = get_binding(['segment2'], SegmentStartBinding)
         point2_b = get_binding(['point2'], PointBinding)
-        assert (is_sequences_equal(bb, [s2_start_b, point2_b], use_is=True)
-            or is_sequences_equal(bb, [point2_b, s2_start_b], use_is=True))
-
+        answer_v1 = [s2_start_b, point2_b]
+        answer_v2 = [point2_b, s2_start_b]
+        assert (is_sequences_equal(bb, answer_v1, use='is', sort=False)
+                or is_sequences_equal(bb, answer_v2, use='is', sort=False))
