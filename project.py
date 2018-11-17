@@ -489,5 +489,5 @@ class CADProject:
 
     def _rollback(self):
         """Load last state from history."""
-        self._state = self._history.get_head()
-        self._cancelled.clear()  # ???
+        self._state = deepcopy(self._history.get_head())
+        # self._cancelled.clear()  # ???
