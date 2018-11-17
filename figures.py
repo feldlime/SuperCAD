@@ -160,7 +160,12 @@ class Point(Figure):
                 'y': self._base[1]}
 
     def set_param(self, param_name, value, **kwargs):
-        """Set parameter of figure."""
+        """Set parameter of figure.
+
+        Returns
+        -------
+        self
+        """
         if kwargs:
             raise IncorrectParamError(f'Unexpected parameters: '
                                       f'{list(kwargs.keys())}')
@@ -174,6 +179,8 @@ class Point(Figure):
         else:
             raise IncorrectParamValue(
                 f'Incorrect name of parameter: {param_name}.')
+
+        return self
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         x, y = symbols
@@ -297,6 +304,8 @@ class Segment(Figure):
         else:
             raise IncorrectParamValue(
                 f'Incorrect name of parameter: {param_name}.')
+
+        return self
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         x1, y1, x2, y2 = symbols

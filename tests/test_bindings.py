@@ -11,14 +11,18 @@ from utils import (
 )
 
 
-def is_sequences_equal(s1, s2):
+def is_sequences_equal(s1, s2, use_is=False):
     if type(s1) != type(s2):
         return False
     if len(s1) != len(s2):
         return False
     for e1, e2 in zip(sorted(s1), sorted(s2)):
-        if e1 == e2:
-            return False
+        if use_is:
+            if e1 is not e2:
+                return False
+        else:
+            if e1 != e2:
+                return False
     return True
 
 
@@ -80,4 +84,50 @@ class TestBindings:
         s2_s3_b = get_binding(
             ['segment2', 'segment3'], SegmentsIntersectionBinding)
         assert all(isclose(s2_s3_b.bind(), (5, 6)))
+
+    def test_choosing_best_bindings(self):
+        figures = {
+            'point1': Point((1, 1)),
+            'point2': Point((2, 3)),
+            'segment1': Segment((0, 0), 0, 7),
+            'segment2': Segment.from_coordinates(3, 8, 7, 4),
+            'segment3': Segment((5, 5), np.pi / 2, 5)
+        }
+
+        bindings = create_bindings(
+            figures,
+            circle_bindings_radius=0.5,
+            segment_bindings_margin=0.2
+        )
+
+        def get_binding(figure_names, binding_type):
+            for binding in bindings:
+                objects_names = binding.get_object_names()
+                if is_sequences_equal(figure_names, objects_names) \
+                        and isinstance(binding, binding_type):
+                    return binding
+
+        figures['point2'].set_param('x', 3).set_param('y', 8)
+
+        bb = choose_best_bindings(bindings, 10, 10)
+        assert is_sequences_equal(bb, [])
+
+        bb = choose_best_bindings(bindings, 1.1, 1.1)
+        point1_b = get_binding(['point1'], PointBinding)
+        assert is_sequences_equal(bb, [point1_b], use_is=True)
+
+        bb = choose_best_bindings(bindings, 3, 0.15)
+        segment1_full_b = get_binding(['segment1'], FullSegmentBinding)
+        assert is_sequences_equal(bb, [segment1_full_b], use_is=True)
+
+        bb = choose_best_bindings(bindings, 3.5, 0.15)
+        segment1_center_b = get_binding(['segment1'], SegmentCenterBinding)
+        # No full binding!
+        assert is_sequences_equal(bb, [segment1_center_b], use_is=True)
+
+        bb = choose_best_bindings(bindings, 2.9, 7.9)
+        s2_start_b = get_binding(['segment2'], SegmentStartBinding)
+        point2_b = get_binding(['point2'], PointBinding)
+        assert (is_sequences_equal(bb, [s2_start_b, point2_b], use_is=True)
+            or is_sequences_equal(bb, [point2_b, s2_start_b], use_is=True))
 
