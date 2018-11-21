@@ -1,5 +1,5 @@
 from contracts import contract
-import math
+import numpy as np
 
 BIG_DISTANCE = 10000
 
@@ -40,62 +40,27 @@ def validate_coordinates(coordinates, msg):
         raise IncorrectParamValue(msg)
 
 
-class Coordinates:
-    """Class of coordinates.
-
-    Parameters
-    ----------
-    coordinates: tuple or function
-        If tuple, it must be coordinates of point.
-        If function, it must be function, that returns coordinates of point.
-    """
-
-    def __init__(self, coordinates, allow_none=False):
-        super().__init__()
-        if isinstance(coordinates, tuple):
-            validate_coordinates(coordinates,
-                                 'If coordinates is tuple, it must contain '
-                                 '2 numbers.')
-
-        elif callable(coordinates):
-            test_coordinates = coordinates()
-            if test_coordinates is not None or not allow_none:
-                validate_coordinates(test_coordinates,
-                                     'If coordinates is function, it must '
-                                     'returns tuple that contains 2 numbers.')
-
-        else:
-            raise IncorrectParamType('Coordinates must be tuple or function.')
-
-        self._coordinates = coordinates
-
-    def get(self):
-        """Return coordinates.
-
-        Returns
-        -------
-        x, y: int or float
-        """
-        if isinstance(self._coordinates, tuple):
-            return self._coordinates
-        else:
-            return self._coordinates()
-
-
 def segment_length(x1, y1, x2, y2):
     magnitude_sqr = (x2 - x1) ** 2 + (y2 - y1) ** 2
     return magnitude_sqr ** 0.5
 
 
+def simplify_angle(angle):
+    return angle % (2 * np.pi)
+
+
 def segment_angle(x1, y1, x2, y2):
     dx, dy = x2 - x1, y2 - y1
     if dx == 0:
-        angle = math.pi / 2 if dy > 0 else -math.pi / 2
+        if dy == 0:
+            return np.nan
+        angle = np.pi / 2 if dy > 0 else -np.pi / 2
     elif dx > 0:
-        angle = math.atan(dy / dx)
+        angle = np.arctan(dy / dx)
     else:
-        angle = math.atan(dy / dx) + math.pi
-    return angle
+        angle = np.arctan(dy / dx) + np.pi
+
+    return simplify_angle(angle)
 
 
 class EmptyStackError(Exception):
@@ -126,23 +91,6 @@ class Stack:
 
     def __len__(self):
         return len(self._arr)
-
-
-class ReferencedToObject:
-    """Interface for objects that are referenced to other object"""
-
-    def __init__(self):
-        self._object_name = None
-
-    @contract(object_name='str')
-    def set_object_name(self, object_name: str):
-        """Set host object name."""
-        self._object_name = object_name
-
-    @contract(returns='str')
-    def get_object_name(self) -> str:
-        """Get host object name."""
-        return self._object_name
 
 
 class ReferencedToObjects:

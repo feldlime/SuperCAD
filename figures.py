@@ -4,13 +4,13 @@ import numpy as np
 import sympy
 
 from utils import (
-    IncorrectParamError,
     IncorrectParamValue,
     validate_num,
     validate_positive_num,
     validate_coordinates,
     segment_length,
-    segment_angle
+    segment_angle,
+    simplify_angle
 )
 
 
@@ -32,7 +32,7 @@ class Figure:
         validate_num(angle, 'angle')
 
         self._base = (float(base[0]), float(base[1]))
-        self._i_angle = self._simplify_angle(float(angle))
+        self._i_angle = simplify_angle(float(angle))
 
     @property
     def _angle(self):
@@ -40,7 +40,7 @@ class Figure:
 
     @_angle.setter
     def _angle(self, value):
-        self._i_angle = self._simplify_angle(float(value))
+        self._i_angle = simplify_angle(float(value))
 
     def move(self, dx=0, dy=0):
         """Move figure.
@@ -85,16 +85,12 @@ class Figure:
         """Return parameters of figure."""
         raise NotImplementedError
 
-    def set_param(self, param_name, value, **kwargs):
+    def set_param(self, param_name, value):
         """Set parameter of figure."""
         raise NotImplementedError
 
     def get_setter_equations(self, symbols: list, param: str, value: float):
         raise NotImplementedError
-
-    @staticmethod
-    def _simplify_angle(angle):
-        return angle % (2 * np.pi)
 
     def __repr__(self):
         desc = f'{self.__class__.__name__} with base representation: ' \
@@ -159,16 +155,13 @@ class Point(Figure):
         return {'x': self._base[0],
                 'y': self._base[1]}
 
-    def set_param(self, param_name, value, **kwargs):
+    def set_param(self, param_name, value):
         """Set parameter of figure.
 
         Returns
         -------
         self
         """
-        if kwargs:
-            raise IncorrectParamError(f'Unexpected parameters: '
-                                      f'{list(kwargs.keys())}')
 
         if param_name == 'x':
             validate_num(value, 'x')
@@ -273,14 +266,10 @@ class Segment(Figure):
             'angle': self._angle
         }
 
-    def set_param(self, param_name, value, **kwargs):
+    def set_param(self, param_name, value):
         """Set parameter of figure.
         Maximum 4 parameters can be set.
         """
-
-        if kwargs:
-            raise IncorrectParamError(f'Unexpected parameters: '
-                                      f'{list(kwargs.keys())}')
 
         validate_num(value, param_name)
 
@@ -322,7 +311,6 @@ class Segment(Figure):
         elif param == 'angle':
             raise NotImplementedError
             # return [sympy.Eq(y1, value)]
+            # TODO
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')
-
-

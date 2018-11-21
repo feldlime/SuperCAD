@@ -78,6 +78,27 @@ class TestPoint:
         with pytest.raises(TypeError):
             Point.from_coordinates(y=10)
 
+    def test_getting_params(self):
+        p = Point((1, 2))
+        res = p.get_params()
+        assert isinstance(res, dict)
+        assert set(res.keys()) == {'x', 'y'}
+        assert res['x'] == 1.0 and res['y'] == 2.0
+
+    def test_setting_param(self):
+        p = Point((1, 2))
+
+        p.set_param('x', 10)
+        rep = p.get_base_representation()
+        assert all(isclose(rep, (10, 2)))
+
+        p.set_param('y', 20)
+        rep = p.get_base_representation()
+        assert all(isclose(rep, (10, 20)))
+
+        with pytest.raises(IncorrectParamValue):
+            p.set_param('y2', 100)
+
 
 # noinspection PyTypeChecker
 class TestSegment:
@@ -136,3 +157,45 @@ class TestSegment:
         assert all(isclose((1, 1, 1, 2), s.get_base_representation()))
         s.rotate(-pi/2)
         assert all(isclose((1, 1, 2, 1), s.get_base_representation()))
+
+    def test_getting_params(self):
+        s = Segment((1, 2), 0, 10)
+        res = s.get_params()
+        assert isinstance(res, dict)
+        assert set(res.keys()) == {'x1', 'y1', 'x2', 'y2', 'length', 'angle'}
+        assert res['x1'] == 1.0 \
+            and res['y1'] == 2.0 \
+            and res['x2'] == 11.0 \
+            and res['y2'] == 2.0 \
+            and res['length'] == 10.0 \
+            and res['angle'] == 0.0
+
+    def test_setting_param(self):
+        s = Segment((1, 2), 0, 10)
+
+        s.set_param('x1', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 2, 10, 2)))
+
+        s.set_param('y1', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 10, 0)))
+
+        s.set_param('y2', 5)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 10, 5)))
+
+        s.set_param('x2', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 0, 5)))
+
+        s.set_param('length', 7)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 0, 7)))
+
+        s.set_param('angle', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 7, 0)))
+
+        with pytest.raises(IncorrectParamValue):
+            s.set_param('y', 100)
