@@ -9,8 +9,8 @@ from utils import (
 from figures import Point, Segment
 
 import numpy as np
-from contracts import contract
 from itertools import combinations
+from contracts import contract
 
 
 class Binding:
@@ -19,6 +19,7 @@ class Binding:
     def __init__(self, *args):
         pass
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -29,38 +30,49 @@ class Binding:
 
         Returns
         ------
-        checking_result: int or bool
-            False if cursor is out of binding zone.
+        checking_result: float or None
+            None if cursor is out of binding zone.
             Distance between cursor and point of binding.
         """
         raise NotImplementedError
 
+    @contract(returns='tuple(number, number)')
     def bind(self, *args):
         """ Return coordinates to bind cursor.
 
         Returns
         ------
         x, y: float
-            Coordinates to bind
+            Coordinates to bind.
         """
         raise NotImplementedError
 
 
 class CentralBinding(Binding):
-    """Class of binding with concrete point to bind.
-
-    Parameters
-    ----------
-    coordinates: tuple or function
-        The object for which this binding is created.
-        If tuple, it must be coordinates of point.
-        If function, it must be function, that returns coordinates of point.
-    """
+    """Class of binding with concrete point to bind."""
 
     def __init__(self, *args):
         super().__init__(*args)
 
-    def bind(self, *args):
+    @contract(x='number', y='number', returns='float|None')
+    def check(self, x, y):
+        """Check if given coordinates places in zone of binding.
+
+        Parameters
+        ----------
+        x, y: int or float
+            Coordinates of cursor.
+
+        Returns
+        ------
+        checking_result: float or None
+            None if cursor is out of binding zone.
+            Distance between cursor and point of binding.
+        """
+        raise NotImplementedError
+
+    @contract(returns='tuple(number, number)')
+    def bind(self):
         """ Return coordinates to bind cursor.
 
         Returns
@@ -70,46 +82,28 @@ class CentralBinding(Binding):
         """
         return self._coordinates()
 
-    def check(self, x, y):
-        """Check if given coordinates places in zone of binding.
-
-        Parameters
-        ----------
-        x, y: int or float
-            Coordinates of cursor.
-
-        Returns
-        ------
-        checking_result: int or bool
-            False if cursor is out of binding zone.
-            Distance between cursor and point of binding.
-        """
-        raise NotImplementedError
-
     def _coordinates(self):
         """Return coordinates of binding."""
         raise NotImplementedError
 
 
 class CircleBinding(CentralBinding):
-    """Class of binding with circle zone.
+    """Central binding with circle binding zone.
 
     Parameters
     ----------
-    coordinates: tuple or function
-        The object for which this binding is created.
-        If tuple, it must be coordinates of point.
-        If function, it must be function, that returns coordinates of point.
     radius: int or float
         Radius of zone to bind.
     """
 
+    @contract(radius='number')
     def __init__(self, radius, *args):
         super().__init__(*args)
 
         validate_positive_num(radius, 'radius')
         self._radius = radius
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -137,8 +131,19 @@ class CircleBinding(CentralBinding):
 
 
 class PointBinding(CircleBinding, ReferencedToObjects):
+    """Point central binding with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    point: Point
+        Point for binding.
+    """
+
     _n_objects = 1
 
+    @contract(radius='number', point='$Point')
     def __init__(self, radius, point):
         super().__init__(radius)
         if not isinstance(point, Point):
@@ -151,8 +156,18 @@ class PointBinding(CircleBinding, ReferencedToObjects):
 
 
 class SegmentStartBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to start of segment with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
 
+    @contract(radius='number', segment='$Segment')
     def __init__(self, radius, segment):
         super().__init__(radius)
         if not isinstance(segment, Segment):
@@ -167,8 +182,18 @@ class SegmentStartBinding(CircleBinding, ReferencedToObjects):
 
 
 class SegmentEndBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to end of segment with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
 
+    @contract(radius='number', segment='$Segment')
     def __init__(self, radius, segment):
         super().__init__(radius)
         if not isinstance(segment, Segment):
@@ -183,8 +208,18 @@ class SegmentEndBinding(CircleBinding, ReferencedToObjects):
 
 
 class SegmentCenterBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to center of segment with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
 
+    @contract(radius='number', segment='$Segment')
     def __init__(self, radius, segment):
         super().__init__(radius)
         if not isinstance(segment, Segment):
@@ -199,8 +234,20 @@ class SegmentCenterBinding(CircleBinding, ReferencedToObjects):
 
 
 class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to segments intersection with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment1: Segment
+        First segment of intersection for binding.
+    segment2: Segment
+        Second segment of intersection for binding.
+    """
     _n_objects = 2
 
+    @contract(radius='number', segment1='$Segment', segment2='$Segment')
     def __init__(self, radius, segment1, segment2):
         super().__init__(radius)
         if not isinstance(segment1, Segment):
@@ -212,6 +259,7 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
         self._segment1 = segment1
         self._segment2 = segment2
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -263,9 +311,18 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
 
 
 class FullSegmentBinding(Binding, ReferencedToObjects):
-    """Binding to all segment (not to point) to highlight it."""
+    """Binding to all segment (not to point).
+
+    Parameters
+    ----------
+    margin: int or float
+        Margin of zone to bind (distance from segment to binding zone border).
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
 
+    @contract(margin='number', segment='$Segment')
     def __init__(self, margin, segment):
         super().__init__()
         validate_positive_num(margin, 'margin')
@@ -275,6 +332,7 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
                 f'Given object has type {type(segment)}, not Segment')
         self._segment = segment
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -297,6 +355,7 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
         else:
             return distance
 
+    @contract(x='number', y='number', returns='tuple(number, number)')
     def bind(self, x, y):
         """ Return coordinates to bind cursor.
 
