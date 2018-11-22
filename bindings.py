@@ -1,25 +1,24 @@
 """Module with classes of geometry bindings."""
 
 from utils import (
-    validate_positive_num,
-    Coordinates,
-    magnitude,
+    segment_length,
     ReferencedToObjects,
     BIG_DISTANCE,
 )
 from figures import Point, Segment
 
 import numpy as np
-from contracts import contract
 from itertools import combinations
+from contracts import contract
 
 
 class Binding:
     """Class of binding."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         pass
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -30,50 +29,31 @@ class Binding:
 
         Returns
         ------
-        checking_result: int or bool
-            False if cursor is out of binding zone.
+        checking_result: float or None
+            None if cursor is out of binding zone.
             Distance between cursor and point of binding.
         """
         raise NotImplementedError
 
+    @contract(returns='tuple(number, number)')
     def bind(self, *args):
         """ Return coordinates to bind cursor.
 
         Returns
         ------
         x, y: float
-            Coordinates to bind
+            Coordinates to bind.
         """
         raise NotImplementedError
 
 
 class CentralBinding(Binding):
-    """Class of binding with concrete point to bind.
+    """Class of binding with concrete point to bind."""
 
-    Parameters
-    ----------
-    coordinates: tuple or function
-        The object for which this binding is created.
-        If tuple, it must be coordinates of point.
-        If function, it must be function, that returns coordinates of point.
-    """
+    def __init__(self, *args):
+        super().__init__(*args)
 
-    def __init__(self, coordinates, coordinates_kwargs=None, *args, **kwargs):
-        super().__init__()
-        if coordinates_kwargs is None:
-            coordinates_kwargs = {}
-        self._coordinates = Coordinates(coordinates, **coordinates_kwargs)
-
-    def bind(self, *args):
-        """ Return coordinates to bind cursor.
-
-        Returns
-        ------
-        x, y: float
-            Coordinates to bind
-        """
-        return self._coordinates.get()
-
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -84,34 +64,44 @@ class CentralBinding(Binding):
 
         Returns
         ------
-        checking_result: int or bool
-            False if cursor is out of binding zone.
+        checking_result: float or None
+            None if cursor is out of binding zone.
             Distance between cursor and point of binding.
         """
         raise NotImplementedError
 
+    @contract(returns='tuple(number, number)')
+    def bind(self):
+        """ Return coordinates to bind cursor.
+
+        Returns
+        ------
+        x, y: float
+            Coordinates to bind
+        """
+        return self._coordinates()
+
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        raise NotImplementedError
+
 
 class CircleBinding(CentralBinding):
-    """Class of binding with circle zone.
+    """Central binding with circle binding zone.
 
     Parameters
     ----------
-    coordinates: tuple or function
-        The object for which this binding is created.
-        If tuple, it must be coordinates of point.
-        If function, it must be function, that returns coordinates of point.
     radius: int or float
         Radius of zone to bind.
     """
 
-    def __init__(self, coordinates, radius, coordinates_kwargs=None):
-        if coordinates_kwargs is None:
-            coordinates_kwargs = {}
-        super().__init__(coordinates, coordinates_kwargs=coordinates_kwargs)
+    @contract(radius='number, >0')
+    def __init__(self, radius, *args):
+        super().__init__(*args)
 
-        validate_positive_num(radius, 'radius')
         self._radius = radius
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -126,42 +116,148 @@ class CircleBinding(CentralBinding):
             None if cursor is out of binding zone.
             Distance between cursor and point of binding.
         """
-        base_x, base_y = self._coordinates.get()
-        distance = magnitude(x, y, base_x, base_y)
+        base_x, base_y = self._coordinates()
+        distance = segment_length(x, y, base_x, base_y)
         if distance > self._radius:
             return None
         else:
             return distance
 
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        raise NotImplementedError
+
 
 class PointBinding(CircleBinding, ReferencedToObjects):
+    """Point central binding with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    point: Point
+        Point for binding.
+    """
+
     _n_objects = 1
-    pass
+
+    @contract(radius='number, >0', point='$Point')
+    def __init__(self, radius, point):
+        super().__init__(radius)
+        if not isinstance(point, Point):
+            raise TypeError(f'Given object has type {type(point)}, not Point')
+        self._point = point
+
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        return self._point.get_base_representation()
 
 
 class SegmentStartBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to start of segment with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
-    pass
+
+    @contract(radius='number, >0', segment='$Segment')
+    def __init__(self, radius, segment):
+        super().__init__(radius)
+        if not isinstance(segment, Segment):
+            raise TypeError(
+                f'Given object has type {type(segment)}, not Segment')
+        self._segment = segment
+
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        x1, y1, x2, y2 = self._segment.get_base_representation()
+        return x1, y1
 
 
 class SegmentEndBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to end of segment with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
-    pass
+
+    @contract(radius='number, >0', segment='$Segment')
+    def __init__(self, radius, segment):
+        super().__init__(radius)
+        if not isinstance(segment, Segment):
+            raise TypeError(
+                f'Given object has type {type(segment)}, not Segment')
+        self._segment = segment
+
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        x1, y1, x2, y2 = self._segment.get_base_representation()
+        return x2, y2
 
 
 class SegmentCenterBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to center of segment with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
-    pass
+
+    @contract(radius='number, >0', segment='$Segment')
+    def __init__(self, radius, segment):
+        super().__init__(radius)
+        if not isinstance(segment, Segment):
+            raise TypeError(
+                f'Given object has type {type(segment)}, not Segment')
+        self._segment = segment
+
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        x1, y1, x2, y2 = self._segment.get_base_representation()
+        return (x1 + x2) / 2, (y1 + y2) / 2
 
 
 class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to segments intersection with circle binding zone.
+
+    Parameters
+    ----------
+    radius: int or float
+        Radius of zone to bind.
+    segment1: Segment
+        First segment of intersection for binding.
+    segment2: Segment
+        Second segment of intersection for binding.
+    """
     _n_objects = 2
 
-    def __init__(self, coordinates, radius):
-        coordinates_kwargs = {'allow_none': True}
-        super().__init__(coordinates, radius,
-                         coordinates_kwargs=coordinates_kwargs)
+    @contract(radius='number, >0', segment1='$Segment', segment2='$Segment')
+    def __init__(self, radius, segment1, segment2):
+        super().__init__(radius)
+        if not isinstance(segment1, Segment):
+            raise TypeError(
+                f'Given segment1 has type {type(segment1)}, not Segment')
+        if not isinstance(segment2, Segment):
+            raise TypeError(
+                f'Given segment1 has type {type(segment2)}, not Segment')
+        self._segment1 = segment1
+        self._segment2 = segment2
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -176,29 +272,64 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
             None if cursor is out of binding zone or binding doesn't exist.
             Otherwise distance between cursor and point of binding.
         """
-        coo = self._coordinates.get()
+        coo = self._coordinates()
         if coo is None:
             return None
 
         base_x, base_y = coo
-        distance = magnitude(x, y, base_x, base_y)
+        distance = segment_length(x, y, base_x, base_y)
         if distance > self._radius:
             return None
         else:
             return distance
 
+    def _coordinates(self):
+        """Return coordinates of binding."""
+        # See original code here:
+        # https://stackoverflow.com/questions/3252194/numpy-and-line-intersections
+
+        ax1, ay1, ax2, ay2 = self._segment1.get_base_representation()
+        bx1, by1, bx2, by2 = self._segment2.get_base_representation()
+
+        a1, a2 = np.array([ax1, ay1]), np.array([ax2, ay2])
+        b1, b2 = np.array([bx1, by1]), np.array([bx2, by2])
+
+        da = a2 - a1
+        db = b2 - b1
+        dp = a1 - b1
+        dap = np.array([-da[1], da[0]])
+
+        denominator = np.dot(dap, db)
+        if np.isclose(denominator, 0):
+            return None
+
+        numerator = np.dot(dap, dp)
+        intersection_coo = (numerator / denominator) * db + b1
+        return tuple(intersection_coo)
+
 
 class FullSegmentBinding(Binding, ReferencedToObjects):
-    """Binding to all segment (not to point) to highlight it."""
+    """Binding to all segment (not to point).
+
+    Parameters
+    ----------
+    margin: int or float
+        Margin of zone to bind (distance from segment to binding zone border).
+    segment: Segment
+        Segment for binding.
+    """
     _n_objects = 1
 
-    def __init__(self, coordinates_1, coordinates_2, margin):
+    @contract(margin='number, >0', segment='$Segment')
+    def __init__(self, margin, segment):
         super().__init__()
-        self._coordinates_1 = Coordinates(coordinates_1)
-        self._coordinates_2 = Coordinates(coordinates_2)
-        validate_positive_num(margin, 'margin')
         self._margin = margin
+        if not isinstance(segment, Segment):
+            raise TypeError(
+                f'Given object has type {type(segment)}, not Segment')
+        self._segment = segment
 
+    @contract(x='number', y='number', returns='float|None')
     def check(self, x, y):
         """Check if given coordinates places in zone of binding.
 
@@ -213,8 +344,7 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
             None if cursor is out of binding zone.
             Distance between cursor and point of binding.
         """
-        x1, y1 = self._coordinates_1.get()
-        x2, y2 = self._coordinates_2.get()
+        x1, y1, x2, y2 = self._segment.get_base_representation()
         distance = self._get_min_distance(x1, y1, x2, y2, x, y)
 
         if distance > self._margin:
@@ -222,6 +352,7 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
         else:
             return distance
 
+    @contract(x='number', y='number', returns='tuple(number, number)')
     def bind(self, x, y):
         """ Return coordinates to bind cursor.
 
@@ -235,25 +366,38 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
         x, y: float
             Coordinates to bind.
         """
-        x1, y1 = self._coordinates_1.get()
-        x2, y2 = self._coordinates_2.get()
+        x1, y1, x2, y2 = self._segment.get_base_representation()
         return self._get_nearest_point(x1, y1, x2, y2, x, y)
 
     @classmethod
     def _get_min_distance(cls, x1, y1, x2, y2, x, y):
         """Calculate minimal distance from point to segment."""
 
-        # TODO
-        pass
+        nearest_x, nearest_y = cls._get_nearest_point(x1, y1, x2, y2, x, y)
+        _dx = nearest_x - x
+        _dy = nearest_y - y
+        square_dist = _dx ** 2 + _dy ** 2
+        return np.sqrt(square_dist)
 
     @classmethod
     def _get_nearest_point(cls, x1, y1, x2, y2, x, y):
         """Calculate point at the segment that are the nearest to the given
         point.
         """
+        dx = x2 - x1
+        dy = y2 - y1
+        dr2 = dx ** 2 + dy ** 2
 
-        # TODO
-        pass
+        lerp = ((x - x1) * dx + (y - y1) * dy) / dr2
+        if lerp < 0:
+            lerp = 0
+        elif lerp > 1:
+            lerp = 1
+
+        nearest_x = lerp * dx + x1
+        nearest_y = lerp * dy + y1
+
+        return nearest_x, nearest_y
 
 
 @contract(bindings='list', x='number', y='number', returns='list')
@@ -296,8 +440,8 @@ def choose_best_bindings(bindings: list, x, y) -> list:
     return best_bindings
 
 
-@contract(figures='dict[N]', circle_bindings_radius='number,>0',
-          segment_bindings_margin='number,>0', returns='list[>=N]')
+@contract(figures='dict[N]', circle_bindings_radius='number, >0',
+          segment_bindings_margin='number, >0', returns='list[>=N]')
 def create_bindings(figures: dict, circle_bindings_radius=8,
                     segment_bindings_margin=2) -> list:
     """Create all bindings for all figures.
@@ -322,41 +466,26 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
 
     for name, figure in figures.items():
         if isinstance(figure, Point):
-            def point_coo():
-                return figure.get_base_representation()
-            binding = PointBinding(point_coo, circle_bindings_radius)
-            binding.set_object_names(name)
+            binding = PointBinding(circle_bindings_radius, figure)
+            binding.set_object_names([name])
             bindings.append(binding)
 
         elif isinstance(figure, Segment):
-            def segment_start_coo():
-                x1, y1, x2, y2 = figure.get_base_representation()
-                return x1, y1
-            binding = SegmentStartBinding(segment_start_coo,
-                                          circle_bindings_radius)
-            binding.set_object_names(name)
+            binding = SegmentStartBinding(circle_bindings_radius, figure)
+            binding.set_object_names([name])
             bindings.append(binding)
 
-            def segment_end_coo():
-                x1, y1, x2, y2 = figure.get_base_representation()
-                return x2, y1
-            binding = SegmentEndBinding(segment_end_coo,
-                                        circle_bindings_radius)
-            binding.set_object_names(name)
+            binding = SegmentEndBinding(circle_bindings_radius, figure)
+            binding.set_object_names([name])
             bindings.append(binding)
 
-            def segment_center_coo():
-                x1, y1, x2, y2 = figure.get_base_representation()
-                return (x1 + x2) / 2, (y1 + y2) / 2
-            binding = SegmentCenterBinding(segment_center_coo,
-                                           circle_bindings_radius)
-            binding.set_object_names(name)
+            binding = SegmentCenterBinding(circle_bindings_radius, figure)
+            binding.set_object_names([name])
             bindings.append(binding)
 
             # Segment full
-            binding = FullSegmentBinding(segment_start_coo, segment_end_coo,
-                                         segment_bindings_margin)
-            binding.set_object_names(name)
+            binding = FullSegmentBinding(segment_bindings_margin, figure)
+            binding.set_object_names([name])
             bindings.append(binding)
 
             # For intersection bindings
@@ -368,29 +497,8 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
     # Intersection bindings
     for (name1, segment1), (name2, segment2) \
             in combinations(segments.items(), 2):
-        def segments_intersection_coo():
-            # See original code here:
-            # https://stackoverflow.com/questions/3252194/numpy-and-line-intersections
-
-            ax1, ay1, ax2, ay2 = segment1.get_base_representation()
-            bx1, by1, bx2, by2 = segment2.get_base_representation()
-
-            a1, a2 = np.array([ax1, ay1]), np.array([ax2, ay2])
-            b1, b2 = np.array([bx1, by1]), np.array([bx2, by2])
-
-            da = a2 - a1
-            db = b2 - b1
-            dp = a1 - b1
-            dap = np.array([-da[1], da[0]])
-
-            denominator = np.dot(dap, db)
-            if np.isclose(denominator, 0):
-                return None
-
-            numerator = np.dot(dap, dp)
-            return (numerator / denominator) * db + b1
-        binding = SegmentsIntersectionBinding(segments_intersection_coo,
-                                              circle_bindings_radius)
+        binding = SegmentsIntersectionBinding(
+            circle_bindings_radius, segment1, segment2)
         binding.set_object_names([name1, name2])
         bindings.append(binding)
 

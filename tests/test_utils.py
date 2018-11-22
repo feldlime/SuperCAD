@@ -1,48 +1,90 @@
 import pytest
-from numpy import isclose
+
 from utils import *
+import numpy as np
 
 
-def test_magnitude():
-    res = magnitude(1, 1, 4, 5)
+def test_segment_length():
+    res = segment_length(1, 1, 4, 5)
     answer = 5
-    assert isclose(res, answer)
+    assert np.isclose(res, answer)
 
-    res = magnitude(1, 1, 4, -3)
+    res = segment_length(1, 1, 4, -3)
     answer = 5
-    assert isclose(res, answer)
+    assert np.isclose(res, answer)
 
-    res = magnitude(1, 1, 1, 1)
+    res = segment_length(1, 1, 1, 1)
     answer = 0
-    assert isclose(res, answer)
+    assert np.isclose(res, answer)
 
 
-def test_coordinates():
-    coo = Coordinates((1, 2))
-    res = coo.get()
-    answer = (1, 2)
-    assert all(isclose(res, answer))
+def test_simplify_angle():
+    res = simplify_angle(1.2)
+    assert np.isclose(res, 1.2)
 
-    a = 5
+    res = simplify_angle(0)
+    assert np.isclose(res, 0)
 
-    def fun():
-        return a, 3
+    res = simplify_angle(-1.2)
+    assert np.isclose(res, 2 * np.pi - 1.2)
 
-    coo = Coordinates(fun)
-    res = coo.get()
-    answer = (5, 3)
-    assert all(isclose(res, answer))
 
-    a = 10
-    res = coo.get()
-    answer = (10, 3)
-    assert all(isclose(res, answer))
+def test_segment_angle():
+    res = segment_angle(1, 1, 5, 5)
+    assert np.isclose(res, np.pi / 4)
 
-    with pytest.raises(IncorrectParamType):
-        Coordinates([1, 2])
+    res = segment_angle(1, 1, -4, 6)
+    assert np.isclose(res, 3 * np.pi / 4)
 
-    with pytest.raises(IncorrectParamError):
-        Coordinates((1, 2, 3))
+    res = segment_angle(1, 1, -5, -5)
+    assert np.isclose(res, 5 * np.pi / 4)
 
-    with pytest.raises(IncorrectParamError):
-        Coordinates((1, '2'))
+    res = segment_angle(1, 1, 6, -4)
+    assert np.isclose(res, 7 * np.pi / 4)
+
+    res = segment_angle(1, 1, 5, 1)
+    assert np.isclose(res, 0)
+
+    res = segment_angle(1, 1, -5, 1)
+    assert np.isclose(res, np.pi)
+
+    res = segment_angle(1, 1, 1, 5)
+    assert np.isclose(res, np.pi / 2)
+
+    res = segment_angle(1, 1, 1, -4)
+    assert np.isclose(res, 3 * np.pi / 2)
+
+    res = segment_angle(1, 1, 1, 1)
+    assert np.isnan(res)
+
+
+def test_stack():
+    s = Stack()
+
+    s.push(1)
+    assert s.get_head() == 1
+
+    s.push(2)
+    assert s.get_head() == 2
+
+    assert s.get_head() == 2
+    assert s.get_head() == 2
+
+    assert s.pop() == 2
+    assert s.get_head() == 1
+
+    assert s.pop() == 1
+    with pytest.raises(EmptyStackError):
+        s.get_head()
+
+    with pytest.raises(EmptyStackError):
+        s.pop()
+
+    s.push(3)
+    assert s.get_head() == 3
+
+    s.clear()
+    with pytest.raises(EmptyStackError):
+        s.pop()
+    with pytest.raises(EmptyStackError):
+        s.get_head()

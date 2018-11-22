@@ -1,4 +1,5 @@
 from contracts import contract
+import numpy as np
 
 BIG_DISTANCE = 10000
 
@@ -15,75 +16,33 @@ class IncorrectParamValue(IncorrectParamError, ValueError):
     pass
 
 
-def validate_num(value, parameter_name):
-    if not (isinstance(value, int) or isinstance(value, float)):
-        raise IncorrectParamType(f'Incorrect type of {parameter_name}')
-
-
-def validate_positive_num(value, parameter_name):
-    validate_num(value, parameter_name)
-    if value <= 0:
-        raise IncorrectParamValue(f'{parameter_name.capitalize()} '
-                                  f'must be positive')
-
-
-def validate_coordinates(coordinates, msg):
-    if not isinstance(coordinates, tuple):
-        raise IncorrectParamType(msg)
-
-    if len(coordinates) != 2 \
-        or not (isinstance(coordinates[0], int) or
-                isinstance(coordinates[0], float)) \
-        or not (isinstance(coordinates[1], int) or
-                isinstance(coordinates[1], float)):
-        raise IncorrectParamValue(msg)
-
-
-class Coordinates:
-    """Class of coordinates.
-
-    Parameters
-    ----------
-    coordinates: tuple or function
-        If tuple, it must be coordinates of point.
-        If function, it must be function, that returns coordinates of point.
-    """
-
-    def __init__(self, coordinates, allow_none=False):
-        super().__init__()
-        if isinstance(coordinates, tuple):
-            validate_coordinates(coordinates,
-                                 'If coordinates is tuple, it must contain '
-                                 '2 numbers.')
-
-        elif callable(coordinates):
-            test_coordinates = coordinates()
-            if test_coordinates is not None or not allow_none:
-                validate_coordinates(test_coordinates,
-                                     'If coordinates is function, it must '
-                                     'returns tuple that contains 2 numbers.')
-
-        else:
-            raise IncorrectParamType('Coordinates must be tuple or function.')
-
-        self._coordinates = coordinates
-
-    def get(self):
-        """Return coordinates.
-
-        Returns
-        -------
-        x, y: int or float
-        """
-        if isinstance(self._coordinates, tuple):
-            return self._coordinates
-        else:
-            return self._coordinates()
-
-
-def magnitude(x1, y1, x2, y2):
+@contract(x1='number', y1='number', x2='number', y2='number')
+def segment_length(x1, y1, x2, y2):
+    """Calculate length of segment, represented by coordinates of its ends."""
     magnitude_sqr = (x2 - x1) ** 2 + (y2 - y1) ** 2
     return magnitude_sqr ** 0.5
+
+
+@contract(angle='number')
+def simplify_angle(angle):
+    """Return equal angle to given, but in range [0, 2*pi]."""
+    return angle % (2 * np.pi)
+
+
+@contract(x1='number', y1='number', x2='number', y2='number')
+def segment_angle(x1, y1, x2, y2):
+    """Return angle of segment in range [0, 2*pi]."""
+    dx, dy = x2 - x1, y2 - y1
+    if dx == 0:
+        if dy == 0:
+            return np.nan
+        angle = np.pi / 2 if dy > 0 else -np.pi / 2
+    elif dx > 0:
+        angle = np.arctan(dy / dx)
+    else:
+        angle = np.arctan(dy / dx) + np.pi
+
+    return simplify_angle(angle)
 
 
 class EmptyStackError(Exception):
@@ -91,40 +50,39 @@ class EmptyStackError(Exception):
 
 
 class Stack:
+    """Simple stack.
+
+    Raises
+    ------
+    EmptyStackError: when try to see or pop elements of empty stack.
+    """
     def __init__(self):
         self._arr = []
 
     def push(self, elem):
+        """Put element to the head of stack."""
         self._arr.append(elem)
 
     def pop(self):
-        try:
+        """Take element from the head of stack."""
+        if self._arr:
             return self._arr.pop()
-        except IndexError:
+        else:
+            raise EmptyStackError
+
+    def get_head(self):
+        """Return (but not delete_ element that is on the head of stack."""
+        if self._arr:
+            return self._arr[-1]
+        else:
             raise EmptyStackError
 
     def clear(self):
+        """Delete all elements from stack."""
         self._arr = []
 
     def __len__(self):
         return len(self._arr)
-
-
-class ReferencedToObject:
-    """Interface for objects that are referenced to other object"""
-
-    def __init__(self):
-        self._object_name = None
-
-    @contract(object_name='str')
-    def set_object_name(self, object_name: str):
-        """Set host object name."""
-        self._object_name = object_name
-
-    @contract(returns='str')
-    def get_object_name(self) -> str:
-        """Get host object name."""
-        return self._object_name
 
 
 class ReferencedToObjects:
@@ -141,10 +99,11 @@ class ReferencedToObjects:
             if len(object_names) != self._n_objects:
                 raise ValueError(
                     f'Len of object_names must be {self._n_objects}')
-
-        self._object_names = object_names
+            self._object_names = object_names
+        else:
+            raise RuntimeError('self._objects_names is None.')
 
     @contract(returns='list(str)')
     def get_object_names(self) -> list:
-        """Get host object name."""
+        """Get host object names."""
         return self._object_names

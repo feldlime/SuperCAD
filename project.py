@@ -2,13 +2,11 @@
 
 from contracts import contract
 import pickle
+from copy import deepcopy
 from typing import Dict
-from collections import defaultdict
 
 from figures import Figure, Point, Segment
 from bindings import (
-    Binding,
-    CentralBinding,
     SegmentStartBinding,
     SegmentEndBinding,
     SegmentCenterBinding,
@@ -16,9 +14,8 @@ from bindings import (
     create_bindings
 )
 from restrictions import Restriction
-from solve import EquationsSystem
+from solve import EquationsSystem, CannotSolveSystemError
 from utils import (
-    IncorrectParamError,
     IncorrectParamType,
     IncorrectParamValue,
     Stack,
@@ -62,6 +59,8 @@ class CADProject:
         self._state = ProjectState()
         self._history = ChangesStack()  # All changes (for undo)
         self._cancelled = ChangesStack()  # Cancelled changes (for redo)
+
+        self._commit()
 
     @property
     def _figures(self):
@@ -108,6 +107,11 @@ class CADProject:
             Figure to add. Must be already created with correct parameters.
         name: str or None, optional, default None
             Name of figure. If None or empty, will be generated automatically.
+
+        Returns
+        -------
+        name: str
+            Name that was given to figure.
         """
         if name is not None:
             if not self._is_valid_user_name(figure, name):
@@ -117,22 +121,27 @@ class CADProject:
         if self._is_name_exists('figure', name):
             raise IncorrectName(f'Name {name} is already exists.')
 
-        self._figures[name] = figure
-        self._bindings = create_bindings(self._figures)  # Slow but easy
+        try:
+            self._figures[name] = figure
+            self._bindings = create_bindings(self._figures)  # Slow but easy
+            self._system.add_figure_symbols(name, figure.base_parameters)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
-        self._system.add_figure_symbols(name, figure.base_parameters)
+        return name
 
-        self._commit()
-
-    @contract(figure_name='str', parameter='str', value='number')
-    def change_figure(self, figure_name: str, parameter: str, value: float):
+    @contract(figure_name='str', param='str', value='number')
+    def change_figure(self, figure_name: str, param: str, value: float):
         """Change one parameter of one figure.
 
         Parameters
         ----------
         figure_name: str
             Name of figure to change.
-        parameter: str
+        param: str
             Name of parameter to change.
         value: int or float
             New value for parameter.
@@ -142,13 +151,26 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
         figure = self._figures[figure_name]
-        if parameter not in figure.all_parameters:
+        if param not in figure.all_parameters:
             raise IncorrectParamValue(
                 f'Parameter must be one of {figure.all_parameters}')
 
-        # TODO: Change (use system, of course)
+        figure_symbols = self._system.get_symbols(figure_name)
+        equations = figure.get_setter_equations(figure_symbols, param, value)
 
-        self._commit()
+        current_values = self._get_values()
+        try:
+            new_values = self._system.solve_new(equations, current_values)
+        except CannotSolveSystemError as e:
+            raise e
+
+        try:
+            self._set_values(new_values)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     @contract(cursor_x='number', cursor_y='number')
     def move_figure(self, binding: PointBinding,
@@ -185,11 +207,16 @@ class CADProject:
             raise NotImplementedError
 
         current_values = self._get_values()
-        new_values = self._system.solve_optimization_task(
-            optimizing_values, current_values)
-        self._set_values(new_values)
+        try:
+            new_values = self._system.solve_optimization_task(
+                optimizing_values,
+                current_values
+            )
+        except CannotSolveSystemError as e:
+            raise e
 
-        self._commit()
+        # TODO: do commit / rollback from outside
+        self._set_values(new_values)
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
@@ -203,26 +230,30 @@ class CADProject:
         if figure_name not in self._figures:
             raise IncorrectParamValue(f'Invalid figure_name {figure_name}')
 
-        # Remove figure
-        self._figures.pop(figure_name)
+        try:
+            # Remove figure
+            self._figures.pop(figure_name)
 
-        # Remove bindings
-        self._bindings = create_bindings(self._figures)  # Slow but easy
+            # Remove bindings
+            self._bindings = create_bindings(self._figures)  # Slow but easy
 
-        # Remove restrictions
-        restrictions_to_remove = []
-        for name, restriction in self._restrictions.items():
-            if figure_name in restriction.get_objects_name():
-                restrictions_to_remove.append(name)
-        for restriction_name in restrictions_to_remove:
-            self._restrictions.pop(restriction_name)
+            # Remove restrictions
+            restrictions_to_remove = []
+            for name, restriction in self._restrictions.items():
+                if figure_name in restriction.get_objects_name():
+                    restrictions_to_remove.append(name)
+            for restriction_name in restrictions_to_remove:
+                self._restrictions.pop(restriction_name)
 
-        # Remove from system
-        self._system.remove_figure_symbols(figure_name)
-        for restriction_name in restrictions_to_remove:
-            self._system.remove_restriction_equations(restriction_name)
-
-        self._commit()
+            # Remove from system
+            self._system.remove_figure_symbols(figure_name)
+            for restriction_name in restrictions_to_remove:
+                self._system.remove_restriction_equations(restriction_name)
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     @contract(figures_names='tuple(str) | tuple(str,str)', name='str|None')
     def add_restriction(self, restriction: Restriction, figures_names: tuple,
@@ -267,19 +298,33 @@ class CADProject:
                 raise IncorrectParamValue(
                     f'Given figures must have types {types}')
 
-        # Add
-        self._restrictions[name] = restriction
-
         # Add to system
         figures_symbols = [self._system.get_symbols(figure_name)
                            for figure_name in figures_names]
         equations = restriction.get_equations(*figures_symbols)
-        self._system.add_restriction_equations(name, equations)
 
-        # Solve
-        # TODO
+        try:
+            self._system.add_restriction_equations(name, equations)
 
-        self._commit()
+            # Try solve
+            try:
+                new_values = self._system.solve()
+            except CannotSolveSystemError as e:
+                # Remove from system
+                self._system.remove_restriction_equations(name)
+                raise e
+
+            # Add
+            self._restrictions[name] = restriction
+
+            # Update values
+            self._set_values(new_values)
+
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     @contract(restriction_name='str')
     def remove_restriction(self, restriction_name: str):
@@ -294,25 +339,31 @@ class CADProject:
             raise IncorrectParamValue(f'Invalid restriction_name'
                                       f' {restriction_name}')
 
-        self._restrictions.pop(restriction_name)
+        try:
+            self._restrictions.pop(restriction_name)
+            self._system.remove_restriction_equations(restriction_name)
 
-        self._system.remove_restriction_equations(restriction_name)
-
-        self._commit()
+        except Exception as e:
+            self._rollback()
+            raise e
+        else:
+            self._commit()
 
     def undo(self):
-        """Cancel action"""
-        try:
-            last_state = self._history.pop()
-            self._cancelled.push(last_state)
-        except EmptyStackError:
+        """Cancel action."""
+        if len(self._history) > 1:
+            self._history.pop()  # Current state (equal to self._state)
+            self._cancelled.push(self._state)
+            self._state = self._history.get_head()
+        else:
             raise ActionImpossible
 
     def redo(self):
-        """Revert action"""
+        """Revert action."""
         try:
             last_cancelled_state = self._cancelled.pop()
             self._history.push(last_cancelled_state)
+            self._state = last_cancelled_state
         except EmptyStackError:
             raise ActionImpossible
 
@@ -352,9 +403,17 @@ class CADProject:
         self._history.clear()
         self._cancelled.clear()
 
+    def commit(self):
+        """Commit changes."""
+        self._commit()
+
+    def rollback(self):
+        """Rollback changes."""
+        self._rollback()
+
     def _generate_name(self, obj) -> str:
         """Generate new names for figures and bindings"""
-        type_str = str(type(obj))
+        type_str = type(obj).__name__
 
         if isinstance(obj, Figure):
             names_list = list(self._figures.keys())
@@ -366,7 +425,8 @@ class CADProject:
         nums = [int(name.split('_')[-1])
                 for name in names_list if name.startswith(type_str)]
 
-        name = f'{type_str}_{max(nums) + 1}'
+        num = max(nums) + 1 if nums else 1
+        name = f'{type_str}_{num}'
         return name
 
     @staticmethod
@@ -376,8 +436,13 @@ class CADProject:
         if not name:
             return False
 
-        type_str = str(type(obj))
-        return not name.startswith(type_str)
+        if name.startswith(type(obj).__name__):
+            return False
+
+        if len(name.split()) > 1:
+            return False
+
+        return True
 
     @contract(type_='str', name='str')
     def _is_name_exists(self, type_: str, name: str):
@@ -420,9 +485,15 @@ class CADProject:
                 raise ValueError(
                     f'Figure with name {figure_name} does not exist.')
 
-            self._figures[figure_name].set_params(**figure_values)
+            for param_name, value in figure_values.items():
+                self._figures[figure_name].set_param(param_name, value)
 
     def _commit(self):
         """Save current state to history."""
-        self._history.push(self._state)
+        self._history.push(deepcopy(self._state))
         self._cancelled.clear()
+
+    def _rollback(self):
+        """Load last state from history."""
+        self._state = deepcopy(self._history.get_head())
+        # self._cancelled.clear()  # ???
