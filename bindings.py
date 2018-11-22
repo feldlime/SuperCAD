@@ -1,7 +1,6 @@
 """Module with classes of geometry bindings."""
 
 from utils import (
-    validate_positive_num,
     segment_length,
     ReferencedToObjects,
     BIG_DISTANCE,
@@ -96,11 +95,10 @@ class CircleBinding(CentralBinding):
         Radius of zone to bind.
     """
 
-    @contract(radius='number')
+    @contract(radius='number, >0')
     def __init__(self, radius, *args):
         super().__init__(*args)
 
-        validate_positive_num(radius, 'radius')
         self._radius = radius
 
     @contract(x='number', y='number', returns='float|None')
@@ -143,7 +141,7 @@ class PointBinding(CircleBinding, ReferencedToObjects):
 
     _n_objects = 1
 
-    @contract(radius='number', point='$Point')
+    @contract(radius='number, >0', point='$Point')
     def __init__(self, radius, point):
         super().__init__(radius)
         if not isinstance(point, Point):
@@ -167,7 +165,7 @@ class SegmentStartBinding(CircleBinding, ReferencedToObjects):
     """
     _n_objects = 1
 
-    @contract(radius='number', segment='$Segment')
+    @contract(radius='number, >0', segment='$Segment')
     def __init__(self, radius, segment):
         super().__init__(radius)
         if not isinstance(segment, Segment):
@@ -193,7 +191,7 @@ class SegmentEndBinding(CircleBinding, ReferencedToObjects):
     """
     _n_objects = 1
 
-    @contract(radius='number', segment='$Segment')
+    @contract(radius='number, >0', segment='$Segment')
     def __init__(self, radius, segment):
         super().__init__(radius)
         if not isinstance(segment, Segment):
@@ -219,7 +217,7 @@ class SegmentCenterBinding(CircleBinding, ReferencedToObjects):
     """
     _n_objects = 1
 
-    @contract(radius='number', segment='$Segment')
+    @contract(radius='number, >0', segment='$Segment')
     def __init__(self, radius, segment):
         super().__init__(radius)
         if not isinstance(segment, Segment):
@@ -247,7 +245,7 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
     """
     _n_objects = 2
 
-    @contract(radius='number', segment1='$Segment', segment2='$Segment')
+    @contract(radius='number, >0', segment1='$Segment', segment2='$Segment')
     def __init__(self, radius, segment1, segment2):
         super().__init__(radius)
         if not isinstance(segment1, Segment):
@@ -322,10 +320,9 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
     """
     _n_objects = 1
 
-    @contract(margin='number', segment='$Segment')
+    @contract(margin='number, >0', segment='$Segment')
     def __init__(self, margin, segment):
         super().__init__()
-        validate_positive_num(margin, 'margin')
         self._margin = margin
         if not isinstance(segment, Segment):
             raise TypeError(
@@ -443,8 +440,8 @@ def choose_best_bindings(bindings: list, x, y) -> list:
     return best_bindings
 
 
-@contract(figures='dict[N]', circle_bindings_radius='number,>0',
-          segment_bindings_margin='number,>0', returns='list[>=N]')
+@contract(figures='dict[N]', circle_bindings_radius='number, >0',
+          segment_bindings_margin='number, >0', returns='list[>=N]')
 def create_bindings(figures: dict, circle_bindings_radius=8,
                     segment_bindings_margin=2) -> list:
     """Create all bindings for all figures.
