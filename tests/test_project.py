@@ -1,11 +1,10 @@
-import pytest
-import numpy as np
-import numpy.random as random
-
+from restrictions import *
 from project import CADProject
 from figures import Point, Segment
-from restrictions import *
-from
+
+import pytest
+import numpy as np
+
 from utils import (
     IncorrectParamType,
     IncorrectParamValue,
@@ -41,7 +40,7 @@ def assert_sequences_equal(s1, s2):
         assert e1 == e2
 
 
-class TestProject():
+class TestProject:
     def test_full_pass(self):
         project = CADProject()
 
@@ -66,7 +65,8 @@ class TestProject():
                 'x': 1
             }
         }
-        # Try move
+
+        # Move
         # project.move_figure()
 
 

@@ -5,9 +5,7 @@ from contracts import ContractNotRespected
 
 from figures import Figure, Point, Segment
 from utils import (
-    IncorrectParamType,
     IncorrectParamValue,
-    IncorrectParamError
 )
 
 

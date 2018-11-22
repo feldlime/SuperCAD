@@ -85,7 +85,7 @@ class Figure:
         """Set parameter of figure."""
         raise NotImplementedError
 
-    def get_setter_equations(self, symbols: list, param: str, value: float):
+    def get_setter_equations(self, symbols: dict, param: str, value: float):
         raise NotImplementedError
 
     def __repr__(self):
@@ -184,8 +184,8 @@ class Point(Figure):
 
         return self
 
-    @contract(symbols='list[2]', param='str', value='number', returns='list')
-    def get_setter_equations(self, symbols: list, param: str, value: float):
+    @contract(symbols='dict[2]', param='str', value='number', returns='list')
+    def get_setter_equations(self, symbols: dict, param: str, value: float):
         """Return equations for setting parameters of point.
 
         Parameters
@@ -208,7 +208,7 @@ class Point(Figure):
         ------
         IncorrectParamValue: if param is incorrect.
         """
-        x, y = symbols
+        x, y = symbols['x'], symbols['y']
         if param == 'x':
             return [sympy.Eq(x, value)]
         elif param == 'y':
@@ -341,8 +341,8 @@ class Segment(Figure):
 
         return self
 
-    @contract(symbols='list[4]', param='str', value='number', returns='list')
-    def get_setter_equations(self, symbols: list, param: str, value: float):
+    @contract(symbols='dict[4]', param='str', value='number', returns='list')
+    def get_setter_equations(self, symbols: dict, param: str, value: float):
         """Return equations for setting parameters of segment.
 
         Parameters
@@ -365,7 +365,8 @@ class Segment(Figure):
         ------
             IncorrectParamValue: if param is incorrect.
         """
-        x1, y1, x2, y2 = symbols
+        x1, y1 = symbols['x1'], symbols['y1']
+        x2, y2 = symbols['x2'], symbols['y2']
         if param == 'x1':
             return [sympy.Eq(x1, value)]
         elif param == 'y1':

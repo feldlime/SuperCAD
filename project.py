@@ -133,7 +133,7 @@ class CADProject:
 
         return name
 
-    @contract(figure_name='str', parameter='str', value='number')
+    @contract(figure_name='str', param='str', value='number')
     def change_figure(self, figure_name: str, param: str, value: float):
         """Change one parameter of one figure.
 
@@ -413,7 +413,7 @@ class CADProject:
 
     def _generate_name(self, obj) -> str:
         """Generate new names for figures and bindings"""
-        type_str = str(type(obj))
+        type_str = type(obj).__name__
 
         if isinstance(obj, Figure):
             names_list = list(self._figures.keys())
@@ -425,7 +425,8 @@ class CADProject:
         nums = [int(name.split('_')[-1])
                 for name in names_list if name.startswith(type_str)]
 
-        name = f'{type_str}_{max(nums) + 1}'
+        num = max(nums) + 1 if nums else 1
+        name = f'{type_str}_{num}'
         return name
 
     @staticmethod
@@ -435,8 +436,13 @@ class CADProject:
         if not name:
             return False
 
-        type_str = str(type(obj))
-        return not name.startswith(type_str)
+        if name.startswith(type(obj).__name__):
+            return False
+
+        if len(name.split()) > 1:
+            return False
+
+        return True
 
     @contract(type_='str', name='str')
     def _is_name_exists(self, type_: str, name: str):
