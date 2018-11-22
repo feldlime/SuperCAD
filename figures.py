@@ -2,12 +2,10 @@
 
 import numpy as np
 import sympy
+from contracts import contract
 
 from utils import (
     IncorrectParamValue,
-    validate_num,
-    validate_positive_num,
-    validate_coordinates,
     segment_length,
     segment_angle,
     simplify_angle
@@ -27,10 +25,8 @@ class Figure:
     all_parameters = ['base_x', 'base_y', 'angle']
     base_parameters = []
 
+    @contract(base='tuple(number, number) | None', angle='number | None')
     def __init__(self, base=(0, 0), angle=0, **kwargs):
-        validate_coordinates(base, 'Base must be a tuple of 2 numbers.')
-        validate_num(angle, 'angle')
-
         self._base = (float(base[0]), float(base[1]))
         self._i_angle = simplify_angle(float(angle))
 
@@ -39,9 +35,11 @@ class Figure:
         return self._i_angle
 
     @_angle.setter
+    @contract(value='number')
     def _angle(self, value):
         self._i_angle = simplify_angle(float(value))
 
+    @contract(dx='number | None', dy='number | None')
     def move(self, dx=0, dy=0):
         """Move figure.
 
@@ -56,11 +54,10 @@ class Figure:
         ------
          self
         """
-        validate_num(dx, 'dx')
-        validate_num(dy, 'dy')
         self._base = self._base[0] + dx, self._base[1] + dy
         return self
 
+    @contract(angle='number')
     def rotate(self, angle):
         """Rotate figure.
 
@@ -73,7 +70,6 @@ class Figure:
         ------
          self
         """
-        validate_num(angle, 'angle')
         self._angle += angle
         return self
 
@@ -109,6 +105,7 @@ class Point(Figure):
     all_parameters = ['x', 'y']
     base_parameters = ['x', 'y']
 
+    @contract(coordinates='tuple(number, number) | None')
     def __init__(self, coordinates=(0, 0)):
         super().__init__(base=coordinates)
 
@@ -116,6 +113,7 @@ class Point(Figure):
         """Not implemented here."""
         return NotImplemented
 
+    @contract(returns='tuple(float, float)')
     def get_base_representation(self):
         """Return special representation of figure that not contains angles.
 
@@ -126,6 +124,7 @@ class Point(Figure):
         return self._base
 
     @classmethod
+    @contract(x='number', y='number')
     def from_coordinates(cls, x, y):
         """Creates point from its coordinates.
 
@@ -140,10 +139,9 @@ class Point(Figure):
         ------
         point: Point instance
         """
-        validate_num(x, 'x')
-        validate_num(y, 'y')
         return cls(coordinates=(x, y))
 
+    @contract(returns='dict(str: float)')
     def get_params(self):
         """Return all parameters.
 
@@ -155,19 +153,30 @@ class Point(Figure):
         return {'x': self._base[0],
                 'y': self._base[1]}
 
+    @contract(param_name='str', value='number')
     def set_param(self, param_name, value):
         """Set parameter of figure.
+
+        Parameters
+        ----------
+        param_name: str
+            Name of parameter to set value.
+            Must be in ['x', 'y'].
+        value: int or float
+            Value too set.
 
         Returns
         -------
         self
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
         """
 
         if param_name == 'x':
-            validate_num(value, 'x')
             self._base = (float(value), self._base[1])
         elif param_name == 'y':
-            validate_num(value, 'y')
             self._base = (self._base[0], float(value))
         else:
             raise IncorrectParamValue(
@@ -175,7 +184,30 @@ class Point(Figure):
 
         return self
 
+    @contract(symbols='list[2]', param='str', value='number', returns='list')
     def get_setter_equations(self, symbols: list, param: str, value: float):
+        """Return equations for setting parameters of point.
+
+        Parameters
+        ----------
+        symbols: list[sympy.Symbol]
+            Symbols for segment.
+            Must contain 2 elements: symbols for x, y.
+        param: str
+            Name of parameter to set value.
+            Must be in ['x', 'y'].
+        value: int or float
+            Value to set.
+
+        Returns
+        -------
+        equations: list[sympy.Eq]
+            List of equations.
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
+        """
         x, y = symbols
         if param == 'x':
             return [sympy.Eq(x, value)]
@@ -200,9 +232,10 @@ class Segment(Figure):
     all_parameters = ['x1', 'y1', 'x2', 'y2', 'length', 'angle']
     base_parameters = ['x1', 'y1', 'x2', 'y2']
 
+    @contract(start='tuple(number, number) | None',
+              angle='number | None', length='number, >0 | None')
     def __init__(self, start=(0, 0), angle=0, length=1):
         super().__init__(start, angle)
-        validate_positive_num(length, 'length')
         self._i_length = float(length)
 
     @property
@@ -210,11 +243,12 @@ class Segment(Figure):
         return self._i_length
 
     @_length.setter
+    @contract(value='number, >0')
     def _length(self, value):
-        validate_positive_num(value, 'length')
         self._i_length = float(value)
 
     @classmethod
+    @contract(x1='number', y1='number', x2='number', y2='number')
     def from_coordinates(cls, x1, y1, x2, y2):
         """Create segment from its end points.
 
@@ -227,16 +261,12 @@ class Segment(Figure):
         y2: int or float
             Coordinate y of the end of segment.
         """
-        validate_num(x1, 'x1')
-        validate_num(y1, 'y1')
-        validate_num(x2, 'x2')
-        validate_num(y2, 'y2')
-
         length = segment_length(x1, y1, x2, y2)
         angle = segment_angle(x1, y1, x2, y2)
 
         return cls(start=(x1, y1), angle=angle, length=length)
 
+    @contract(returns='tuple(float, float, float, float)')
     def get_base_representation(self):
         """Return special representation of figure that not contains angles.
 
@@ -249,6 +279,7 @@ class Segment(Figure):
         y2 = y1 + self._length * np.sin(self._angle)
         return x1, y1, x2, y2
 
+    @contract(returns='dict(str: float)')
     def get_params(self):
         """Return all parameters.
 
@@ -266,12 +297,26 @@ class Segment(Figure):
             'angle': self._angle
         }
 
+    @contract(param_name='str', value='number')
     def set_param(self, param_name, value):
         """Set parameter of figure.
-        Maximum 4 parameters can be set.
-        """
 
-        validate_num(value, param_name)
+        Parameters
+        ----------
+        param_name: str
+            Name of parameter to set value.
+            Must be in ['x1', 'y1', 'x2', 'y2', 'length', 'angle'].
+        value: int or float
+            Value too set.
+
+        Returns
+        -------
+        self
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
+        """
 
         if param_name == 'x1':
             self._base = (float(value), self._base[1])
@@ -296,7 +341,30 @@ class Segment(Figure):
 
         return self
 
+    @contract(symbols='list[4]', param='str', value='number', returns='list')
     def get_setter_equations(self, symbols: list, param: str, value: float):
+        """Return equations for setting parameters of segment.
+
+        Parameters
+        ----------
+        symbols: list[sympy.Symbol]
+            Symbols for segment.
+            Must contain 4 elements: symbols for x1, y1, x2, y2.
+        param: str
+            Name of parameter to set value.
+            Must be in ['x1', 'y1', 'x2', 'y2', 'length', 'angle'].
+        value: int or float
+            Value to set.
+
+        Returns
+        -------
+        equations: list[sympy.Eq]
+            List of equations.
+
+        Raises
+        ------
+            IncorrectParamValue: if param is incorrect.
+        """
         x1, y1, x2, y2 = symbols
         if param == 'x1':
             return [sympy.Eq(x1, value)]

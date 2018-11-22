@@ -1,6 +1,7 @@
 import pytest
 from numpy import isclose, pi
 import numpy.random as random
+from contracts import ContractNotRespected
 
 from figures import Figure, Point, Segment
 from utils import (
@@ -23,9 +24,9 @@ class TestFigure:
         assert isinstance(f, Figure)
 
     def test_incorrect_creation(self):
-        with pytest.raises(IncorrectParamValue):
+        with pytest.raises(ContractNotRespected):
             Figure(('1', 2), 1)
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(ContractNotRespected):
             Figure((1, 2), '1')
 
     def test_representation(self):
@@ -35,14 +36,14 @@ class TestFigure:
 
     def test_incorrect_moving(self):
         f = Figure()
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(ContractNotRespected):
             f.move('1', 2)
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(ContractNotRespected):
             f.move(1, '2')
 
     def test_incorrect_rotation(self):
         f = Figure()
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(ContractNotRespected):
             f.rotate('2')
 
 
@@ -117,14 +118,14 @@ class TestSegment:
         assert all(isclose((1, 2, 1, 5), rep))
 
     def test_incorrect_creation(self):
-        with pytest.raises(IncorrectParamValue):
+        with pytest.raises(ContractNotRespected):
             Segment(('1', 2), 1)
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(ContractNotRespected):
             Segment((1, 2), '1')
-        with pytest.raises(IncorrectParamType):
+        with pytest.raises(ContractNotRespected):
             Segment((1, 1), 1, '1')
-        for i in range(-1, 1):
-            with pytest.raises(IncorrectParamValue):
+        for i in [-1, 0]:
+            with pytest.raises(ContractNotRespected):
                 Segment((1, 2), 0, i)
 
     def test_create_from_point(self):
@@ -136,7 +137,7 @@ class TestSegment:
         for i in range(4):
             a = [1, 1, 1, 1]
             a[i] = '1'
-            with pytest.raises(IncorrectParamError):
+            with pytest.raises(ContractNotRespected):
                 Segment.from_coordinates(*a)
 
     def test_move(self):
