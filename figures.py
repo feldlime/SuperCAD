@@ -243,7 +243,7 @@ class Segment(Figure):
         return self._i_length
 
     @_length.setter
-    @contract(value='number, >0')
+    @contract(value='number, > -0.00001')
     def _length(self, value):
         self._i_length = float(value)
 

@@ -23,6 +23,10 @@ from utils import (
 )
 
 
+CIRCLE_BINDING_RADIUS = 8
+SEGMENT_BINDING_MARGIN = 2
+
+
 class IncorrectName(IncorrectParamValue):
     pass
 
@@ -123,11 +127,15 @@ class CADProject:
 
         try:
             self._figures[name] = figure
-            self._bindings = create_bindings(self._figures)  # Slow but easy
+            self._bindings = create_bindings(
+                self._figures,
+                circle_bindings_radius=CIRCLE_BINDING_RADIUS,
+                segment_bindings_margin=SEGMENT_BINDING_MARGIN
+            )  # Slow but easy
             self._system.add_figure_symbols(name, figure.base_parameters)
-        except Exception as e:
+        except:
             self._rollback()
-            raise e
+            raise
         else:
             self._commit()
 
@@ -197,6 +205,8 @@ class CADProject:
             raise RuntimeError(
                 'Binding references to figure that does not exist.')
 
+        cursor_x, cursor_y = float(cursor_x), float(cursor_y)
+
         if isinstance(binding, PointBinding):
             optimizing_values = {obj_name: {'x': cursor_x, 'y': cursor_y}}
         elif isinstance(binding, SegmentStartBinding):
@@ -204,6 +214,7 @@ class CADProject:
         elif isinstance(binding, SegmentEndBinding):
             optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
         else:
+            # TODO: SegmentCenterBinding
             raise NotImplementedError
 
         current_values = self._get_values()
@@ -215,8 +226,8 @@ class CADProject:
         except CannotSolveSystemError as e:
             raise e
 
-        # TODO: do commit / rollback from outside
         self._set_values(new_values)
+        # TODO: do commit / rollback from outside
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
@@ -249,9 +260,9 @@ class CADProject:
             self._system.remove_figure_symbols(figure_name)
             for restriction_name in restrictions_to_remove:
                 self._system.remove_restriction_equations(restriction_name)
-        except Exception as e:
+        except:
             self._rollback()
-            raise e
+            raise
         else:
             self._commit()
 
@@ -303,12 +314,14 @@ class CADProject:
                            for figure_name in figures_names]
         equations = restriction.get_equations(*figures_symbols)
 
+        current_values = self._get_values()
+
         try:
             self._system.add_restriction_equations(name, equations)
 
             # Try solve
             try:
-                new_values = self._system.solve()
+                new_values = self._system.solve(current_values)
             except CannotSolveSystemError as e:
                 # Remove from system
                 self._system.remove_restriction_equations(name)
@@ -320,11 +333,13 @@ class CADProject:
             # Update values
             self._set_values(new_values)
 
-        except Exception as e:
+        except:
             self._rollback()
-            raise e
+            raise
         else:
             self._commit()
+
+        return name
 
     @contract(restriction_name='str')
     def remove_restriction(self, restriction_name: str):
@@ -343,9 +358,9 @@ class CADProject:
             self._restrictions.pop(restriction_name)
             self._system.remove_restriction_equations(restriction_name)
 
-        except Exception as e:
+        except:
             self._rollback()
-            raise e
+            raise
         else:
             self._commit()
 
@@ -354,7 +369,7 @@ class CADProject:
         if len(self._history) > 1:
             self._history.pop()  # Current state (equal to self._state)
             self._cancelled.push(self._state)
-            self._state = self._history.get_head()
+            self._state = deepcopy(self._history.get_head())
         else:
             raise ActionImpossible
 
@@ -362,37 +377,32 @@ class CADProject:
         """Revert action."""
         try:
             last_cancelled_state = self._cancelled.pop()
-            self._history.push(last_cancelled_state)
+            self._history.push(deepcopy(last_cancelled_state))
             self._state = last_cancelled_state
         except EmptyStackError:
             raise ActionImpossible
 
     @contract(filename='str')
     def save(self, filename: str):
-        """Save system state to .pkl file.
+        """Save system state to .scad file.
 
         Parameters
         ----------
         filename: str
-            Name of file to save (without extension).
+            Name of file to save (with extension).
         """
-        filename = filename + '.pkl'
         with open(filename, 'wb') as f:
             pickle.dump(self._state, f)
 
     @contract(filename='str')
     def load(self, filename: str):
-        """Load system state from file.
+        """Load system state from .scad file.
 
         Parameters
         ----------
         filename: str
             Name of file to load.
-            Extension must be .pkl.
         """
-        if not filename.endswith('.pkl'):
-            raise IncorrectParamValue('File must have .pkl extension.')
-
         with open(filename, 'rb') as f:
             state = pickle.load(f)
 

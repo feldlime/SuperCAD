@@ -108,7 +108,7 @@ class SystemIncompatibleError(SystemOverfittedError):
     pass
 
 
-class ExistingSubstitutionError(Exception):
+class SubstitutionError(Exception):
     pass
 
 
@@ -138,30 +138,77 @@ class Substitutor:
         """
         self._symbols_names = symbols_names
 
-        # Define and save simple equations
+        # ### Define and save simple equations
+
+        # At first, go through all simple equations,
+        # swap if, e.g. 5 = 'x',
+        # if value is number, save it to self._subs
+        # else save to symbols dict
+        symbols_dict = dict()
         for eq in system:
             if self._is_simple_equation(eq):
                 key = str(eq.lhs)
                 value = str(eq.rhs)
-                if re.fullmatch(number_pattern, value):
-                    value = float(value)
 
-                if key not in self._subs:
-                    self._subs.update({key: value})
+                if re.fullmatch(number_pattern, key):
+                    if value in self._subs:
+                        raise SubstitutionError('Two same keys.')
+                    self._subs[value] = float(key)
+                elif re.fullmatch(number_pattern, value):
+                    if key in self._subs:
+                        raise SubstitutionError('Two same keys.')
+                    self._subs[key] = float(value)
                 else:
-                    raise ExistingSubstitutionError
+                    if key in symbols_dict and symbols_dict[key] == value:
+                        # Case when value in keys() and key in values() will
+                        # be treated later
+                        raise SubstitutionError('Two same equations.')
+                    symbols_dict[key] = value
 
-        # Do substitutions into self._subs
-        # E.g. {'x': 'y', 'y': 5.0} -> {'x': 5.0, 'y': 5.0}
-        were_changes = True
-        while were_changes:
-            were_changes = False
-            new_subs = dict()
-            for k, v in self._subs.items():
-                if isinstance(v, str) and v in self._subs:
-                    new_subs[k] = self._subs[v]
-                    were_changes = True
-            self._subs.update(new_subs)
+        # Then treat cases with 2 values
+        # So much code to treat different cases
+        # E.g. x=y, y=z, y=5 -> x: 5, y: 5, z: 5
+
+        # Graph to find connected_components and cycles
+        graph = nx.Graph()
+        for key, value in symbols_dict.items():
+            if (key, value) in graph.edges:  # order is not important
+                raise SubstitutionError('Two same equations.')
+            if key not in graph.nodes:
+                graph.add_node(key)
+            if value not in graph.nodes:
+                graph.add_node(value)
+            graph.add_edge(key, value)
+
+        # If there is cycle in graph, system is underfited (a=b, b=c, c=a)
+        try:
+            nx.find_cycle(graph)
+        except nx.NetworkXNoCycle:
+            pass
+        else:
+            raise SubstitutionError('Cycle in equations graph.')
+
+        subgraphs = [graph.subgraph(c).copy()
+                     for c in nx.connected_components(graph)]
+        for subgraph in subgraphs:
+            nodes_in_subs = [node for node in subgraph.nodes
+                             if node in self._subs]
+
+            if len(nodes_in_subs) > 1:  # overfitted
+                raise SubstitutionError('Substitutor get two same keys.')
+
+            elif len(nodes_in_subs) == 1:  # has value for all nodes
+                key_node = nodes_in_subs[0]
+                for node in subgraph.nodes:
+                    if node != key_node:
+                        self._subs[node] = self._subs[key_node]
+
+            else:  # len == 0 (no value for nodes)
+                iter_ = iter(subgraph.nodes)
+                key_node = next(iter_)
+                for node in iter_:
+                    if node != key_node:
+                        self._subs[node] = key_node
 
         return self
 
@@ -220,11 +267,20 @@ class Substitutor:
     def _is_simple_equation(self, eq):
         """Check if equation is simple (looks like x = y or x = 5)."""
         l_str, r_str = str(eq.lhs), str(eq.rhs)
-        if l_str in self._symbols_names \
-                and (r_str in self._symbols_names
-                     or re.fullmatch(number_pattern, r_str)):
+
+        if l_str in self._symbols_names:
+            ltype = 'sym'
+        elif re.fullmatch(number_pattern, l_str):
+            ltype = 'num'
+        else:
+            return False
+
+        if r_str in self._symbols_names:
             return True
-        return False
+        elif re.fullmatch(number_pattern, r_str) and ltype == 'sym':
+            return True
+        else:
+            return False
 
 
 class EquationsSystem:
@@ -567,7 +623,7 @@ class EquationsSystem:
             'symbols.keys() must be equal to best_values.keys()'
 
         if len(system) == len(symbols):  # Optimization
-            result = self._solve_square_system(system, symbols)
+            result = self._solve_square_system(system, symbols, desired_values)
             result = {name: value for name, value in result.items()}
             return result
 
@@ -590,15 +646,19 @@ class EquationsSystem:
 
         equations.extend(system)
         lambdas_dict.update(symbols)
-        result = self._solve_square_system(equations, lambdas_dict)
+        result = self._solve_square_system(equations, lambdas_dict,
+                                           desired_values)
 
         result = {name: value for name, value in result.items()
                   if split_full_name(name)[0] != 'lambda'}
         return result
 
     @classmethod
-    @contract(system='list[N]', symbols_dict='dict[N]', returns='dict[N]')
-    def _solve_square_system(cls, system: list, symbols_dict: dict):
+    @contract(system='list[N]', symbols_dict='dict[N]',
+              desired_values='dict | None', returns='dict[N]')
+    def _solve_square_system(cls, system: list, symbols_dict: dict,
+                             desired_values: dict = None):
+        """Desired values only for setting initial conditions."""
         symbols_names = list(symbols_dict.keys())
 
         # Simplify by substitutions
@@ -606,9 +666,8 @@ class EquationsSystem:
 
         try:
             substitutor.fit(system, symbols_names)
-        except ExistingSubstitutionError:
-            raise SystemOverfittedError(
-                'Two substitutions with same keys were defined')
+        except SubstitutionError as e:
+            raise CannotSolveSystemError(f'{type(e)}: {e.args}')
 
         simplified_system = substitutor.sub(system)
 
@@ -639,9 +698,16 @@ class EquationsSystem:
             system_function = \
                 cls._system_to_function(canonical_system, used_symbols)
 
+            # Prepare ini values
+            ini_values = list(np.random.random(len(used_symbols)))
+            if desired_values is not None:
+                for i, symbol_name in enumerate(used_symbols_names):
+                    if symbol_name in desired_values:
+                        ini_values[i] = desired_values[symbol_name]
+
             # Solve
-            init = np.random.random(len(used_symbols))
-            solution = cls._solve_numeric(system_function, init)
+            solution = cls._solve_numeric(
+                system_function, np.array(ini_values))
         else:
             solution = []
 
@@ -671,12 +737,17 @@ class EquationsSystem:
 
     @staticmethod
     def _solve_numeric(fun: callable, init: np.ndarray) -> np.ndarray:
-        result = sp_optimize.fsolve(fun, init, full_output=True)
-
+        result = sp_optimize.fsolve(fun, init, full_output=True, maxfev=1000)
         if result[2] != 1:
             raise CannotSolveSystemError(result[3])
+        res = result[0]
 
-        return result[0]
+        # result = sp_optimize.root(fun, init)
+        # if not result.success:
+        #     raise CannotSolveSystemError(result.message)
+        # res = result.x
+
+        return res
 
     def _update_graph(self):
         graph = nx.MultiGraph()
