@@ -18,7 +18,7 @@ class Sts:
     DRAWING_SEGMENT = 2
     MOVING_FIGURE = 3
 
-class FS(Sts):  # Figure statuses
+# class FS(Sts):  # Figure statuses
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -37,8 +37,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         super().__init__()
 
         self._window = window
+        self.setupUi(self._window)
+
+
         self._project = CADProject()
-        self._glwindow_proc = GLWindowProcessor(window.work_plane)
+        self._glwindow_proc = GLWindowProcessor(self.work_plane)
         self._interface_proc = InterfaceProcessor()
 
         self._status = Sts.NOTHING
@@ -57,18 +60,20 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._setup_ui()
         self._setup_handlers()
 
+
     def _setup_ui(self):
         self.setupUi(self._window)
 
         self.center = (
-                self._window.work_plane.height() // 2,
-                self._window.work_plane.height() // 2
+                self.work_plane.height() // 2,
+                self.work_plane.height() // 2
         )
 
-        self.widget_list_objects.hide()
-        self.hide_all_footer_widgets()
+        self.widget_elements_table.hide()
+        self._hide_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
-            self._interface_proc._trigger_)
+            lambda ev: self._interface_proc.trigger_widget(
+                self.widget_elements_table, ev))
 
         # TODO: Remove unnecessary (duplicate design.py)
         self._window.setAutoFillBackground(True)
@@ -79,8 +84,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._window.setGeometry(QtCore.QRect(
             0,
             0,
-            self._window.work_plane.width(),
-            self._window.work_plane.height())
+            self.work_plane.width(),
+            self.work_plane.height())
         )
 
         size_policy = QtWidgets.QSizePolicy(
@@ -98,15 +103,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
         for button_name, widget_name in self._buttons_to_widgets_dict.items():
             button = getattr(self, button_name)
             widget = getattr(self, widget_name)
-            button.clicked['bool'].connect(self._trigger_widget(widget))
+            button.clicked['bool'].connect(lambda ev: self._trigger_widget(
+                button, ev))
 
     @property
-    def _footer_widgets(self):
-        return list(self._buttons_to_widgets_dict.values())
+    def _footer_widgets(self) -> dict:
+        widgets = dict()
+        for w_name in self._buttons_to_widgets_dict.values():
+            widgets[w_name] = getattr(self, w_name)
+        return widgets
 
     @property
     def _left_buttons(self):
-        return list(self._buttons_to_widgets_dict.keys())
+        buttons = dict()
+        for b_name in self._buttons_to_widgets_dict.keys():
+            buttons[b_name] = getattr(self, b_name)
+        return buttons
 
     def mouse_xy(self, event):
         return event.x() - self.center[0], event.y() - self.center[1]
@@ -117,11 +129,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._interface_proc.trigger_widget(widget, show)
 
     def _hide_footer_widgets(self):
-        for widget in self._footer_widgets:
+        for w_name, widget in self._footer_widgets.items():
             self._interface_proc.trigger_widget(widget, False)
 
     def _uncheck_left_buttons(self):
-        for button in self._left_buttons:
+        for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
 
     def animate(self):
