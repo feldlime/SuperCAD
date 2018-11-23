@@ -157,30 +157,33 @@ class TestProject:
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
-        n_attempts = 100
+        n_attempts = 20
         n_successes = 0
         for _ in range(n_attempts):
-            project.change_figure(segment1_name, 'length', 7)
+            new_len = np.random.randint(1, 10)
+            project.change_figure(segment1_name, 'length', new_len)
             print(project.figures[segment1_name].get_base_representation())
             answer_1 = {
                 point1_name: (1, 2),
                 point2_name: (5, 6),
-                segment1_name: (1.5, 0, 8.5, 0)
+                segment1_name: ((10-new_len) / 2, 0, 10 - (10-new_len) / 2, 0)
             }
             answer_2 = {
                 point1_name: (1, 2),
                 point2_name: (5, 6),
-                segment1_name: (0, 0, 7, 0)
+                segment1_name: (0, 0, new_len, 0)
             }
             answer_3 = {
                 point1_name: (1, 2),
                 point2_name: (5, 6),
-                segment1_name: (3, 0, 10, 0)
+                segment1_name: (10 - new_len, 0, 10, 0)
             }
             if self._is_figures_correct(project.figures, answer_1) \
                     or self._is_figures_correct(project.figures, answer_2) \
                     or self._is_figures_correct(project.figures, answer_3):
                 n_successes += 1
+            project.undo()
+
         print(f'{n_successes} successes from {n_attempts} attempts')
         assert n_successes / n_attempts > 0.7
 
