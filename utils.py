@@ -35,7 +35,7 @@ def segment_angle(x1, y1, x2, y2):
     dx, dy = x2 - x1, y2 - y1
     if dx == 0:
         if dy == 0:
-            return np.nan
+            return 0
         angle = np.pi / 2 if dy > 0 else -np.pi / 2
     elif dx > 0:
         angle = np.arctan(dy / dx)
