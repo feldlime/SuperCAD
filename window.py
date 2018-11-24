@@ -1,15 +1,13 @@
 """Module with main class of application that manage system and picture."""
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QTimer
+
 
 from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
 from project import CADProject, ActionImpossible
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow
-from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import Qt
-from PyQt5 import QtCore
+
 from design import Ui_window
+import logging
 
 
 class Sts:
@@ -20,54 +18,41 @@ class Sts:
 
 # class FS(Sts):  # Figure statuses
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        # noinspection PyArgumentList
-        super().__init__()
-
-        self._content = WindowContent(self)
-
-        timer = QTimer(self)
-        timer.timeout.connect(self._content.animate)
-        timer.start(1)
-
 
 class WindowContent(QOpenGLWidget, Ui_window):
     def __init__(self, window: QMainWindow):
-        super().__init__()
+        self._logger = logging.getLogger('WindowContent')
 
+        # Set key private attributes
         self._window = window
-        self.setupUi(self._window)
-
-
         self._project = CADProject()
-        self._glwindow_proc = GLWindowProcessor(self.work_plane)
+        self._glwindow_proc = GLWindowProcessor(self)
         self._interface_proc = InterfaceProcessor()
 
-        self._status = Sts.NOTHING
-
-        self._last_clicked_point = (0, 0)  # x, y
-
-        self._highlighted_figures_names = []
-
-        self._buttons_to_widgets_dict = dict()
-        for name in dir(self):
-            if name.startswith('button_'):
-                widget_name = 'widget' + name[6:]
-                if widget_name in dir(self):
-                    self._buttons_to_widgets_dict[name] = widget_name
-
-        self._setup_ui()
-        self._setup_handlers()
-
-
-    def _setup_ui(self):
+        # Setup basic UI - from design.py
         self.setupUi(self._window)
 
-        self.center = (
-                self.work_plane.height() // 2,
-                self.work_plane.height() // 2
-        )
+        # Init GLWidget: self.work_plane - QOpenGLWidget that was created into
+        # setupUi in design.py
+        super().__init__(self.work_plane)
+
+        # Set additional private attributes
+        self._status = Sts.NOTHING
+        self._buttons_to_widgets_dict = self._get_buttons_to_widgets_dict()
+
+        # Setup special UI - method _setup_ui
+        self._setup_ui()
+
+        # Setup special parameters for glwindow (i.e. for self)
+        self._glwindow_proc.setup(
+            self.work_plane.width(), self.work_plane.height())
+
+        # Setup handlers (only for ui, because handlers for glwindow are
+        # default methods)
+        self._setup_handlers()
+
+    def _setup_ui(self):
+        self._logger.debug('setup_ui start')
 
         self.widget_elements_table.hide()
         self._hide_footer_widgets()
@@ -75,29 +60,29 @@ class WindowContent(QOpenGLWidget, Ui_window):
             lambda ev: self._interface_proc.trigger_widget(
                 self.widget_elements_table, ev))
 
-        # TODO: Remove unnecessary (duplicate design.py)
-        self._window.setAutoFillBackground(True)
-        self._window.setMouseTracking(True)
-
-            # Располагаем виджет в области work_plane и присваеваем ему те же
-            # паркаметры как в design
-        self._window.setGeometry(QtCore.QRect(
-            0,
-            0,
-            self.work_plane.width(),
-            self.work_plane.height())
-        )
-
-        size_policy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred,
-            QtWidgets.QSizePolicy.Preferred
-        )
-        size_policy.setHorizontalStretch(0)
-        size_policy.setVerticalStretch(0)
-        size_policy.setHeightForWidth(
-                self._window.sizePolicy().hasHeightForWidth()
-        )
-        self._window.setSizePolicy(size_policy)
+        # # TODO: Remove unnecessary (duplicate design.py)
+        # self._window.setAutoFillBackground(True)
+        # self._window.setMouseTracking(True)
+        #
+        #     # Располагаем виджет в области work_plane и присваеваем ему те же
+        #     # паркаметры как в design
+        # self._window.setGeometry(QtCore.QRect(
+        #     0,
+        #     0,
+        #     self.work_plane.width(),
+        #     self.work_plane.height())
+        # )
+        #
+        # size_policy = QtWidgets.QSizePolicy(
+        #     QtWidgets.QSizePolicy.Preferred,
+        #     QtWidgets.QSizePolicy.Preferred
+        # )
+        # size_policy.setHorizontalStretch(0)
+        # size_policy.setVerticalStretch(0)
+        # size_policy.setHeightForWidth(
+        #         self._window.sizePolicy().hasHeightForWidth()
+        # )
+        # self._window.setSizePolicy(size_policy)
 
     def _setup_handlers(self):
         pass
@@ -108,7 +93,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         #     print(button, button_name ,widget ,widget_name)
         #     button.clicked['bool'].connect()
 
-
     @property
     def _footer_widgets(self) -> dict:
         widgets = dict()
@@ -117,16 +101,33 @@ class WindowContent(QOpenGLWidget, Ui_window):
         return widgets
 
     @property
-    def _left_buttons(self):
+    def _left_buttons(self) -> dict:
         buttons = dict()
         for b_name in self._buttons_to_widgets_dict.keys():
             buttons[b_name] = getattr(self, b_name)
         return buttons
 
-    def paintEvent(self, event):
-        self._glwindow_proc.paint_all(event)
+    def animate(self):
+        self.update()
 
-    def _trigger_widget(self, button, widget_name,  show: bool = False):
+    def paintEvent(self, event):
+        # self._logger.debug('paintEvent')
+        self._glwindow_proc.paint_all(
+            event,
+            self._project.figures
+        )
+
+    def mouseMoveEvent(self, event):
+        self._glwindow_proc.handle_mouse_move_event(
+            event,
+            self._project.bindings,
+            self._project.figures
+        )
+
+    def mouseReleaseEvent(self, event):
+        self._glwindow_proc.handle_mouse_release_event(event)
+
+    def _trigger_widget(self, button, widget_name, show: bool = False):
         widget = getattr(self, widget_name)
         print(button, widget, widget_name, show)
         self._hide_footer_widgets()
@@ -141,73 +142,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _uncheck_left_buttons(self):
         for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
-
-    def animate(self):
-        self.update()
-
-    def paintEvent(self, event):
-        self.painter.begin(self)
-        self.painter.setRenderHint(QPainter.Antialiasing)
-        self.painter.paint(self.painter,
-                           event,
-                           self.center_width,
-                           self.center_height,
-                           self.segments_array,
-                           self.points_array,
-                           self.segments_array_view,
-                           self.points_array_view,
-                           self.mouse_xy)
-        self.painter.end()
-
-    # Отслеживание передвижения мыши
-    def mouseMoveEvent(self, event):
-        # На каком расстоянии от мышки, объект будет выделяться
-        near_size = 8
-
-        # Convert mouse coordinats to drawing space
-        self.mouse_xy[0] = x = event.x() - self.center_width
-        self.mouse_xy[1] = y = event.y() - self.center_height
-
-        self.points_array_view = self.points_array
-        self.segments_array_view = self.segments_array
-
-        # TODO: Для полчучения привязок
-        # project.get_bindings -> bindings.get_best_bindings
-        # TODO: Для подсветки анализируем класс привязки и вызываем
-        # bindings.object.bind
-        # TODO: Для получения фигуры
-        # bindinsg.object.get_object_names -> список имен объектов
-        # project.get_figure(object_name) -> object_figure
-
-        # if not self.window.Line_widget.isHidden():
-        #     if len(self.now_drawing) > 0:
-        #         s = Segment.from_points(self.now_drawing[0][0],
-        #                                 self.now_drawing[0][1],
-        #                                 x,
-        #                                 y)
-        #         self.segments_array_view.append(s)
-        #     else:
-        #         p = Point.from_coordinates(x, y)
-        #         self.points_array_view.append(p)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            x, y = self.mouse_xy
-            self.now_drawing.append([x, y])
-
-            if not self._window.Point_widget.isHidden():
-                p = Point.from_coordinates(x, y)
-                self.points_array.append(p)
-                self.now_drawing = []
-
-            if not self._window.Line_widget.isHidden() and len(
-                    self.now_drawing) > 0:
-                s = Segment.from_points(self.now_drawing[0][0],
-                                        self.now_drawing[0][1],
-                                        self.now_drawing[1][0],
-                                        self.now_drawing[1][1])
-                self.segments_array.append(s)
-                self.now_drawing = []
 
     def _save(self):
         # TODO: window for saving, event -> get filename
@@ -232,3 +166,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         except ActionImpossible:
             # TODO: Status bar / inactive
             pass
+
+    def _get_buttons_to_widgets_dict(self):
+        buttons_to_widgets_dict = dict()
+        for name in dir(self):
+            if name.startswith('button_'):
+                widget_name = 'widget' + name[6:]
+                if widget_name in dir(self):
+                    buttons_to_widgets_dict[name] = widget_name
+        return buttons_to_widgets_dict

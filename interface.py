@@ -1,11 +1,12 @@
 """Module with functions for design"""
 from PyQt5.QtWidgets import QWidget, QPushButton, QAction
 from PyQt5.QtWidgets import QMainWindow
+import logging
 
 
 class InterfaceProcessor:
     def __init__(self):
-        pass
+        self._logger = logging.getLogger('InterfaceProcessor')
 
     @staticmethod
     def trigger_action(action: QAction, show: bool = False):

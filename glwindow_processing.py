@@ -1,80 +1,129 @@
 """Module of OpenGL widget"""
-from math import sqrt, pow
-
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QMainWindow
-from figures import Point, Segment
+from PyQt5.QtGui import QPainter, QPaintEvent
+
+import logging
+from typing import Dict, Tuple, List
+
 import paint
 
+from figures import Figure, Point, Segment
+from bindings import (
+    Binding,
+    PointBinding,
+    SegmentStartBinding,
+    SegmentCenterBinding,
+    SegmentEndBinding,
+    SegmentsIntersectionBinding,
+    FullSegmentBinding,
+    choose_best_bindings
+)
+
+
 class GLWindowProcessor:
-    def __init__(self, plane):
+    def __init__(self, glwindow):
+        self._logger = logging.getLogger('GLWindowProcessor')
+
         # noinspection PyArgumentList
+        self._glwindow = glwindow
 
-        self._plane = plane
+        # Additional private attributes
+        self._mouse_xy = (0, 0)
+        self._last_clicked_point = (0, 0)  # x, y
+        self._highlighted_figures_names = []
 
-    def paint_all(self, event):
-        print("PAINT_ALL")
+    def setup(self, width, height):
+        self._logger.debug('setup start')
+
+        self._glwindow.elapsed = 0
+
+        self._glwindow.setAutoFillBackground(True)
+        self._glwindow.setMouseTracking(True)
+
+        # Располагаем виджет в области work_plane и присваеваем ему те же
+        # параметры как в design
+        self._glwindow.setGeometry(QtCore.QRect(0, 0, width, height))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                           QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(
+            self._glwindow.sizePolicy().hasHeightForWidth())
+
+        self._glwindow.setSizePolicy(sizePolicy)
+
+    @property
+    def center(self) -> tuple:
+        return self._glwindow.width() // 2, self._glwindow.height() // 2
+
+    def paint_all(self, event: QPaintEvent, figures: Dict[str, Figure]):
+        # self._logger.debug('paint_all start')
         painter = QPainter()
-        painter.begin(self._plane)
-        figures = []
+        painter.begin(self._glwindow)
         painter.setRenderHint(QPainter.Antialiasing)
+
+        figures_with_styles = []
+        for name, figure in figures.items():
+            if name not in self._highlighted_figures_names:
+                figures_with_styles.append((figure, 'basic'))
+            else:
+                figures_with_styles.append((figure, 'highlighted'))
+
         paint.paint_all(painter,
-                        figures,
-                        self.mouse_xy(event),
+                        figures_with_styles,
+                        self._mouse_xy,
+                        self.center,
                         event.rect())
         painter.end()
 
-    def mouse_xy(self, event):
-        return event.x() - self.center[0], event.y() - self.center[1]
+    def _to_real_xy(self, x, y) -> tuple:
+        return x - self.center[0], y - self.center[1]
 
-    # Отслеживание передвижения мыши
-    def mouseMoveEvent(self, event):
-        # На каком расстоянии от мышки, объект будет выделяться
-        near_size = 8
+    def handle_mouse_move_event(
+            self, event, bindings: List[Binding], figures: Dict[str, Figure]):
+        self._logger.debug('handle_mouse_move_event start')
 
-        # Convert mouse coordinats to drawing space
-        self.mouse_xy[0] = x = event.x() - self.center_width
-        self.mouse_xy[1] = y = event.y() - self.center_height
+        # Convert mouse coordinates to drawing space
+        x, y = self._to_real_xy(event.x(), event.y())
+        self._mouse_xy = (x, y)
 
-        self.points_array_view = self.points_array
-        self.segments_array_view = self.segments_array
+        self._logger.debug(f'bindings: {bindings}')
+        best_bindings = choose_best_bindings(bindings, x, y)
 
-        # TODO: Для полчучения привязок
-        # project.get_bindings -> bindings.get_best_bindings
         # TODO: Для подсветки анализируем класс привязки и вызываем
         # bindings.object.bind
         # TODO: Для получения фигуры
         # bindinsg.object.get_object_names -> список имен объектов
         # project.get_figure(object_name) -> object_figure
 
-        if not self._window.Line_widget.isHidden():
-            if len(self.now_drawing) > 0:
-                s = Segment.from_points(self.now_drawing[0][0],
-                                        self.now_drawing[0][1],
-                                        x,
-                                        y)
-                self.segments_array_view.append(s)
-            else:
-                p = Point.from_coordinates(x, y)
-                self.points_array_view.append(p)
+        # if not self._window.Line_widget.isHidden():
+        #     if len(self.now_drawing) > 0:
+        #         s = Segment.from_points(self.now_drawing[0][0],
+        #                                 self.now_drawing[0][1],
+        #                                 x,
+        #                                 y)
+        #         self.segments_array_view.append(s)
+        #     else:
+        #         p = Point.from_coordinates(x, y)
+        #         self.points_array_view.append(p)
 
-    def mouseReleaseEvent(self, event):
+    def handle_mouse_release_event(self, event):
+
         if event.button() == Qt.LeftButton:
-            x, y = self.mouse_xy
-            self.now_drawing.append([x, y])
-
-            if not self._window.Point_widget.isHidden():
-                p = Point.from_coordinates(x, y)
-                self.points_array.append(p)
-                self.now_drawing = []
-
-            if not self._window.Line_widget.isHidden() and len(
-                    self.now_drawing) > 0:
-                s = Segment.from_points(self.now_drawing[0][0],
-                                        self.now_drawing[0][1],
-                                        self.now_drawing[1][0],
-                                        self.now_drawing[1][1])
-                self.segments_array.append(s)
-                self.now_drawing = []
+            x, y = self._mouse_xy
+            # self.now_drawing.append([x, y])
+            #
+            # if not self._window.Point_widget.isHidden():
+            #     p = Point.from_coordinates(x, y)
+            #     self.points_array.append(p)
+            #     self.now_drawing = []
+            #
+            # if not self._window.Line_widget.isHidden() and len(
+            #         self.now_drawing) > 0:
+            #     s = Segment.from_points(self.now_drawing[0][0],
+            #                             self.now_drawing[0][1],
+            #                             self.now_drawing[1][0],
+            #                             self.now_drawing[1][1])
+            #     self.segments_array.append(s)
+            #     self.now_drawing = []
