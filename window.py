@@ -100,11 +100,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._window.setSizePolicy(size_policy)
 
     def _setup_handlers(self):
-        for button_name, widget_name in self._buttons_to_widgets_dict.items():
-            button = getattr(self, button_name)
-            widget = getattr(self, widget_name)
-            button.clicked['bool'].connect(lambda ev: self._trigger_widget(
-                button, ev))
+        pass
+        # TODO: Сделать кнопки списком и под каждую написать свою функцию
+        # for button_name, widget_name in self._buttons_to_widgets_dict.items():
+        #     button = getattr(self, button_name)
+        #     widget = getattr(self, widget_name)
+        #     print(button, button_name ,widget ,widget_name)
+        #     button.clicked['bool'].connect()
+
 
     @property
     def _footer_widgets(self) -> dict:
@@ -120,12 +123,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
             buttons[b_name] = getattr(self, b_name)
         return buttons
 
-    def mouse_xy(self, event):
-        return event.x() - self.center[0], event.y() - self.center[1]
+    def paintEvent(self, event):
+        self._glwindow_proc.paint_all(event)
 
-    def _trigger_widget(self, widget, show: bool = False):
+    def _trigger_widget(self, button, widget_name,  show: bool = False):
+        widget = getattr(self, widget_name)
+        print(button, widget, widget_name, show)
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
+        # self._interf ace_proc.trigger_button(button, show)
         self._interface_proc.trigger_widget(widget, show)
 
     def _hide_footer_widgets(self):
@@ -173,16 +179,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # bindinsg.object.get_object_names -> список имен объектов
         # project.get_figure(object_name) -> object_figure
 
-        if not self.window.Line_widget.isHidden():
-            if len(self.now_drawing) > 0:
-                s = Segment.from_points(self.now_drawing[0][0],
-                                        self.now_drawing[0][1],
-                                        x,
-                                        y)
-                self.segments_array_view.append(s)
-            else:
-                p = Point.from_coordinates(x, y)
-                self.points_array_view.append(p)
+        # if not self.window.Line_widget.isHidden():
+        #     if len(self.now_drawing) > 0:
+        #         s = Segment.from_points(self.now_drawing[0][0],
+        #                                 self.now_drawing[0][1],
+        #                                 x,
+        #                                 y)
+        #         self.segments_array_view.append(s)
+        #     else:
+        #         p = Point.from_coordinates(x, y)
+        #         self.points_array_view.append(p)
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -202,11 +208,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                         self.now_drawing[1][1])
                 self.segments_array.append(s)
                 self.now_drawing = []
-    # def animate(self):
-    #     self.update()
-    # #                                     self.now_drawing[1][1])
-    #             self.segments_array.append(s)
-    #             self.now_drawing = []
 
     def _save(self):
         # TODO: window for saving, event -> get filename
