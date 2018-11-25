@@ -148,11 +148,11 @@ class TestSegment:
         s = Segment((1, 1), 0, 1)
         s.rotate(pi)
         assert all(isclose((1, 1, 0, 1), s.get_base_representation()))
-        s.rotate(np.pi/2)
+        s.rotate(pi/2)
         assert all(isclose((1, 1, 1, 0), s.get_base_representation()))
         s.rotate(-pi)
         assert all(isclose((1, 1, 1, 2), s.get_base_representation()))
-        s.rotate(-np.pi/2)
+        s.rotate(-pi/2)
         assert all(isclose((1, 1, 2, 1), s.get_base_representation()))
 
     def test_getting_params(self):

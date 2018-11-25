@@ -89,7 +89,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/point.svg</normaloff>resources/point.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/point.svg</normaloff>../../../.designer/backup/resources/point.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -115,7 +115,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/line.svg</normaloff>resources/line.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/line.svg</normaloff>../../../.designer/backup/resources/line.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -138,7 +138,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/combine_points.svg</normaloff>resources/combine_points.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/combine_points.svg</normaloff>../../../.designer/backup/resources/combine_points.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -161,7 +161,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/point_on_line.svg</normaloff>resources/point_on_line.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/point_on_line.svg</normaloff>../../../.designer/backup/resources/point_on_line.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -184,7 +184,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/parallelism.svg</normaloff>resources/parallelism.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/parallelism.svg</normaloff>../../../.designer/backup/resources/parallelism.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -207,7 +207,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/normal.svg</normaloff>resources/normal.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/normal.svg</normaloff>../../../.designer/backup/resources/normal.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -230,7 +230,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/horizontally.svg</normaloff>resources/horizontally.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/horizontally.svg</normaloff>../../../.designer/backup/resources/horizontally.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -253,7 +253,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/fix_point.svg</normaloff>resources/fix_point.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/fix_point.svg</normaloff>../../../.designer/backup/resources/fix_point.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -276,7 +276,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/fix_length.svg</normaloff>resources/fix_length.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/fix_length.svg</normaloff>../../../.designer/backup/resources/fix_length.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -302,7 +302,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>resources/fix_angle.svg</normaloff>resources/fix_angle.svg</iconset>
+         <normaloff>../../../.designer/backup/resources/fix_angle.svg</normaloff>../../../.designer/backup/resources/fix_angle.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -551,7 +551,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="combine_points_submit">
+    <widget class="QPushButton" name="restr_points_joint_submit">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -564,7 +564,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="combine_points_point_1">
+    <widget class="QCheckBox" name="restr_points_joint_point_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -580,7 +580,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="combine_points_point_2">
+    <widget class="QCheckBox" name="restr_points_joint_point_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -609,7 +609,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="point_on_line_submit">
+    <widget class="QPushButton" name="restr_point_on_segment_submit">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -622,7 +622,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="point_on_line_point">
+    <widget class="QCheckBox" name="restr_point_on_segment_point">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -638,7 +638,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="point_on_line_line">
+    <widget class="QCheckBox" name="restr_point_on_segment_line">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -670,7 +670,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="parallelism_submit">
+    <widget class="QPushButton" name="restr_segments_parallel_submit">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -683,7 +683,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="parallelism_line_1">
+    <widget class="QCheckBox" name="restr_segments_parallel_line_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -714,7 +714,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="parallelism_line_2">
+    <widget class="QCheckBox" name="restr_segments_parallel_line_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -743,7 +743,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="normal_submit">
+    <widget class="QPushButton" name="restr_segments_normal_submit">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -756,7 +756,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="normal_line_1">
+    <widget class="QCheckBox" name="restr_segments_normal_line_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -772,7 +772,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="normal_line_2">
+    <widget class="QCheckBox" name="restr_segments_normal_line_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -801,7 +801,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="horizontally_submit">
+    <widget class="QPushButton" name="restr_segment_horizontal_submit">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -814,7 +814,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="horizontally_line">
+    <widget class="QCheckBox" name="restr_segment_horizontal_line">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -843,7 +843,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="fix_point_submit">
+    <widget class="QPushButton" name="restr_point_fixed_submit">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -856,7 +856,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="fix_point_point">
+    <widget class="QCheckBox" name="restr_point_fixed_point">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -885,7 +885,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="fix_length_submit">
+    <widget class="QPushButton" name="restr_segment_length_fixed_submit">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -898,7 +898,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="fix_length_line">
+    <widget class="QCheckBox" name="restr_segment_length_fixed_line">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -927,7 +927,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="fix_angle_submit">
+    <widget class="QPushButton" name="restr_segment_angle_fixed_submit">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -940,7 +940,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="fix_angle_line_1">
+    <widget class="QCheckBox" name="restr_segment_angle_fixed_line_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -956,7 +956,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="fix_angle_line_2">
+    <widget class="QCheckBox" name="restr_segment_angle_fixed_line_2">
      <property name="geometry">
       <rect>
        <x>90</x>

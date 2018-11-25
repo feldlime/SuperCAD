@@ -1,0 +1,194 @@
+root                 INFO     Start working
+WindowContent        DEBUG    setup_ui start
+GLWindowProcessor    DEBUG    setup start
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+WindowContent        DEBUG    controller_add_segment start status True
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: []
+WindowContent        DEBUG    controller_add_segment start status 3
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1047718748>, <bindings.SegmentEndBinding object at 0x7f1040061908>, <bindings.SegmentCenterBinding object at 0x7f1008b47a90>, <bindings.FullSegmentBinding object at 0x7f1008b65b38>]
+WindowContent        DEBUG    controller_add_segment start status 3
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0fdc05ab38>, <bindings.SegmentEndBinding object at 0x7f0fdc05aba8>, <bindings.SegmentCenterBinding object at 0x7f0fdc05abe0>, <bindings.FullSegmentBinding object at 0x7f0fdc05ac18>, <bindings.SegmentStartBinding object at 0x7f0fdc05ac50>, <bindings.SegmentEndBinding object at 0x7f0fdc05ac88>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a9b0>, <bindings.FullSegmentBinding object at 0x7f0fdc05aa58>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a978>]
+WindowContent        DEBUG    controller_add_segment start status 3
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1040061908>, <bindings.SegmentEndBinding object at 0x7f0ff0c2d6a0>, <bindings.SegmentCenterBinding object at 0x7f0ff0c2d780>, <bindings.FullSegmentBinding object at 0x7f0fdc05a4a8>, <bindings.SegmentStartBinding object at 0x7f0fdc05a2b0>, <bindings.SegmentEndBinding object at 0x7f0fdc05a518>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a588>, <bindings.FullSegmentBinding object at 0x7f0fdc05a710>, <bindings.SegmentStartBinding object at 0x7f0fdc05a5f8>, <bindings.SegmentEndBinding object at 0x7f0fdc05a780>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a748>, <bindings.FullSegmentBinding object at 0x7f0fdc05a7f0>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a7b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a860>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a828>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1040061908>, <bindings.SegmentEndBinding object at 0x7f0ff0c2d6a0>, <bindings.SegmentCenterBinding object at 0x7f0ff0c2d780>, <bindings.FullSegmentBinding object at 0x7f0fdc05a4a8>, <bindings.SegmentStartBinding object at 0x7f0fdc05a2b0>, <bindings.SegmentEndBinding object at 0x7f0fdc05a518>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a588>, <bindings.FullSegmentBinding object at 0x7f0fdc05a710>, <bindings.SegmentStartBinding object at 0x7f0fdc05a5f8>, <bindings.SegmentEndBinding object at 0x7f0fdc05a780>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a748>, <bindings.FullSegmentBinding object at 0x7f0fdc05a7f0>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a7b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a860>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a828>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1040061908>, <bindings.SegmentEndBinding object at 0x7f0ff0c2d6a0>, <bindings.SegmentCenterBinding object at 0x7f0ff0c2d780>, <bindings.FullSegmentBinding object at 0x7f0fdc05a4a8>, <bindings.SegmentStartBinding object at 0x7f0fdc05a2b0>, <bindings.SegmentEndBinding object at 0x7f0fdc05a518>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a588>, <bindings.FullSegmentBinding object at 0x7f0fdc05a710>, <bindings.SegmentStartBinding object at 0x7f0fdc05a5f8>, <bindings.SegmentEndBinding object at 0x7f0fdc05a780>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a748>, <bindings.FullSegmentBinding object at 0x7f0fdc05a7f0>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a7b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a860>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a828>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1040061908>, <bindings.SegmentEndBinding object at 0x7f0ff0c2d6a0>, <bindings.SegmentCenterBinding object at 0x7f0ff0c2d780>, <bindings.FullSegmentBinding object at 0x7f0fdc05a4a8>, <bindings.SegmentStartBinding object at 0x7f0fdc05a2b0>, <bindings.SegmentEndBinding object at 0x7f0fdc05a518>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a588>, <bindings.FullSegmentBinding object at 0x7f0fdc05a710>, <bindings.SegmentStartBinding object at 0x7f0fdc05a5f8>, <bindings.SegmentEndBinding object at 0x7f0fdc05a780>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a748>, <bindings.FullSegmentBinding object at 0x7f0fdc05a7f0>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a7b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a860>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a828>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f1040061908>, <bindings.SegmentEndBinding object at 0x7f0ff0c2d6a0>, <bindings.SegmentCenterBinding object at 0x7f0ff0c2d780>, <bindings.FullSegmentBinding object at 0x7f0fdc05a4a8>, <bindings.SegmentStartBinding object at 0x7f0fdc05a2b0>, <bindings.SegmentEndBinding object at 0x7f0fdc05a518>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a588>, <bindings.FullSegmentBinding object at 0x7f0fdc05a710>, <bindings.SegmentStartBinding object at 0x7f0fdc05a5f8>, <bindings.SegmentEndBinding object at 0x7f0fdc05a780>, <bindings.SegmentCenterBinding object at 0x7f0fdc05a748>, <bindings.FullSegmentBinding object at 0x7f0fdc05a7f0>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a7b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a860>, <bindings.SegmentsIntersectionBinding object at 0x7f0fdc05a828>]
+WindowContent        DEBUG    controller_add_segment start status 3
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0ff10cdf60>, <bindings.SegmentEndBinding object at 0x7f0ff10cde80>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1278>, <bindings.FullSegmentBinding object at 0x7f0ff10e1f28>, <bindings.SegmentStartBinding object at 0x7f0ff10e1b00>, <bindings.SegmentEndBinding object at 0x7f0ff10e1588>, <bindings.SegmentCenterBinding object at 0x7f0ff10e18d0>, <bindings.FullSegmentBinding object at 0x7f0ff10e1748>, <bindings.SegmentStartBinding object at 0x7f0ff10e1208>, <bindings.SegmentEndBinding object at 0x7f0ff10e1be0>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1cc0>, <bindings.FullSegmentBinding object at 0x7f0ff10e14e0>, <bindings.SegmentStartBinding object at 0x7f0ff10e1080>, <bindings.SegmentEndBinding object at 0x7f0ff10e1908>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1780>, <bindings.FullSegmentBinding object at 0x7f0ff10e1ef0>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e10b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1ba8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1160>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e12e8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1128>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1898>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0ff10cdf60>, <bindings.SegmentEndBinding object at 0x7f0ff10cde80>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1278>, <bindings.FullSegmentBinding object at 0x7f0ff10e1f28>, <bindings.SegmentStartBinding object at 0x7f0ff10e1b00>, <bindings.SegmentEndBinding object at 0x7f0ff10e1588>, <bindings.SegmentCenterBinding object at 0x7f0ff10e18d0>, <bindings.FullSegmentBinding object at 0x7f0ff10e1748>, <bindings.SegmentStartBinding object at 0x7f0ff10e1208>, <bindings.SegmentEndBinding object at 0x7f0ff10e1be0>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1cc0>, <bindings.FullSegmentBinding object at 0x7f0ff10e14e0>, <bindings.SegmentStartBinding object at 0x7f0ff10e1080>, <bindings.SegmentEndBinding object at 0x7f0ff10e1908>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1780>, <bindings.FullSegmentBinding object at 0x7f0ff10e1ef0>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e10b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1ba8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1160>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e12e8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1128>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1898>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0ff10cdf60>, <bindings.SegmentEndBinding object at 0x7f0ff10cde80>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1278>, <bindings.FullSegmentBinding object at 0x7f0ff10e1f28>, <bindings.SegmentStartBinding object at 0x7f0ff10e1b00>, <bindings.SegmentEndBinding object at 0x7f0ff10e1588>, <bindings.SegmentCenterBinding object at 0x7f0ff10e18d0>, <bindings.FullSegmentBinding object at 0x7f0ff10e1748>, <bindings.SegmentStartBinding object at 0x7f0ff10e1208>, <bindings.SegmentEndBinding object at 0x7f0ff10e1be0>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1cc0>, <bindings.FullSegmentBinding object at 0x7f0ff10e14e0>, <bindings.SegmentStartBinding object at 0x7f0ff10e1080>, <bindings.SegmentEndBinding object at 0x7f0ff10e1908>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1780>, <bindings.FullSegmentBinding object at 0x7f0ff10e1ef0>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e10b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1ba8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1160>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e12e8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1128>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1898>]
+GLWindowProcessor    DEBUG    handle_mouse_move_event start
+GLWindowProcessor    DEBUG    bindings: [<bindings.SegmentStartBinding object at 0x7f0ff10cdf60>, <bindings.SegmentEndBinding object at 0x7f0ff10cde80>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1278>, <bindings.FullSegmentBinding object at 0x7f0ff10e1f28>, <bindings.SegmentStartBinding object at 0x7f0ff10e1b00>, <bindings.SegmentEndBinding object at 0x7f0ff10e1588>, <bindings.SegmentCenterBinding object at 0x7f0ff10e18d0>, <bindings.FullSegmentBinding object at 0x7f0ff10e1748>, <bindings.SegmentStartBinding object at 0x7f0ff10e1208>, <bindings.SegmentEndBinding object at 0x7f0ff10e1be0>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1cc0>, <bindings.FullSegmentBinding object at 0x7f0ff10e14e0>, <bindings.SegmentStartBinding object at 0x7f0ff10e1080>, <bindings.SegmentEndBinding object at 0x7f0ff10e1908>, <bindings.SegmentCenterBinding object at 0x7f0ff10e1780>, <bindings.FullSegmentBinding object at 0x7f0ff10e1ef0>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e10b8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1ba8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1160>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e12e8>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1128>, <bindings.SegmentsIntersectionBinding object at 0x7f0ff10e1898>]
