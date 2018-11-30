@@ -32,7 +32,7 @@ class GLWindowProcessor:
         # Additional private attributes
         self._mouse_xy = (0, 0)
         self._last_clicked_point = (0, 0)  # x, y
-        self._highlighted_figures_names = []
+        self._current_bindings = []
 
     def setup(self, width, height):
         self._logger.debug('setup start')
@@ -59,23 +59,15 @@ class GLWindowProcessor:
         return self._glwindow.width() // 2, self._glwindow.height() // 2
 
     def paint_all(self, event: QPaintEvent, figures: Dict[str, Figure]):
-        # self._logger.debug('paint_all start')
+        self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self._glwindow)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        figures_with_styles = []
-        for name, figure in figures.items():
-            if name not in self._highlighted_figures_names:
-                figures_with_styles.append((figure, 'basic'))
-            else:
-                figures_with_styles.append((figure, 'highlighted'))
-
-        paint.paint_all(painter,
-                        figures_with_styles,
-                        self._mouse_xy,
-                        self.center,
-                        event.rect())
+        paint.paint_all(
+            painter, figures, self._current_bindings, self._mouse_xy,
+            self.center, event.rect()
+        )
         painter.end()
 
     def _to_real_xy(self, x, y) -> tuple:
@@ -101,7 +93,8 @@ class GLWindowProcessor:
                 if isinstance(bind, (SegmentEndBinding,
                                      SegmentStartBinding,
                                      SegmentCenterBinding)):
-            #         TODO: Подсветить
+            #         TODO: Подсветить+
+                    pass
 
 
 
@@ -125,7 +118,7 @@ class GLWindowProcessor:
                     #     ControllerSt.SUBMIT, bind_name)
 
                 if controller_work_st == ControllerWorkSt.RESTR_POINTS_JOINT:
-
+                    pass
                 # self.choose_figures_names.append(self
                 # ._highlighted_figures_names[0])
 

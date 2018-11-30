@@ -62,3 +62,5 @@ ENV/
 env.bak/
 venv.bak/
 
+# Log
+log.log
