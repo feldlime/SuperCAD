@@ -161,7 +161,7 @@ class SegmentAngleFixed(Restriction, ReferencedToObjects):
         return equations
 
 
-class SegmentsHorizontal(Restriction, ReferencedToObjects):
+class SegmentHorizontal(Restriction, ReferencedToObjects):
     object_types = [Segment]
 
     @contract(symbols='dict[4]')
@@ -174,7 +174,7 @@ class SegmentsHorizontal(Restriction, ReferencedToObjects):
         return equations
 
 
-class SegmentsVertical(Restriction, ReferencedToObjects):
+class SegmentVertical(Restriction, ReferencedToObjects):
     object_types = [Segment]
 
     @contract(symbols='dict[4]')
@@ -219,14 +219,16 @@ class SegmentsParallel(Restriction, ReferencedToObjects):
         s1_x2, s1_y2 = symbols_segment_1['x2'], symbols_segment_1['y2']
         s2_x1, s2_y1 = symbols_segment_2['x1'], symbols_segment_2['y1']
         s2_x2, s2_y2 = symbols_segment_2['x2'], symbols_segment_2['y2']
-        equations = [
 
+        s1_dx, s1_dy = s1_x2 - s1_x1, s1_y2 - s1_y1
+        s2_dx, s2_dy = s2_x2 - s2_x1, s2_y2 - s2_y1
+        equations = [
+            Eq(s1_dy * s2_dx - s2_dy * s1_dx, 0)  # vector product is 0
         ]
         return equations
-        # TODO
 
 
-class SegmentsPerpendicular(Restriction, ReferencedToObjects):
+class SegmentsNormal(Restriction, ReferencedToObjects):
     object_types = [Segment, Segment]
 
     @contract(symbols_segment_1='dict[4]', symbols_segment_2='dict[4]')
@@ -235,11 +237,13 @@ class SegmentsPerpendicular(Restriction, ReferencedToObjects):
         s1_x2, s1_y2 = symbols_segment_1['x2'], symbols_segment_1['y2']
         s2_x1, s2_y1 = symbols_segment_2['x1'], symbols_segment_2['y1']
         s2_x2, s2_y2 = symbols_segment_2['x2'], symbols_segment_2['y2']
-        equations = [
 
+        s1_dx, s1_dy = s1_x2 - s1_x1, s1_y2 - s1_y1
+        s2_dx, s2_dy = s2_x2 - s2_x1, s2_y2 - s2_y1
+        equations = [
+            Eq(s1_dx * s2_dx + s1_dy * s2_dy, 0)  # Scalar product is 0
         ]
         return equations
-        # TODO
 
 
 class SegmentsSpotsJoint(Restriction, ReferencedToObjects):
@@ -319,11 +323,12 @@ class PointOnSegmentFixed(Restriction, ReferencedToObjects):
         x1, y1 = symbols_segment['x1'], symbols_segment['y1']
         x2, y2 = symbols_segment['x2'], symbols_segment['y2']
 
+        dx, dy = x2 - x1, y2 - y1
         equations = [
-
+            Eq(x, x1 + dx * self._ratio),
+            Eq(y, y1 + dy * self._ratio),
         ]
-        # TODO
-        pass
+        return equations
 
 
 class PointOnSegmentLine(Restriction, ReferencedToObjects):
@@ -335,11 +340,12 @@ class PointOnSegmentLine(Restriction, ReferencedToObjects):
         x1, y1 = symbols_segment['x1'], symbols_segment['y1']
         x2, y2 = symbols_segment['x2'], symbols_segment['y2']
 
-        equations = [
+        dx, dy = x2 - x1, y2 - y1
 
+        equations = [
+            Eq(dx * (y - y1) - (x - x1) * dy, 0)  # vector product is 0
         ]
-        # TODO
-        pass
+        return equations
 
 
 class PointAndSegmentSpotJoint(Restriction, ReferencedToObjects):
