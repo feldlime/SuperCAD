@@ -62,7 +62,7 @@
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>45</width>
+      <width>50</width>
       <height>471</height>
      </rect>
     </property>
@@ -89,7 +89,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/point.svg</normaloff>../../../.designer/backup/resources/point.svg</iconset>
+         <normaloff>resources/point.svg</normaloff>resources/point.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -115,7 +115,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/line.svg</normaloff>../../../.designer/backup/resources/line.svg</iconset>
+         <normaloff>resources/line.svg</normaloff>resources/line.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -132,13 +132,13 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="button_restr_points_joint">
+      <widget class="QPushButton" name="button_restr_joint">
        <property name="text">
         <string/>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/combine_points.svg</normaloff>../../../.designer/backup/resources/combine_points.svg</iconset>
+         <normaloff>resources/combine_points.svg</normaloff>resources/combine_points.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -161,7 +161,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/point_on_line.svg</normaloff>../../../.designer/backup/resources/point_on_line.svg</iconset>
+         <normaloff>resources/point_on_line.svg</normaloff>resources/point_on_line.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -184,7 +184,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/parallelism.svg</normaloff>../../../.designer/backup/resources/parallelism.svg</iconset>
+         <normaloff>resources/point_on_middle_line.svg</normaloff>resources/point_on_middle_line.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -207,7 +207,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/normal.svg</normaloff>../../../.designer/backup/resources/normal.svg</iconset>
+         <normaloff>resources/normal.svg</normaloff>resources/normal.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -230,7 +230,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/horizontally.svg</normaloff>../../../.designer/backup/resources/horizontally.svg</iconset>
+         <normaloff>resources/horizontally.svg</normaloff>resources/horizontally.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -247,13 +247,13 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="button_restr_point_fixed">
+      <widget class="QPushButton" name="button_restr_fixed">
        <property name="text">
         <string/>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/fix_point.svg</normaloff>../../../.designer/backup/resources/fix_point.svg</iconset>
+         <normaloff>resources/fix_point.svg</normaloff>resources/fix_point.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -276,7 +276,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/fix_length.svg</normaloff>../../../.designer/backup/resources/fix_length.svg</iconset>
+         <normaloff>resources/fix_length.svg</normaloff>resources/fix_length.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -302,7 +302,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../../../.designer/backup/resources/fix_angle.svg</normaloff>../../../.designer/backup/resources/fix_angle.svg</iconset>
+         <normaloff>resources/fix_angle.svg</normaloff>resources/fix_angle.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -539,7 +539,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="widget_restr_points_joint" native="true">
+   <widget class="QWidget" name="widget_restr_joint" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -551,7 +551,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_points_joint_submit">
+    <widget class="QPushButton" name="submit_restr_joint">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -564,7 +564,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_points_joint_point_1">
+    <widget class="QCheckBox" name="checkbox_restr_joint_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -580,7 +580,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_points_joint_point_2">
+    <widget class="QCheckBox" name="checkbox_restr_joint_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -831,7 +831,7 @@
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="widget_restr_point_fixed" native="true">
+   <widget class="QWidget" name="widget_restr_fixed" native="true">
     <property name="geometry">
      <rect>
       <x>50</x>
@@ -843,7 +843,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_point_fixed_submit">
+    <widget class="QPushButton" name="submit_restr_fixed">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -856,7 +856,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_point_fixed_point">
+    <widget class="QCheckBox" name="checkbox_restr_fixed">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -979,12 +979,12 @@
    <zorder>widget_elements_table</zorder>
    <zorder>widget_add_point</zorder>
    <zorder>widget_add_segment</zorder>
-   <zorder>widget_restr_points_joint</zorder>
+   <zorder>widget_restr_joint</zorder>
    <zorder>widget_restr_point_on_segment</zorder>
    <zorder>widget_restr_segments_parallel</zorder>
    <zorder>widget_restr_segments_normal</zorder>
    <zorder>widget_restr_segment_horizontal</zorder>
-   <zorder>widget_restr_point_fixed</zorder>
+   <zorder>widget_restr_fixed</zorder>
    <zorder>widget_restr_segment_length_fixed</zorder>
    <zorder>widget_restr_segment_angle_fixed</zorder>
   </widget>
