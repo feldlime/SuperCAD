@@ -116,21 +116,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # TODO Вернуть две линии
             # return((self.point_x.value(), self.point_y.value()))
 
-    # @contract(status='int')
-    def controller_restr_segments_normal(self, status, figure: str=None):
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
+    def controller_show_hide(self, widget, controller_st, controller_work_st):
+        self._hide_footer_widgets()
+        self._uncheck_left_buttons()
+        if controller_st == ControllerSt.HIDE:
             self.controller_work_st = ControllerWorkSt.NOTHING
             self.choose = ChooseSt.NOTHING
             self.choose_figures_names = []
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_segments_normal.show()
-            self.controller_work_st = ControllerWorkSt.RESTR_SEGMENTS_NORMAL
+        if controller_st == ControllerSt.SHOW:
+            widget.show()
+            self.controller_work_st = controller_work_st
             self.choose = ChooseSt.COOOSE
-            self.choose_len = 2
+
+    def controller_restr_segments_normal(self, status, figure: str=None):
         if status == ControllerSt.SUBMIT:
             if not self.restr_segments_normal_line_1.checkState() or \
                     not self.restr_segments_normal_line_2.checkState():
@@ -140,72 +138,49 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.controller_work_st = ControllerWorkSt.NOTHING
                 self.choose = ChooseSt.NOTHING
                 self.choose_figures_names = []
+        else:
+            self.controller_show_hide(self.widget_restr_segments_normal,
+                                      status,
+                                      ControllerWorkSt.RESTR_SEGMENTS_NORMAL)
 
-    # @contract(status='int', returns='tuple')
-    def controller_restr_segment_length_fixed(self, status: int):
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_segment_length_fixed.show()
+
+    def controller_restr_segment_length_fixed(self, status):
         if status == ControllerSt.SUBMIT:
-            if self.restr_segment_length_fixed_line.checkState() == False:
-                raise ValueError
+            if not self.restr_segment_length_fixed_line.checkState():
+                pass
             else:
                 pass
-            # TODO Вернуть линию
-            # return((self.point_x.value(), self.point_y.value()))
+        else:
+            self.controller_show_hide(self.widget_restr_segment_length_fixed,
+                                      status,
+                                      ControllerWorkSt.
+                                      RESTR_SEGMENT_LENGTH_FIXED)
 
-    # @contract(status='int', returns='tuple')
-    def controller_restr_segment_horizontal(self, status: int):
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_segment_horizontal.show()
+    def controller_restr_segment_horizontal(self, status):
         if status == ControllerSt.SUBMIT:
-            if self.restr_segment_horizontal_line.checkState() == False:
-                raise ValueError
+            if not self.restr_segment_horizontal_line.checkState():
+                pass
             else:
                 pass
-            # TODO Вернуть линию
-            # return((self.point_x.value(), self.point_y.value()))
+        else:
+            self.controller_show_hide(self.widget_restr_segment_horizontal,
+                                      status,
+                                      ControllerWorkSt.RESTR_SEGMENT_HORIZONTAL)
 
-    # @contract(status='int', returns='tuple')
-    def controller_restr_segment_angle_fixed(self, status: int) -> \
-            tuple:
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_segment_angle_fixed.show()
+    def controller_restr_segment_angle_fixed(self, status):
         if status == ControllerSt.SUBMIT:
-            if self.restr_segment_angle_fixed_line_1.checkState() == False or \
-                    self.restr_segment_angle_fixed_line_2.checkState() == False:
-                raise ValueError
+            if not self.restr_segment_angle_fixed_line_1.checkState() or not\
+                    self.restr_segment_angle_fixed_line_2.checkState():
+                pass
             else:
                 pass
-            # TODO Вернуть две выделеных линии
-            # return((self.point_x.value(), self.point_y.value()))
+        else:
+            self.controller_show_hide(self.widget_restr_segment_angle_fixed,
+                                      status,
+                                      ControllerWorkSt.
+                                      RESTR_SEGMENT_ANGLE_FIXED)
 
-    # @contract(status='int', returns='tuple')
     def controller_restr_point_joint(self, status, figure: str=None):
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_points_joint.show()
-            self.controller_work_st = ControllerWorkSt.RESTR_POINTS_JOINT
-            self.choose = ChooseSt.COOOSE
-            self.choose_len = 2
         if status == ControllerSt.SUBMIT:
             if not self.restr_points_joint_point_1.checkState() or \
                     not self.restr_points_joint_point_2.checkState():
@@ -215,22 +190,24 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.controller_work_st = ControllerWorkSt.NOTHING
                 self.choose = ChooseSt.NOTHING
                 self.choose_figures_names = []
+        else:
+            self.controller_show_hide(self.widget_restr_points_joint,
+                                      status,
+                                      ControllerWorkSt.RESTR_POINTS_JOINT)
 
     # @contract(status='int', returns='tuple')
     def controller_restr_point_on_segment(self, status, figure: str=None):
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_point_on_segment.show()
         if status == ControllerSt.SUBMIT:
             if self.restr_point_on_segment_line.checkState() == False or \
                     self.restr_point_on_segment_point.checkState() == False:
                 raise ValueError
             else:
                 pass
+        else:
+            self._hide_footer_widgets()
+            self._uncheck_left_buttons()
+            if status == ControllerSt.SHOW:
+                self.widget_restr_point_on_segment.show()
 
     # @contract(status='int')
     def controller_restr_point_fixed(self, status, figure: str=None):
