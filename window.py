@@ -6,25 +6,12 @@ from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
 from project import CADProject, ActionImpossible
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow
+import logging
 
 from design import Ui_window
 from figures import Figure, Point, Segment
-import logging
-
-
-class Sts:
-    NOTHING = 0
-    DRAWING_POINT = 1
-    DRAWING_SEGMENT = 2
-    MOVING_FIGURE = 3
-
-# class FS(Sts):  # Figure statuses
-
-class ControllerSt:
-    HIDE = 0
-    SHOW = 1
-    STATE = 2
-    SUBMIT = 3
+from states import ControllerWorkSt, ChooseSt, ControllerSt
+from restrictions import *
 
 class WindowContent(QOpenGLWidget, Ui_window):
     def __init__(self, window: QMainWindow):
@@ -44,7 +31,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         super().__init__(self.work_plane)
 
         # Set additional private attributes
-        self._status = Sts.NOTHING
+        # self._status = Sts.NOTHING
         self._buttons_to_widgets_dict = self._get_buttons_to_widgets_dict()
 
         # Setup special UI - method _setup_ui
@@ -58,6 +45,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # default methods)
         self._setup_handlers()
 
+        self.controller_work_st = ControllerWorkSt.NOTHING
+        self.choose = ChooseSt.NOTHING
+        self.choose_len = 0
+        self.choose_figures_names = []
+
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
 
@@ -66,30 +58,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_show_elements_table.triggered['bool'].connect(
             lambda ev: self._interface_proc.trigger_widget(
                 self.widget_elements_table, ev))
-
-        # # TODO: Remove unnecessary (duplicate design.py)
-        # self._window.setAutoFillBackground(True)
-        # self._window.setMouseTracking(True)
-        #
-        #     # Располагаем виджет в области work_plane и присваеваем ему те же
-        #     # паркаметры как в design
-        # self._window.setGeometry(QtCore.QRect(
-        #     0,
-        #     0,
-        #     self.work_plane.width(),
-        #     self.work_plane.height())
-        # )
-        #
-        # size_policy = QtWidgets.QSizePolicy(
-        #     QtWidgets.QSizePolicy.Preferred,
-        #     QtWidgets.QSizePolicy.Preferred
-        # )
-        # size_policy.setHorizontalStretch(0)
-        # size_policy.setVerticalStretch(0)
-        # size_policy.setHeightForWidth(
-        #         self._window.sizePolicy().hasHeightForWidth()
-        # )
-        # self._window.setSizePolicy(size_policy)
 
     def _setup_handlers(self):
         self.button_add_point.clicked['bool'].connect(
@@ -139,7 +107,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_segments_parallel.show()
-        if status == ControllerSt.STATE:
+        if status == ControllerSt.SUBMIT:
             if self.restr_segments_parallel_line_1.checkState() == False or \
                     self.restr_segments_parallel_line_2.checkState() == False:
                 raise ValueError
@@ -148,28 +116,33 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # TODO Вернуть две линии
             # return((self.point_x.value(), self.point_y.value()))
 
-    # @contract(status='int', returns='tuple')
-    def controller_restr_segments_normal(self, status: int) -> \
-            tuple:
+    # @contract(status='int')
+    def controller_restr_segments_normal(self, status, figure: str=None):
         if status == ControllerSt.HIDE:
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
+            self.controller_work_st = ControllerWorkSt.NOTHING
+            self.choose = ChooseSt.NOTHING
+            self.choose_figures_names = []
         if status == ControllerSt.SHOW:
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_segments_normal.show()
-        if status == ControllerSt.STATE:
-            if self.restr_segments_normal_line_1.checkState() == False or \
-                    self.restr_segments_normal_line_2.checkState() == False:
-                raise ValueError
+            self.controller_work_st = ControllerWorkSt.RESTR_SEGMENTS_NORMAL
+            self.choose = ChooseSt.COOOSE
+            self.choose_len = 2
+        if status == ControllerSt.SUBMIT:
+            if not self.restr_segments_normal_line_1.checkState() or \
+                    not self.restr_segments_normal_line_2.checkState():
+                self.choose_figures_names.append(figure)
             else:
-                pass
-            # TODO Вернуть две линии
-            # return((self.point_x.value(), self.point_y.value()))
+                restr = SegmentsParallel()
+                self.controller_work_st = ControllerWorkSt.NOTHING
+                self.choose = ChooseSt.NOTHING
+                self.choose_figures_names = []
 
     # @contract(status='int', returns='tuple')
-    def controller_restr_segment_length_fixed(self, status: int) -> \
-            tuple:
+    def controller_restr_segment_length_fixed(self, status: int):
         if status == ControllerSt.HIDE:
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
@@ -177,7 +150,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_segment_length_fixed.show()
-        if status == ControllerSt.STATE:
+        if status == ControllerSt.SUBMIT:
             if self.restr_segment_length_fixed_line.checkState() == False:
                 raise ValueError
             else:
@@ -186,8 +159,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # return((self.point_x.value(), self.point_y.value()))
 
     # @contract(status='int', returns='tuple')
-    def controller_restr_segment_horizontal(self, status: int) -> \
-            tuple:
+    def controller_restr_segment_horizontal(self, status: int):
         if status == ControllerSt.HIDE:
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
@@ -195,7 +167,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_segment_horizontal.show()
-        if status == ControllerSt.STATE:
+        if status == ControllerSt.SUBMIT:
             if self.restr_segment_horizontal_line.checkState() == False:
                 raise ValueError
             else:
@@ -213,7 +185,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_segment_angle_fixed.show()
-        if status == ControllerSt.STATE:
+        if status == ControllerSt.SUBMIT:
             if self.restr_segment_angle_fixed_line_1.checkState() == False or \
                     self.restr_segment_angle_fixed_line_2.checkState() == False:
                 raise ValueError
@@ -223,7 +195,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # return((self.point_x.value(), self.point_y.value()))
 
     # @contract(status='int', returns='tuple')
-    def controller_restr_point_joint(self, status: int) -> tuple:
+    def controller_restr_point_joint(self, status, figure: str=None):
         if status == ControllerSt.HIDE:
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
@@ -231,17 +203,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_points_joint.show()
-        if status == ControllerSt.STATE:
-            if self.restr_points_joint_point_1.checkState() == False or \
-                    self.restr_points_joint_point_2.checkState() == False:
-                raise ValueError
+            self.controller_work_st = ControllerWorkSt.RESTR_POINTS_JOINT
+            self.choose = ChooseSt.COOOSE
+            self.choose_len = 2
+        if status == ControllerSt.SUBMIT:
+            if not self.restr_points_joint_point_1.checkState() or \
+                    not self.restr_points_joint_point_2.checkState():
+                self.choose_figures_names.append(figure)
             else:
-                pass
-            # TODO Вернуть две выделеных точки
-            # return((self.point_x.value(), self.point_y.value()))
+                # restr = SegmentsSpotsJoint(,)
+                self.controller_work_st = ControllerWorkSt.NOTHING
+                self.choose = ChooseSt.NOTHING
+                self.choose_figures_names = []
 
     # @contract(status='int', returns='tuple')
-    def controller_restr_point_on_segment(self, status: int) -> tuple:
+    def controller_restr_point_on_segment(self, status, figure: str=None):
         if status == ControllerSt.HIDE:
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
@@ -249,36 +225,28 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._hide_footer_widgets()
             self._uncheck_left_buttons()
             self.widget_restr_point_on_segment.show()
-        if status == ControllerSt.STATE:
+        if status == ControllerSt.SUBMIT:
             if self.restr_point_on_segment_line.checkState() == False or \
                     self.restr_point_on_segment_point.checkState() == False:
                 raise ValueError
             else:
                 pass
-            # TODO: Получить выделенную линию и точку, и вернуть её
-            #     return(Line)
-            #     return ((self.point_x.value(), self.point_y.value()))
 
-    # @contract(status='int', returns='tuple')
-    def controller_restr_point_fixed(self, status: int) -> tuple:
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_point_fixed.show()
-        if status == ControllerSt.STATE:
-            if self.restr_point_fixed_point.checkState() == False:
-                raise ValueError
+    # @contract(status='int')
+    def controller_restr_point_fixed(self, status, figure: str=None):
+        if status == ControllerSt.SUBMIT:
+            if not self.restr_point_fixed_point.checkState():
+                pass
             else:
                 pass
-                # self._project.add_figure(Point())
-            # TODO: Получить выделенную линию и вернуть её
-            #     return(Line)
+        else:
+            self._hide_footer_widgets()
+            self._uncheck_left_buttons()
+            if status == ControllerSt.SHOW:
+                self.widget_restr_point_fixed.show()
 
-    # @contract(status='int', returns='tuple')
-    def controller_add_segment(self, status: int) -> tuple:
+
+    def controller_add_segment(self, status):
         self._logger.debug('controller_add_segment start status ' + str(status))
         if status == ControllerSt.HIDE:
             self._hide_footer_widgets()
@@ -300,13 +268,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.line_x_2.value(),
                     self.line_y_2.value())
                 self._project.add_figure(s)
-                # return((self.line_x_1.value(),
-                #         self.line_y_1.value(),
-                #         self.line_x_2.value(),
-                #         self.line_y_2.value()))
 
-    # @contract(status='int', returns='tuple')
-    def controller_add_point(self, status: int) -> tuple:
+    def controller_add_point(self, status):
         self._logger.debug('controller_add_point start wits status' + str(
             status))
         if status == ControllerSt.HIDE:
@@ -320,8 +283,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             x = self.point_x.value()
             y = self.point_y.value()
             self._project.add_figure(Point((x, y)))
-            # return((x, y))
-
 
     @property
     def _footer_widgets(self) -> dict:
@@ -355,7 +316,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def mouseReleaseEvent(self, event):
-        self._glwindow_proc.handle_mouse_release_event(event)
+        self._glwindow_proc.handle_mouse_release_event(event, self.choose,
+                                                       self.controller_work_st)
 
     def _trigger_widget(self, button, widget_name, show: bool = False):
         widget = getattr(self, widget_name)

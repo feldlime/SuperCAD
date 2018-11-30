@@ -8,6 +8,7 @@ from typing import Dict, Tuple, List
 
 import paint
 
+from states import ControllerWorkSt, ChooseSt, ControllerSt
 from figures import Figure, Point, Segment
 from bindings import (
     Binding,
@@ -81,7 +82,9 @@ class GLWindowProcessor:
         return x - self.center[0], y - self.center[1]
 
     def handle_mouse_move_event(
-            self, event, bindings: List[Binding], figures: Dict[str, Figure]):
+            self, event, bindings: List[Binding], figures: Dict[str, Figure],
+            status):
+        # TODO: Status
         self._logger.debug('handle_mouse_move_event start')
 
         # Convert mouse coordinates to drawing space
@@ -89,29 +92,44 @@ class GLWindowProcessor:
         self._mouse_xy = (x, y)
 
         self._logger.debug(f'bindings: {bindings}')
+        self._highlighted_figures_names = []
+
+
         best_bindings = choose_best_bindings(bindings, x, y)
+        for bind in best_bindings:
+            if ControllerWorkSt.RESTR_POINTS_JOINT:
+                if isinstance(bind, (SegmentEndBinding,
+                                     SegmentStartBinding,
+                                     SegmentCenterBinding)):
+            #         TODO: Подсветить
 
-        # TODO: Для подсветки анализируем класс привязки и вызываем
-        # bindings.object.bind
-        # TODO: Для получения фигуры
-        # bindinsg.object.get_object_names -> список имен объектов
-        # project.get_figure(object_name) -> object_figure
 
-        # if not self._window.Line_widget.isHidden():
-        #     if len(self.now_drawing) > 0:
-        #         s = Segment.from_points(self.now_drawing[0][0],
-        #                                 self.now_drawing[0][1],
-        #                                 x,
-        #                                 y)
-        #         self.segments_array_view.append(s)
-        #     else:
-        #         p = Point.from_coordinates(x, y)
-        #         self.points_array_view.append(p)
 
-    def handle_mouse_release_event(self, event):
+            for name in bind.get_object_names():
+                self._highlighted_figures_names.append(name)
+
+    def handle_mouse_release_event(self, event, choose, controller_work_st):
 
         if event.button() == Qt.LeftButton:
             x, y = self._mouse_xy
+            print(choose)
+            if choose == ChooseSt.COOOSE:
+                if controller_work_st == ControllerWorkSt.RESTR_SEGMENTS_NORMAL:
+                    binding = []
+                    best_bindings = choose_best_bindings(binding, x, y)
+                    bind = best_bindings[0]
+                    binds_names = bind.get_object_names()
+                    bind_name = binds_names[0]
+                    print(best_bindings, bind_name)
+                    # self.controller_restr_segments_normal(
+                    #     ControllerSt.SUBMIT, bind_name)
+
+                if controller_work_st == ControllerWorkSt.RESTR_POINTS_JOINT:
+
+                # self.choose_figures_names.append(self
+                # ._highlighted_figures_names[0])
+
+
             # self.now_drawing.append([x, y])
             #
             # if not self._window.Point_widget.isHidden():
