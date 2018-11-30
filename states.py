@@ -1,6 +1,6 @@
 class ChooseSt:
     NOTHING = 0
-    COOOSE = 1
+    CHOOSE = 1
 
 class ControllerWorkSt:
     NOTHING = 0
@@ -14,6 +14,14 @@ class ControllerWorkSt:
     RESTR_SEGMENT_LENGTH_FIXED = 8
     RESTR_SEGMENTS_NORMAL = 9
     RESTR_SEGMENTS_PARALLEL = 10
+
+    def __init__(self):
+        self._state = self.NOTHING
+
+    def __get__(self, instance, owner):
+
+
+    def is_restr(self):
 
 
 class ControllerSt:

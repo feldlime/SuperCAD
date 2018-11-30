@@ -101,24 +101,23 @@ class GLWindowProcessor:
             for name in bind.get_object_names():
                 self._highlighted_figures_names.append(name)
 
-    def handle_mouse_release_event(self, event, choose, controller_work_st):
+    def handle_mouse_release_event(self,
+                                   bindings,
+                                   event,
+                                   choose,
+                                   controller_work_st):
 
         if event.button() == Qt.LeftButton:
             x, y = self._mouse_xy
             print(choose)
-            if choose == ChooseSt.COOOSE:
-                if controller_work_st == ControllerWorkSt.RESTR_SEGMENTS_NORMAL:
-                    binding = []
-                    best_bindings = choose_best_bindings(binding, x, y)
-                    bind = best_bindings[0]
-                    binds_names = bind.get_object_names()
-                    bind_name = binds_names[0]
-                    print(best_bindings, bind_name)
-                    # self.controller_restr_segments_normal(
-                    #     ControllerSt.SUBMIT, bind_name)
-
-                if controller_work_st == ControllerWorkSt.RESTR_POINTS_JOINT:
-                    pass
+            if choose == ChooseSt.CHOOSE:
+                best_bindings = choose_best_bindings(bindings, x, y)
+                if controller_work_st.is_restr():
+                    if controller_work_st == ControllerWorkSt.RESTR_SEGMENTS_NORMAL:
+                        self.controller_restr_segments_normal(ControllerSt.SUBMIT,
+                                                              best_bindings)
+                    if controller_work_st == ControllerWorkSt.RESTR_POINTS_JOINT:
+                        pass
                 # self.choose_figures_names.append(self
                 # ._highlighted_figures_names[0])
 

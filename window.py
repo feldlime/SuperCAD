@@ -126,7 +126,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if controller_st == ControllerSt.SHOW:
             widget.show()
             self.controller_work_st = controller_work_st
-            self.choose = ChooseSt.COOOSE
+            self.choose = ChooseSt.CHOOSE
 
     def controller_restr_segments_normal(self, status, figure: str=None):
         if status == ControllerSt.SUBMIT:
@@ -293,7 +293,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def mouseReleaseEvent(self, event):
-        self._glwindow_proc.handle_mouse_release_event(event, self.choose,
+        self._glwindow_proc.handle_mouse_release_event(event,
+                                                       self._project.bindings,
+                                                       self.choose,
                                                        self.controller_work_st)
 
     def _trigger_widget(self, button, widget_name, show: bool = False):
