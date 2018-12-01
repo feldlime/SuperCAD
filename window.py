@@ -102,37 +102,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.button_restr_segments_parallel.clicked['bool'].connect(
             self.controller_restr_segments_parallel
         )
-        self.point_submit.clicked['bool'].connect(
+        self.submit_add_point.clicked['bool'].connect(
             lambda ev: self.controller_add_point(ControllerSt.SUBMIT)
         )
-        self.line_submit.clicked['bool'].connect(
+        self.submit_add_segment.clicked['bool'].connect(
             lambda ev: self.controller_add_segment(ControllerSt.SUBMIT)
         )
         self.submit_restr_fixed.clicked['bool'].connect(
-            lambda  ev: self.controller_restr_fixed(ControllerSt.SUBMIT)
+            lambda ev: self.controller_restr_fixed(ControllerSt.SUBMIT)
         )
         self.submit_restr_joint.clicked['bool'].connect(
-            lambda  ev: self.controller_restr_joint(ControllerSt.SUBMIT)
+            lambda ev: self.controller_restr_joint(ControllerSt.SUBMIT)
         )
-
-    # @contract(status='int', returns='tuple')
-    def controller_restr_segments_parallel(self, status: int) -> \
-            tuple:
-        if status == ControllerSt.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-        if status == ControllerSt.SHOW:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.widget_restr_segments_parallel.show()
-        if status == ControllerSt.SUBMIT:
-            if self.restr_segments_parallel_line_1.checkState() == False or \
-                    self.restr_segments_parallel_line_2.checkState() == False:
-                raise ValueError
-            else:
-                pass
-            # TODO Вернуть две линии
-            # return((self.point_x.value(), self.point_y.value()))
 
     def controller_show_hide(self, widget, controller_st, controller_work_st):
         self._hide_footer_widgets()
@@ -146,10 +127,26 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_work_st = controller_work_st
             self.choose = ChooseSt.CHOOSE
 
+
+    def controller_restr_segments_parallel(self, status: int):
+        if status == ControllerSt.HIDE:
+            self._hide_footer_widgets()
+            self._uncheck_left_buttons()
+        if status == ControllerSt.SHOW:
+            self._hide_footer_widgets()
+            self._uncheck_left_buttons()
+            self.widget_restr_segments_parallel.show()
+        if status == ControllerSt.SUBMIT:
+            if self.checkbox_restr_segments_parallel_1.checkState() == False or \
+                    self.checkbox_restr_segments_parallel_2.checkState() == False:
+                raise ValueError
+            else:
+                pass
+
     def controller_restr_segments_normal(self, status, figure: str=None):
         if status == ControllerSt.SUBMIT:
-            if not self.restr_segments_normal_line_1.checkState() or \
-                    not self.restr_segments_normal_line_2.checkState():
+            if not self.checkbox_restr_segments_normal_1.checkState() or \
+                    not self.checkbox_restr_segments_normal_2.checkState():
                 self.choosed_bindings.append(figure)
             else:
                 restr = SegmentsParallel()
@@ -164,7 +161,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_segment_length_fixed(self, status):
         if status == ControllerSt.SUBMIT:
-            if not self.restr_segment_length_fixed_line.checkState():
+            if not self.checkbox_restr_segment_length_fixed.checkState():
                 pass
             else:
                 pass
@@ -176,7 +173,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_segment_horizontal(self, status):
         if status == ControllerSt.SUBMIT:
-            if not self.restr_segment_horizontal_line.checkState():
+            if not self.checkbox_restr_segment_horizontal.checkState():
                 pass
             else:
                 pass
@@ -187,8 +184,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_segment_angle_fixed(self, status):
         if status == ControllerSt.SUBMIT:
-            if not self.restr_segment_angle_fixed_line_1.checkState() or not\
-                    self.restr_segment_angle_fixed_line_2.checkState():
+            if not self.checkbox_restr_segment_angle_fixed_1.checkState() or not\
+                    self.checkbox_restr_segment_angle_fixed_2.checkState():
                 pass
             else:
                 pass
@@ -223,6 +220,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 else:
                     raise TypeError
 
+            if len(self.choosed_bindings) < 2:
+                raise RuntimeError
+
             b1, b2 = self.choosed_bindings
             if isinstance(b1, PointBinding):
                 if isinstance(b2, PointBinding):
@@ -239,7 +239,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     restr = SegmentsSpotsJoint(spot_type_1, spot_type_2)
             try:
                 self._project.add_restriction(restr,
-                                              tuple(self.choosed_bindings))
+                                              (b1.get_object_names()[0],
+                                               b2.get_object_names()[0]))
             except CannotSolveSystemError:
                 pass
             self.controller_work_st = ControllerWorkSt.NOTHING
@@ -251,8 +252,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_point_on_segment(self, status, figure: str=None):
         if status == ControllerSt.SUBMIT:
-            if self.restr_point_on_segment_line.checkState() == False or \
-                    self.restr_point_on_segment_point.checkState() == False:
+            if not self.checkbox_restr_point_on_segment_line.checkState() or \
+                    not self.checkbox_restr_point_on_segment_point.checkState():
                 raise ValueError
             else:
                 pass

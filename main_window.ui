@@ -394,7 +394,7 @@
       <string>Y:</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="point_submit">
+    <widget class="QPushButton" name="submit_add_point">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -479,7 +479,7 @@
       <string>Y1:</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="line_submit">
+    <widget class="QPushButton" name="submit_add_segment">
      <property name="geometry">
       <rect>
        <x>460</x>
@@ -609,7 +609,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_point_on_segment_submit">
+    <widget class="QPushButton" name="submit_restr_point_on_segment">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -622,7 +622,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_point_on_segment_point">
+    <widget class="QCheckBox" name="checkbox_restr_point_on_segment_point">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -638,7 +638,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_point_on_segment_line">
+    <widget class="QCheckBox" name="checkbox_restr_point_on_segment_line">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -670,7 +670,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_segments_parallel_submit">
+    <widget class="QPushButton" name="submit_restr_segments_parallel">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -683,7 +683,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segments_parallel_line_1">
+    <widget class="QCheckBox" name="checkbox_restr_segments_parallel_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -714,7 +714,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segments_parallel_line_2">
+    <widget class="QCheckBox" name="checkbox_restr_segments_parallel_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -743,7 +743,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_segments_normal_submit">
+    <widget class="QPushButton" name="submit_restr_segments_normal">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -756,7 +756,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segments_normal_line_1">
+    <widget class="QCheckBox" name="checkbox_restr_segments_normal_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -772,7 +772,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segments_normal_line_2">
+    <widget class="QCheckBox" name="checkbox_restr_segments_normal_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -801,7 +801,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_segment_horizontal_submit">
+    <widget class="QPushButton" name="submit_restr_segment_horizontal">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -814,7 +814,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segment_horizontal_line">
+    <widget class="QCheckBox" name="checkbox_restr_segment_horizontal">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -885,7 +885,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_segment_length_fixed_submit">
+    <widget class="QPushButton" name="submit_restr_segment_length_fixed">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -898,7 +898,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segment_length_fixed_line">
+    <widget class="QCheckBox" name="checkbox_restr_segment_length_fixed">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -927,7 +927,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QPushButton" name="restr_segment_angle_fixed_submit">
+    <widget class="QPushButton" name="submit_restr_segment_angle_fixed">
      <property name="geometry">
       <rect>
        <x>170</x>
@@ -940,7 +940,7 @@
       <string>Submit</string>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segment_angle_fixed_line_1">
+    <widget class="QCheckBox" name="checkbox_restr_segment_angle_fixed_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -956,7 +956,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="restr_segment_angle_fixed_line_2">
+    <widget class="QCheckBox" name="checkbox_restr_segment_angle_fixed_2">
      <property name="geometry">
       <rect>
        <x>90</x>
