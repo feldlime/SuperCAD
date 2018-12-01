@@ -35,13 +35,13 @@ def main():
 
     logging.info('Start working')
 
-    app = QtWidgets.QApplication(sys.argv)  # Новый экземпляр QApplication
-    window = MainWindow()  # Создаём объект класса ExampleApp
+    app = QtWidgets.QApplication(sys.argv)
+    window = MainWindow()
 
-    window.show()  # Показываем окно
+    window.show()
 
-    sys.exit(app.exec_())  # и запускаем приложение
+    sys.exit(app.exec_())
 
 
-if __name__ == '__main__':  # Если мы запускаем файл напрямую, а не импортируем
-    main()  # то запускаем функцию main()
+if __name__ == '__main__':
+    main()

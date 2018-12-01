@@ -373,8 +373,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 checkboxes[name] = getattr(self, name)
         return checkboxes
 
-
-
     def animate(self):
         self.update()
 
@@ -402,13 +400,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                                  y))
                     self.first_line_coo = []
 
-
-
     def mouseMoveEvent(self, event):
+        if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
+            allowed_bindings_types = (
+                PointBinding,
+                SegmentStartBinding, SegmentCenterBinding, SegmentEndBinding
+            )
+            # TODO: check all variants
+        else:
+            allowed_bindings_types = None
+
         self._glwindow_proc.handle_mouse_move_event(
             event,
             self._project.bindings,
-            self._project.figures
+            self._project.figures,
+            allowed_bindings_types
         )
 
     def mouseReleaseEvent(self, event):

@@ -23,8 +23,8 @@ from utils import (
 )
 
 
-CIRCLE_BINDING_RADIUS = 8
-SEGMENT_BINDING_MARGIN = 2
+CIRCLE_BINDING_RADIUS = 12
+SEGMENT_BINDING_MARGIN = 6
 
 
 class IncorrectName(IncorrectParamValue):

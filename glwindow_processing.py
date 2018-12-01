@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPaintEvent
 
 import logging
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional, Type
 
 import paint
 
@@ -60,7 +60,7 @@ class GLWindowProcessor:
 
     def paint_all(self, event: QPaintEvent,
                   figures: Dict[str, Figure],
-                  ferst_line_coo):
+                  first_line_coo):
         self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self._glwindow)
@@ -69,13 +69,13 @@ class GLWindowProcessor:
         painter.save()
         painter.translate(*self.center)
 
+        # self._logger.debug(f'current_bindings: {self._current_bindings}')
         paint.paint_all(
-            painter, figures, self._current_bindings, self._mouse_xy,
-            self.center, event.rect()
+            painter, figures, self._current_bindings, self._mouse_xy
         )
-        if len(ferst_line_coo) == 2:
+        if len(first_line_coo) == 2:
             paint.paint_line(
-                painter, ferst_line_coo, self._mouse_xy
+                painter, first_line_coo, self._mouse_xy
             )
         painter.restore()
         painter.end()
@@ -84,31 +84,23 @@ class GLWindowProcessor:
         return x - self.center[0], y - self.center[1]
 
     def handle_mouse_move_event(
-            self, event, bindings: List[Binding], figures: Dict[str, Figure]):
+            self, event, bindings: List[Binding], figures: Dict[str, Figure],
+            allowed_bindings_types: Optional[Tuple[Type, ...]] = None
+    ):
         # TODO: Status
-        self._logger.debug('handle_mouse_move_event start')
+        # self._logger.debug('handle_mouse_move_event start')
 
         # Convert mouse coordinates to drawing space
         x, y = self.to_real_xy(event.x(), event.y())
         self._mouse_xy = (x, y)
 
-        self._logger.debug(f'bindings: {bindings}')
-        self._highlighted_figures_names = []
-
-
         best_bindings = choose_best_bindings(bindings, x, y)
-        for bind in best_bindings:
-            if ControllerWorkSt.RESTR_JOINT:
-                if isinstance(bind, (SegmentEndBinding,
-                                     SegmentStartBinding,
-                                     SegmentCenterBinding)):
-            #         TODO: Подсветить+
-                    pass
-
-
-
-            for name in bind.get_object_names():
-                self._highlighted_figures_names.append(name)
+        self._current_bindings = []
+        for binding in best_bindings:
+            if allowed_bindings_types is None \
+                    or isinstance(binding, allowed_bindings_types):
+                self._current_bindings.append(binding)
+                self._current_bindings.append(binding)
 
     def handle_mouse_release_event(self,
                                    bindings,

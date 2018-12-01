@@ -17,9 +17,8 @@ module_logger = logging.getLogger('paint.py')
 
 
 def paint_all(painter: QPainter, figures: Dict[str, Figure],
-              bindings: List[Binding], mouse_xy: Tuple[int,int],
-              center_xy: Tuple[int], rect: QRect):
-    module_logger.debug('paint_all start')
+              bindings: List[Binding], mouse_xy: Tuple[int, int]):
+    # module_logger.debug('paint_all start')
 
     # Write coordinates near the mouse
     painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -32,27 +31,25 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
     for figure in figures.values():
         to_draw = figure.get_base_representation()
         if isinstance(figure, Point):
-            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
-            painter.drawEllipse(*to_draw, 2, 2)
+            paint_point(painter, to_draw, 4, Qt.darkCyan)
         elif isinstance(figure, Segment):
-            painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+            painter.setPen(QPen(Qt.darkBlue, 2, Qt.SolidLine))
             painter.drawLine(*to_draw)
         else:
             raise RuntimeError(f'Unexpected figure type {type(figure)}.')
 
     # Draw bindings
     for binding in bindings:
-        if isinstance(binding, (PointBinding, SegmentStartBinding,
-                                SegmentCenterBinding, SegmentEndBinding)):
-            painter.setPen(QPen(Qt.blue, 4, Qt.SolidLine))
-            x, y = binding.bind()
-            painter.drawEllipse(x, y, 4, 4)
+        if isinstance(binding, PointBinding):
+            paint_point(painter, binding.bind(), 6, Qt.cyan)
+        elif isinstance(binding, (SegmentStartBinding,
+                                  SegmentCenterBinding, SegmentEndBinding)):
+            paint_point(painter, binding.bind(), 6, Qt.blue)
         elif isinstance(binding, SegmentsIntersectionBinding):
-            painter.setPen(QPen(Qt.blue, 4, Qt.SolidLine))
             x, y = binding.bind()
-            painter.drawEllipse(x, y, 4, 4)
 
-            painter.setPen(QPen(Qt.cyan, 1, Qt.SolidLine))
+            paint_point(painter, (x, y), 6, Qt.magenta)
+            painter.setPen(QPen(Qt.magenta, 1, Qt.SolidLine))
             for name in binding.get_object_names():
                 segment = figures[name]
                 x1, y1, _, _ = segment.get_base_representation()
@@ -60,14 +57,19 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
         elif isinstance(binding, FullSegmentBinding):
             painter.setPen(QPen(Qt.blue, 4, Qt.SolidLine))
             segment = figures[binding.get_object_names()[0]]
-            painter.drawLine(segment.get_base_representation())
+            painter.drawLine(*segment.get_base_representation())
         else:
             raise RuntimeError(f'Unexpected binding type {type(binding)}.')
 
 
+def paint_point(painter: QPainter, xy: Tuple[int, int], size: int, color):
+    painter.setPen(QPen(color, size // 2 + 1, Qt.SolidLine))
+    painter.drawEllipse(xy[0] - size // 2, xy[1] - size // 2, size, size)
+
+
 def paint_line(painter: QPainter,
                line_point1: Tuple[int, int],
-               mouse_xy: Tuple[int,int]):
+               mouse_xy: Tuple[int, int]):
     module_logger.debug('paint_line')
 
     painter.setPen(QPen(Qt.blue, 2, Qt.SolidLine))
