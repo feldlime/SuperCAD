@@ -29,3 +29,4 @@ class ControllerSt:
     SHOW = 1
     SUBMIT = 2
     ADD = 3
+    MOUSE_ADD = 4

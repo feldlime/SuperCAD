@@ -1,7 +1,7 @@
 """Module of OpenGL widget"""
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPaintEvent
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPaintEvent
 
 import logging
 from typing import Dict, Tuple, List
@@ -58,16 +58,26 @@ class GLWindowProcessor:
     def center(self) -> tuple:
         return self._glwindow.width() // 2, self._glwindow.height() // 2
 
-    def paint_all(self, event: QPaintEvent, figures: Dict[str, Figure]):
+    def paint_all(self, event: QPaintEvent,
+                  figures: Dict[str, Figure],
+                  ferst_line_coo):
         self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self._glwindow)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255)))
+        painter.save()
+        painter.translate(*self.center)
 
         paint.paint_all(
             painter, figures, self._current_bindings, self._mouse_xy,
             self.center, event.rect()
         )
+        if len(ferst_line_coo) == 2:
+            paint.paint_line(
+                painter, ferst_line_coo, self._mouse_xy
+            )
+        painter.restore()
         painter.end()
 
     def to_real_xy(self, x, y) -> tuple:

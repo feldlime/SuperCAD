@@ -17,12 +17,9 @@ module_logger = logging.getLogger('paint.py')
 
 
 def paint_all(painter: QPainter, figures: Dict[str, Figure],
-              bindings: List[Binding], mouse_xy: Tuple[int],
+              bindings: List[Binding], mouse_xy: Tuple[int,int],
               center_xy: Tuple[int], rect: QRect):
     module_logger.debug('paint_all start')
-    painter.fillRect(rect, QBrush(QColor(255, 255, 255)))
-    painter.save()
-    painter.translate(*center_xy)
 
     # Write coordinates near the mouse
     painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
@@ -67,4 +64,15 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
         else:
             raise RuntimeError(f'Unexpected binding type {type(binding)}.')
 
-    painter.restore()
+
+def paint_line(painter: QPainter,
+               line_point1: Tuple[int, int],
+               mouse_xy: Tuple[int,int]):
+    module_logger.debug('paint_line')
+
+    painter.setPen(QPen(Qt.blue, 2, Qt.SolidLine))
+    # Draw line
+    x1, y1 = line_point1
+    x, y = mouse_xy
+    painter.drawLine(x1, y1, x, y)
+
