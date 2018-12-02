@@ -360,6 +360,9 @@
        <height>26</height>
       </rect>
      </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
      <property name="minimum">
       <double>-900000000000000000.000000000000000</double>
      </property>
@@ -381,6 +384,9 @@
        <width>69</width>
        <height>26</height>
       </rect>
+     </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
      </property>
      <property name="minimum">
       <double>-900000000000000000.000000000000000</double>
@@ -478,6 +484,9 @@
        <height>26</height>
       </rect>
      </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
      <property name="minimum">
       <double>-900000000000000000.000000000000000</double>
      </property>
@@ -499,6 +508,9 @@
        <width>69</width>
        <height>26</height>
       </rect>
+     </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
      </property>
      <property name="minimum">
       <double>-900000000000000000.000000000000000</double>
@@ -593,6 +605,9 @@
        <height>26</height>
       </rect>
      </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
+     </property>
      <property name="minimum">
       <double>-900000000000000000.000000000000000</double>
      </property>
@@ -614,6 +629,9 @@
        <width>69</width>
        <height>26</height>
       </rect>
+     </property>
+     <property name="keyboardTracking">
+      <bool>false</bool>
      </property>
      <property name="minimum">
       <double>-900000000000000000.000000000000000</double>

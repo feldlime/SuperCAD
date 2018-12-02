@@ -63,7 +63,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.choose_len = 0
         self.choosed_bindings = []
 
-        self.first_line_coo = []
+        self.painted_figure = None  # Figure that is painted at this moment
 
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
@@ -87,6 +87,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.setTabOrder(self.field_y2_add_segment, self.submit_add_segment)
 
     def _setup_handlers(self):
+
+        # Left buttons
         self.button_add_point.clicked['bool'].connect(
             lambda ev: self.controller_add_point(ControllerSt.SHOW)
         )
@@ -117,6 +119,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.button_restr_segments_parallel.clicked['bool'].connect(
             self.controller_restr_segments_parallel
         )
+
+        # Submits
         self.submit_add_point.clicked['bool'].connect(
             lambda ev: self.controller_add_point(ControllerSt.SUBMIT)
         )
@@ -130,6 +134,30 @@ class WindowContent(QOpenGLWidget, Ui_window):
             lambda ev: self.controller_restr_joint(ControllerSt.SUBMIT)
         )
 
+        # Fields
+        self.field_x_add_point.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('x', new_value)
+        )
+        self.field_y_add_point.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('y', new_value)
+        )
+        self.field_x1_add_segment.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('x1', new_value)
+        )
+        self.field_y1_add_segment.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('y1', new_value)
+        )
+        self.field_x2_add_segment.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('x2', new_value)
+        )
+        self.field_y2_add_segment.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('y2', new_value)
+        )
+
+    def change_painted_figure(self, field: str, value: float):
+        self.painted_figure.set_param(field, value)
+        # TODO: Move mouse
+
     def controller_show_hide(self, widget, controller_st, controller_work_st):
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
@@ -137,11 +165,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_work_st = ControllerWorkSt.NOTHING
             self.choose = ChooseSt.NOTHING
             self.choosed_bindings = []
+            self.painted_figure = None
         if controller_st == ControllerSt.SHOW:
             widget.show()
             self.controller_work_st = controller_work_st
             self.choose = ChooseSt.CHOOSE
-
 
     def controller_restr_segments_parallel(self, status: int):
         if status == ControllerSt.HIDE:
@@ -172,7 +200,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_show_hide(self.widget_restr_segments_normal,
                                       status,
                                       ControllerWorkSt.RESTR_SEGMENTS_NORMAL)
-
 
     def controller_restr_segment_length_fixed(self, status):
         if status == ControllerSt.SUBMIT:
@@ -322,6 +349,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif status == ControllerSt.SHOW:
             self.field_x_add_point.setFocus()
             self.field_x_add_point.selectAll()
+            self.painted_figure = Point.from_coordinates(
+                self.field_x_add_point.value(),
+                self.field_y_add_point.value()
+            )
+        elif status == ControllerSt.HIDE:
+            self.painted_figure = None
+        else:
+            raise RuntimeError(f'Unexpected status {status}')
+
         if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
             self.controller_show_hide(self.widget_add_point,
                                       status,
@@ -350,6 +386,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif status == ControllerSt.SHOW:
             self.field_x1_add_segment.setFocus()
             self.field_x1_add_segment.selectAll()
+            self.painted_figure = Segment.from_coordinates(
+                self.field_x1_add_segment.value(),
+                self.field_y1_add_segment.value(),
+                self.field_x2_add_segment.value(),
+                self.field_y2_add_segment.value()
+            )
+        elif status == ControllerSt.HIDE:
+            self.painted_figure = None
+        else:
+            raise RuntimeError(f'Unexpected status {status}')
 
         if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
             self.controller_show_hide(self.widget_add_segment,
@@ -397,7 +443,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
-            self.first_line_coo
+            self.painted_figure
         )
 
     def mousePressEvent(self, event):
@@ -406,17 +452,32 @@ class WindowContent(QOpenGLWidget, Ui_window):
             if self.controller_work_st == ControllerWorkSt.ADD_POINT:
                 self.controller_add_point(ControllerSt.MOUSE_ADD, (x, y))
             elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
-                if len(self.first_line_coo) == 0:
-                    self.first_line_coo = [x, y]
+                if len(self.painted_figure) == 0:
+                    self.painted_figure = [x, y]
                 else:
                     self.controller_add_segment(ControllerSt.MOUSE_ADD,
-                                                (self.first_line_coo[0],
-                                                 self.first_line_coo[1],
+                                                (self.painted_figure[0],
+                                                 self.painted_figure[1],
                                                  x,
                                                  y))
-                    self.first_line_coo = []
+                    self.painted_figure = []
 
     def mouseMoveEvent(self, event):
+        x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
+        if self.controller_work_st == ControllerWorkSt.ADD_POINT:
+            self.painted_figure.set_param('x', x).set_param('y', y)
+            self.field_x_add_point.setValue(x)
+            self.field_y_add_point.setValue(y)
+            if self.field_x_add_point.hasFocus():
+                self.field_x_add_point.selectAll()
+            elif self.field_y_add_point.hasFocus():
+                self.field_y_add_point.selectAll()
+                
+        elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
+            self.painted_figure.set_param('x', x).set_param('y', y)
+
+
+        # Work with bindings
         if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
             allowed_bindings_types = (
                 PointBinding,
@@ -467,6 +528,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         widget = getattr(self, widget_name)
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
+        self.painted_figure = None
         # self._interf ace_proc.trigger_button(button, show)
         self._interface_proc.trigger_widget(widget, show)
 

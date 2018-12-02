@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QPointF, Qt, QRect
+from PyQt5.QtCore import QPointF, Qt
 from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
 import logging
 from typing import Tuple, List, Dict
@@ -33,8 +33,7 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
         if isinstance(figure, Point):
             paint_point(painter, to_draw, 4, Qt.darkCyan)
         elif isinstance(figure, Segment):
-            painter.setPen(QPen(Qt.darkBlue, 2, Qt.SolidLine))
-            painter.drawLine(*to_draw)
+            paint_segment(painter, to_draw, 2, Qt.darkBlue)
         else:
             raise RuntimeError(f'Unexpected figure type {type(figure)}.')
 
@@ -47,17 +46,14 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
             paint_point(painter, binding.bind(), 6, Qt.blue)
         elif isinstance(binding, SegmentsIntersectionBinding):
             x, y = binding.bind()
-
             paint_point(painter, (x, y), 6, Qt.magenta)
-            painter.setPen(QPen(Qt.magenta, 1, Qt.SolidLine))
             for name in binding.get_object_names():
                 segment = figures[name]
                 x1, y1, _, _ = segment.get_base_representation()
-                painter.drawLine(x1, y1, x, y)
+                paint_segment(painter, (x1, y1, x, y), 1, Qt.magenta)
         elif isinstance(binding, FullSegmentBinding):
-            painter.setPen(QPen(Qt.blue, 4, Qt.SolidLine))
-            segment = figures[binding.get_object_names()[0]]
-            painter.drawLine(*segment.get_base_representation())
+            seg = figures[binding.get_object_names()[0]]
+            paint_segment(painter, seg.get_base_representation(), 1, Qt.blue)
         else:
             raise RuntimeError(f'Unexpected binding type {type(binding)}.')
 
@@ -67,14 +63,13 @@ def paint_point(painter: QPainter, xy: Tuple[int, int], size: int, color):
     painter.drawEllipse(xy[0] - size // 2, xy[1] - size // 2, size, size)
 
 
-def paint_line(painter: QPainter,
-               line_point1: Tuple[int, int],
-               mouse_xy: Tuple[int, int]):
-    module_logger.debug('paint_line')
-
-    painter.setPen(QPen(Qt.blue, 2, Qt.SolidLine))
-    # Draw line
-    x1, y1 = line_point1
-    x, y = mouse_xy
-    painter.drawLine(x1, y1, x, y)
+def paint_segment(
+        painter: QPainter,
+        coordinates: Tuple[int, int, int, int],  # x1, y1, x2, y2
+        width: int,
+        color
+):
+    module_logger.debug('paint_segment')
+    painter.setPen(QPen(color, width, Qt.SolidLine))
+    painter.drawLine(*coordinates)
 
