@@ -345,10 +345,13 @@
       <height>31</height>
      </rect>
     </property>
+    <property name="focusPolicy">
+     <enum>Qt::TabFocus</enum>
+    </property>
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QDoubleSpinBox" name="point_y">
+    <widget class="QDoubleSpinBox" name="field_y_add_point">
      <property name="geometry">
       <rect>
        <x>130</x>
@@ -370,7 +373,7 @@
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QDoubleSpinBox" name="point_x">
+    <widget class="QDoubleSpinBox" name="field_x_add_point">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -392,7 +395,7 @@
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="label_x_add_point">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -405,7 +408,7 @@
       <string>X:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_2">
+    <widget class="QLabel" name="label_y_add_point">
      <property name="geometry">
       <rect>
        <x>110</x>
@@ -427,8 +430,17 @@
        <height>25</height>
       </rect>
      </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::StrongFocus</enum>
+     </property>
      <property name="text">
       <string>Submit</string>
+     </property>
+     <property name="autoDefault">
+      <bool>true</bool>
      </property>
     </widget>
    </widget>
@@ -457,7 +469,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QDoubleSpinBox" name="line_y_1">
+    <widget class="QDoubleSpinBox" name="field_y1_add_segment">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -479,7 +491,7 @@
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QDoubleSpinBox" name="line_x_1">
+    <widget class="QDoubleSpinBox" name="field_x1_add_segment">
      <property name="geometry">
       <rect>
        <x>40</x>
@@ -501,7 +513,7 @@
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLabel" name="label_9">
+    <widget class="QLabel" name="label_x1_add_segment">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -514,7 +526,7 @@
       <string>X1:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_10">
+    <widget class="QLabel" name="label_y1_add_segment">
      <property name="geometry">
       <rect>
        <x>120</x>
@@ -536,11 +548,17 @@
        <height>25</height>
       </rect>
      </property>
+     <property name="cursor">
+      <cursorShape>PointingHandCursor</cursorShape>
+     </property>
      <property name="text">
       <string>Submit</string>
      </property>
+     <property name="autoDefault">
+      <bool>true</bool>
+     </property>
     </widget>
-    <widget class="QLabel" name="label_11">
+    <widget class="QLabel" name="label_x2_add_segment">
      <property name="geometry">
       <rect>
        <x>230</x>
@@ -553,7 +571,7 @@
       <string>X2:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_12">
+    <widget class="QLabel" name="label_y2_add_segment">
      <property name="geometry">
       <rect>
        <x>340</x>
@@ -566,7 +584,7 @@
       <string>Y2:</string>
      </property>
     </widget>
-    <widget class="QDoubleSpinBox" name="line_x_2">
+    <widget class="QDoubleSpinBox" name="field_x2_add_segment">
      <property name="geometry">
       <rect>
        <x>260</x>
@@ -588,7 +606,7 @@
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QDoubleSpinBox" name="line_y_2">
+    <widget class="QDoubleSpinBox" name="field_y2_add_segment">
      <property name="geometry">
       <rect>
        <x>370</x>
@@ -1091,8 +1109,6 @@
    <zorder>work_plane</zorder>
    <zorder>layoutWidget_2</zorder>
    <zorder>widget_elements_table</zorder>
-   <zorder>widget_add_point</zorder>
-   <zorder>widget_add_segment</zorder>
    <zorder>widget_restr_point_on_segment</zorder>
    <zorder>widget_restr_segments_normal</zorder>
    <zorder>widget_restr_segment_horizontal</zorder>
@@ -1101,6 +1117,8 @@
    <zorder>widget_restr_segments_parallel</zorder>
    <zorder>widget_restr_fixed</zorder>
    <zorder>widget_restr_joint</zorder>
+   <zorder>widget_add_point</zorder>
+   <zorder>widget_add_segment</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1108,7 +1126,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1215,6 +1233,49 @@
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>button_add_point</tabstop>
+  <tabstop>button_add_segment</tabstop>
+  <tabstop>button_restr_joint</tabstop>
+  <tabstop>button_restr_point_on_segment</tabstop>
+  <tabstop>button_restr_segments_parallel</tabstop>
+  <tabstop>button_restr_segments_normal</tabstop>
+  <tabstop>button_restr_segment_horizontal</tabstop>
+  <tabstop>button_restr_fixed</tabstop>
+  <tabstop>button_restr_segment_length_fixed</tabstop>
+  <tabstop>button_restr_segment_angle_fixed</tabstop>
+  <tabstop>widget_elements_table</tabstop>
+  <tabstop>widget_add_point</tabstop>
+  <tabstop>field_y_add_point</tabstop>
+  <tabstop>field_x_add_point</tabstop>
+  <tabstop>submit_add_point</tabstop>
+  <tabstop>field_y1_add_segment</tabstop>
+  <tabstop>field_x1_add_segment</tabstop>
+  <tabstop>submit_add_segment</tabstop>
+  <tabstop>field_x2_add_segment</tabstop>
+  <tabstop>field_y2_add_segment</tabstop>
+  <tabstop>submit_restr_joint</tabstop>
+  <tabstop>checkbox_restr_joint_1</tabstop>
+  <tabstop>checkbox_restr_joint_2</tabstop>
+  <tabstop>submit_restr_point_on_segment</tabstop>
+  <tabstop>checkbox_restr_point_on_segment_point</tabstop>
+  <tabstop>checkbox_restr_point_on_segment_line</tabstop>
+  <tabstop>submit_restr_segments_parallel</tabstop>
+  <tabstop>checkbox_restr_segments_parallel_1</tabstop>
+  <tabstop>checkbox_restr_segments_parallel_2</tabstop>
+  <tabstop>submit_restr_segments_normal</tabstop>
+  <tabstop>checkbox_restr_segments_normal_1</tabstop>
+  <tabstop>checkbox_restr_segments_normal_2</tabstop>
+  <tabstop>submit_restr_segment_horizontal</tabstop>
+  <tabstop>checkbox_restr_segment_horizontal</tabstop>
+  <tabstop>submit_restr_fixed</tabstop>
+  <tabstop>checkbox_restr_fixed</tabstop>
+  <tabstop>submit_restr_segment_length_fixed</tabstop>
+  <tabstop>checkbox_restr_segment_length_fixed</tabstop>
+  <tabstop>submit_restr_segment_angle_fixed</tabstop>
+  <tabstop>checkbox_restr_segment_angle_fixed_1</tabstop>
+  <tabstop>checkbox_restr_segment_angle_fixed_2</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

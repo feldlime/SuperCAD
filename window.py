@@ -74,12 +74,24 @@ class WindowContent(QOpenGLWidget, Ui_window):
             lambda ev: self._interface_proc.trigger_widget(
                 self.widget_elements_table, ev))
 
+        # Setting tab order. Can do it into designer and remove from here
+
+        # Add point
+        self.setTabOrder(self.field_x_add_point, self.field_y_add_point)
+        self.setTabOrder(self.field_y_add_point, self.submit_add_point)
+
+        # Add segment
+        self.setTabOrder(self.field_x1_add_segment, self.field_y1_add_segment)
+        self.setTabOrder(self.field_y1_add_segment, self.field_x2_add_segment)
+        self.setTabOrder(self.field_x2_add_segment, self.field_y2_add_segment)
+        self.setTabOrder(self.field_y2_add_segment, self.submit_add_segment)
+
     def _setup_handlers(self):
         self.button_add_point.clicked['bool'].connect(
-            self.controller_add_point
+            lambda ev: self.controller_add_point(ControllerSt.SHOW)
         )
         self.button_add_segment.clicked['bool'].connect(
-            self.controller_add_segment
+            lambda ev: self.controller_add_segment(ControllerSt.SHOW)
         )
         self.button_restr_fixed.clicked['bool'].connect(
             self.controller_restr_fixed
@@ -296,49 +308,53 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                       status,
                                       ControllerWorkSt.RESTR_FIXED)
 
-    def controller_add_segment(self, status, line_pos: tuple=None):
-        self._logger.debug('controller_add_segment start status ' + str(status))
-        if status == ControllerSt.SUBMIT:
-            if float(self.line_x_1.value()) ==\
-                float(self.line_x_2.value()) ==\
-                float(self.line_y_1.value()) ==\
-                float(self.line_y_2.value()):
-                raise ValueError
-            else:
-                s = Segment.from_coordinates(
-                    self.line_x_1.value(),
-                    self.line_y_1.value(),
-                    self.line_x_2.value(),
-                    self.line_y_2.value())
-                self._project.add_figure(s)
-                status = ControllerSt.HIDE
-        elif status == ControllerSt.MOUSE_ADD:
-            s = Segment.from_coordinates(*line_pos)
-            self._project.add_figure(s)
-            status = ControllerSt.HIDE
-
-        if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
-            self.controller_show_hide(self.widget_add_segment,
-                                      status,
-                                      ControllerWorkSt.ADD_SEGMENT)
-
     def controller_add_point(self, status, point_pos: tuple=None):
-        self._logger.debug('controller_add_point start wits status' + str(
-            status))
+        self._logger.debug(f'controller_add_point start with status {status}')
         if status == ControllerSt.SUBMIT:
-            x = self.point_x.value()
-            y = self.point_y.value()
+            x = self.field_x_add_point.value()
+            y = self.field_y_add_point.value()
             self._project.add_figure(Point((x, y)))
             status = ControllerSt.HIDE
         elif status == ControllerSt.MOUSE_ADD:
             x, y = point_pos
             self._project.add_figure(Point((x, y)))
             status = ControllerSt.HIDE
-
+        elif status == ControllerSt.SHOW:
+            self.field_x_add_point.setFocus()
+            self.field_x_add_point.selectAll()
         if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
             self.controller_show_hide(self.widget_add_point,
                                       status,
                                       ControllerWorkSt.ADD_POINT)
+
+    def controller_add_segment(self, status, line_pos: tuple=None):
+        self._logger.debug('controller_add_segment start status ' + str(status))
+        if status == ControllerSt.SUBMIT:
+            if float(self.field_x1_add_segment.value()) ==\
+                float(self.field_x2_add_segment.value()) ==\
+                float(self.field_y1_add_segment.value()) ==\
+                float(self.field_y2_add_segment.value()):  # TODO: What a strange check?
+                raise ValueError
+            else:
+                s = Segment.from_coordinates(
+                    self.field_x1_add_segment.value(),
+                    self.field_y1_add_segment.value(),
+                    self.field_x2_add_segment.value(),
+                    self.field_y2_add_segment.value())
+                self._project.add_figure(s)
+                status = ControllerSt.HIDE
+        elif status == ControllerSt.MOUSE_ADD:
+            s = Segment.from_coordinates(*line_pos)
+            self._project.add_figure(s)
+            status = ControllerSt.HIDE
+        elif status == ControllerSt.SHOW:
+            self.field_x1_add_segment.setFocus()
+            self.field_x1_add_segment.selectAll()
+
+        if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
+            self.controller_show_hide(self.widget_add_segment,
+                                      status,
+                                      ControllerWorkSt.ADD_SEGMENT)
 
     @staticmethod
     def get_spot_type(binding):

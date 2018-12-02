@@ -2,6 +2,7 @@ class ChooseSt:
     NOTHING = 0
     CHOOSE = 1
 
+
 class ControllerWorkSt:
     NOTHING = 0
     ADD_POINT = 1
@@ -15,14 +16,6 @@ class ControllerWorkSt:
     RESTR_SEGMENTS_NORMAL = 9
     RESTR_SEGMENTS_PARALLEL = 10
 
-    # def __init__(self):
-    #     self._state = self.NOTHING
-    #
-    # def __get__(self, instance, owner):
-    #
-    #
-    # def is_restr(self):
-
 
 class ControllerSt:
     HIDE = 0
@@ -30,3 +23,4 @@ class ControllerSt:
     SUBMIT = 2
     ADD = 3
     MOUSE_ADD = 4
+
