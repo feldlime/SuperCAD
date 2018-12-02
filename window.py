@@ -156,6 +156,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
             lambda new_value: self.change_painted_figure('y2', new_value)
         )
 
+        # Actions
+        self.action_undo.triggered['bool'].connect(self.undo)
+        self.action_redo.triggered['bool'].connect(self.redo)
+
+
     def change_painted_figure(self, field: str, value: float):
         if self.painted_figure is not None:
             self.painted_figure.set_param(field, value)
@@ -588,24 +593,26 @@ class WindowContent(QOpenGLWidget, Ui_window):
         for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
 
-    def _save(self):
+    def save(self):
         # TODO: window for saving, event -> get filename
         filename = ''
         self._project.save(filename)
 
-    def _load(self):
+    def load(self):
         # TODO: window for loading, event -> get filename
         filename = ''
         self._project.load(filename)
 
-    def _undo(self):
+    def undo(self, ev):
+        self._logger.debug(f'Undo: ev = {ev}')
         try:
             self._project.undo()
         except ActionImpossible:
             # TODO: Status bar / inactive
             pass
 
-    def _redo(self):
+    def redo(self, ev):
+        self._logger.debug(f'Redo: ev = {ev}')
         try:
             self._project.redo()
         except ActionImpossible:
