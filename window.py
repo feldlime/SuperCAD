@@ -5,7 +5,7 @@ from contracts import contract, new_contract
 from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
 from project import CADProject, ActionImpossible
-from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow
+from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
 from PyQt5.QtCore import Qt
 import logging
 
@@ -66,6 +66,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self.painted_figure = None  # Figure that is painted at this moment
         self.creation_st = CreationSt.NOTHING
+
+        self._filename = None
 
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
@@ -159,6 +161,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # Actions
         self.action_undo.triggered['bool'].connect(self.undo)
         self.action_redo.triggered['bool'].connect(self.redo)
+        self.action_save.triggered['bool'].connect(self.save)
+        self.action_save_as.triggered['bool'].connect(self.save_as)
+        self.action_open.triggered['bool'].connect(self.open)
 
 
     def change_painted_figure(self, field: str, value: float):
@@ -593,15 +598,25 @@ class WindowContent(QOpenGLWidget, Ui_window):
         for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
 
-    def save(self):
-        # TODO: window for saving, event -> get filename
-        filename = ''
-        self._project.save(filename)
+    def save(self, _=None):
+        if self._filename is None:
+            self.save_as()
+        else:
+            self._project.save(self._filename)
 
-    def load(self):
-        # TODO: window for loading, event -> get filename
-        filename = ''
-        self._project.load(filename)
+    def save_as(self, _=None):
+        filename, _ = QFileDialog.getSaveFileName(
+            self, 'Сохранить', '', 'SCAD Files (*.scad)')
+        if filename:
+            self._filename = filename
+            self.save()
+
+    def open(self, _=None):
+        filename, _ = QFileDialog.getOpenFileName(
+            self, 'Открыть', '', 'SCAD Files (*.scad)')
+        if filename:
+            self._filename = filename
+            self._project.load(self._filename)
 
     def undo(self, ev):
         self._logger.debug(f'Undo: ev = {ev}')
