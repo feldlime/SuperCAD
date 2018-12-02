@@ -164,7 +164,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_save.triggered['bool'].connect(self.save)
         self.action_save_as.triggered['bool'].connect(self.save_as)
         self.action_open.triggered['bool'].connect(self.open)
-
+        self.action_reset.triggered['bool'].connect(self.reset)
+        self.action_new.triggered['bool'].connect(self.new)
+        self.action_exit.triggered['bool'].connect(self.exit)
 
     def change_painted_figure(self, field: str, value: float):
         if self.painted_figure is not None:
@@ -597,6 +599,25 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _uncheck_left_buttons(self):
         for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
+
+    def new(self, _=None):
+        self.reset()
+        self._project = CADProject()
+        self._filename = None
+
+    def exit(self, _=None):
+        self._window.close()
+        
+    def reset(self, _=None):
+        self._logger.debug('reset: start')
+
+        self.controller_work_st = ControllerWorkSt.NOTHING
+        self.choose = ChooseSt.NOTHING
+        self.creation_st = CreationSt.NOTHING
+        self.painted_figure = None
+
+        self._hide_footer_widgets()
+        self._uncheck_left_buttons()
 
     def save(self, _=None):
         if self._filename is None:
