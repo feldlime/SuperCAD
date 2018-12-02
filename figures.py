@@ -233,7 +233,7 @@ class Segment(Figure):
     base_parameters = ['x1', 'y1', 'x2', 'y2']
 
     @contract(start='tuple(number, number) | None',
-              angle='number | None', length='number, >0 | None')
+              angle='number | None', length='number, >=0 | None')
     def __init__(self, start=(0, 0), angle=0, length=1):
         super().__init__(start, angle)
         self._i_length = float(length)

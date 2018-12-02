@@ -61,7 +61,7 @@ class GLWindowProcessor:
     def paint_all(self, event: QPaintEvent,
                   figures: Dict[str, Figure],
                   painted_figure: Optional[Figure] = None):
-        self._logger.debug('paint_all start')
+        # self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self._glwindow)
         painter.setRenderHint(QPainter.Antialiasing)
@@ -80,7 +80,7 @@ class GLWindowProcessor:
             if isinstance(painted_figure, Point):
                 paint.paint_point(painter, coo, 6, Qt.green)
             elif isinstance(painted_figure, Segment):
-                paint.paint_segment(painter, coo, 4, Qt.green)
+                paint.paint_segment(painter, coo, 3, Qt.green)
             else:
                 raise RuntimeError(
                     f'Unexpected figure type {type(painted_figure)}')

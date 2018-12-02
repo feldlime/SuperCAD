@@ -24,3 +24,11 @@ class ControllerSt:
     ADD = 3
     MOUSE_ADD = 4
 
+
+class CreationSt:
+    NOTHING = 0
+    POINT_SET = 1
+    SEGMENT_START_SET = 2
+    SEGMENT_END_SET = 3
+
+

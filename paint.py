@@ -53,7 +53,7 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
                 paint_segment(painter, (x1, y1, x, y), 1, Qt.magenta)
         elif isinstance(binding, FullSegmentBinding):
             seg = figures[binding.get_object_names()[0]]
-            paint_segment(painter, seg.get_base_representation(), 1, Qt.blue)
+            paint_segment(painter, seg.get_base_representation(), 3, Qt.blue)
         else:
             raise RuntimeError(f'Unexpected binding type {type(binding)}.')
 
@@ -69,7 +69,6 @@ def paint_segment(
         width: int,
         color
 ):
-    module_logger.debug('paint_segment')
     painter.setPen(QPen(color, width, Qt.SolidLine))
     painter.drawLine(*coordinates)
 
