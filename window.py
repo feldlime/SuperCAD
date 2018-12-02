@@ -1,7 +1,6 @@
 """Module with main class of application that manage system and picture."""
 
-
-from contracts import contract, new_contract
+from contracts import contract
 from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
 from project import CADProject, ActionImpossible
@@ -10,11 +9,26 @@ from PyQt5.QtCore import Qt
 import logging
 
 from design import Ui_window
-from figures import Figure, Point, Segment
+from figures import Point, Segment
 from states import ControllerWorkSt, ChooseSt, ControllerSt, CreationSt
-from restrictions import *
+from restrictions import (
+    PointFixed,
+    PointsJoint,
+    SegmentFixed,
+    SegmentAngleFixed,
+    SegmentLengthFixed,
+    SegmentSpotFixed,
+    SegmentsHorizontal,
+    SegmentsVertical,
+    SegmentsParallel,
+    SegmentsPerpendicular,
+    SegmentsSpotsJoint,
+    SegmentsAngleBetweenFixed,
+    PointOnSegmentFixed,
+    PointOnSegmentLine,
+    PointAndSegmentSpotJoint,
+)
 from bindings import (
-    Binding,
     PointBinding,
     SegmentStartBinding,
     SegmentCenterBinding,
@@ -24,6 +38,17 @@ from bindings import (
     choose_best_bindings
 )
 from solve import CannotSolveSystemError
+
+
+def get_spot_type(binding):
+    if isinstance(binding, SegmentStartBinding):
+        return 'start'
+    elif isinstance(binding, SegmentCenterBinding):
+        return 'center'
+    elif isinstance(binding, SegmentEndBinding):
+        return 'end'
+    else:
+        raise TypeError
 
 
 class WindowContent(QOpenGLWidget, Ui_window):
@@ -61,7 +86,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.controller_work_st = ControllerWorkSt.NOTHING
         self.choose = ChooseSt.NOTHING
 
-        self.choose_len = 0
         self.choosed_bindings = []
 
         self.painted_figure = None  # Figure that is painted at this moment
@@ -173,19 +197,82 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.painted_figure.set_param(field, value)
         # TODO: Move mouse
 
-    def controller_show_hide(self, widget, controller_st, controller_work_st):
-        self._hide_footer_widgets()
-        self._uncheck_left_buttons()
+    def show_hide_controller(self, widget, controller_st, controller_work_st):
         if controller_st == ControllerSt.HIDE:
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.choose = ChooseSt.NOTHING
-            self.choosed_bindings = []
-            self.painted_figure = None
+            self._hide_footer_widgets()
+            self._uncheck_left_buttons()
+            self.reset()
         if controller_st == ControllerSt.SHOW:
             widget.show()
             self.controller_work_st = controller_work_st
             self.choose = ChooseSt.CHOOSE
-        self._logger.debug('End of controller_show_hide')
+
+    def controller_add_point(self, status):
+        self._logger.debug(f'controller_add_point start with status {status}')
+
+        if status == ControllerSt.SUBMIT or status == ControllerSt.MOUSE_ADD:
+            figure_coo = self.painted_figure.get_base_representation()
+            self._project.add_figure(Point.from_coordinates(*figure_coo))
+            status = ControllerSt.HIDE
+
+        elif status == ControllerSt.SHOW:
+            self.field_x_add_point.setFocus()
+            self.field_x_add_point.selectAll()
+            self.painted_figure = Point.from_coordinates(
+                self.field_x_add_point.value(),
+                self.field_y_add_point.value()
+            )
+            self.creation_st = CreationSt.POINT_SET
+        elif status == ControllerSt.HIDE:
+            pass
+        else:
+            raise RuntimeError(f'Unexpected status {status}')
+
+        if status == ControllerSt.HIDE:
+            self.painted_figure = None
+            self.creation_st = CreationSt.NOTHING
+
+        if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
+            self.show_hide_controller(self.widget_add_point,
+                                      status,
+                                      ControllerWorkSt.ADD_POINT)
+
+    def controller_add_segment(self, status):
+        self._logger.debug(f'controller_add_segment start with status {status}')
+        if status == ControllerSt.SUBMIT or status == ControllerSt.MOUSE_ADD:
+            figure_coo = self.painted_figure.get_base_representation()
+            if float(self.field_x1_add_segment.value()) ==\
+                float(self.field_x2_add_segment.value()) ==\
+                float(self.field_y1_add_segment.value()) ==\
+                float(self.field_y2_add_segment.value()):  # TODO: What a strange check??
+                raise ValueError
+            else:
+                s = Segment.from_coordinates(*figure_coo)
+                self._project.add_figure(s)
+                status = ControllerSt.HIDE
+
+        elif status == ControllerSt.SHOW:
+            self.field_x1_add_segment.setFocus()
+            self.field_x1_add_segment.selectAll()
+            self.painted_figure = Segment.from_coordinates(
+                self.field_x1_add_segment.value(),
+                self.field_y1_add_segment.value(),
+                self.field_x2_add_segment.value(),
+                self.field_y2_add_segment.value()
+            )
+            self.creation_st = CreationSt.SEGMENT_START_SET
+        elif status == ControllerSt.HIDE:
+            pass
+        else:
+            raise RuntimeError(f'Unexpected status {status}')
+
+        if status == ControllerSt.HIDE:
+            self.painted_figure = None
+            self.creation_st = CreationSt.NOTHING
+
+        if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
+            self.show_hide_controller(
+                self.widget_add_segment, status, ControllerWorkSt.ADD_SEGMENT)
 
     def controller_restr_segments_parallel(self, status: int):
         if status == ControllerSt.HIDE:
@@ -213,7 +300,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.choose = ChooseSt.NOTHING
                 self.choosed_bindings = []
         else:
-            self.controller_show_hide(self.widget_restr_segments_normal,
+            self.show_hide_controller(self.widget_restr_segments_normal,
                                       status,
                                       ControllerWorkSt.RESTR_SEGMENTS_NORMAL)
 
@@ -224,7 +311,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             else:
                 pass
         else:
-            self.controller_show_hide(self.widget_restr_segment_length_fixed,
+            self.show_hide_controller(self.widget_restr_segment_length_fixed,
                                       status,
                                       ControllerWorkSt.
                                       RESTR_SEGMENT_LENGTH_FIXED)
@@ -236,7 +323,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             else:
                 pass
         else:
-            self.controller_show_hide(self.widget_restr_segment_horizontal,
+            self.show_hide_controller(self.widget_restr_segment_horizontal,
                                       status,
                                       ControllerWorkSt.RESTR_SEGMENT_HORIZONTAL)
 
@@ -248,7 +335,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             else:
                 pass
         else:
-            self.controller_show_hide(self.widget_restr_segment_angle_fixed,
+            self.show_hide_controller(self.widget_restr_segment_angle_fixed,
                                       status,
                                       ControllerWorkSt.
                                       RESTR_SEGMENT_ANGLE_FIXED)
@@ -256,16 +343,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def controller_restr_joint(self, status, bindings: list = None):
         if status == ControllerSt.ADD:
             for binding in bindings:
-                if isinstance(binding, (PointBinding,
-                                        SegmentStartBinding,
-                                        SegmentCenterBinding,
-                                        SegmentEndBinding)):
+                if isinstance(
+                    binding,
+                    (
+                        PointBinding,
+                        SegmentStartBinding,
+                        SegmentCenterBinding,
+                        SegmentEndBinding
+                    )
+                ):
                     self.choosed_bindings.append(binding)
                     if len(self.choosed_bindings) == 1:
                         self.checkbox_restr_joint_1.toggle()
-                    if len(self.choosed_bindings) == 2:
+                    elif len(self.choosed_bindings) == 2:
                         self.checkbox_restr_joint_2.toggle()
                         self.choose = ChooseSt.NOTHING
+                        self.submit_restr_joint.setFocus()
                     break
         elif status == ControllerSt.SUBMIT:
             if len(self.choosed_bindings) < 2:
@@ -292,13 +385,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                                b2.get_object_names()[0]))
             except CannotSolveSystemError:
                 pass
+
             self.controller_work_st = ControllerWorkSt.NOTHING
             self.choosed_bindings = []
             status = ControllerSt.HIDE
+
         if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
-            self.controller_show_hide(self.widget_restr_joint,
-                                      status,
-                                      ControllerWorkSt.RESTR_JOINT)
+            self.show_hide_controller(
+                self.widget_restr_joint, status, ControllerWorkSt.RESTR_JOINT)
 
     def controller_restr_point_on_segment(self, status, figure: str=None):
         if status == ControllerSt.SUBMIT:
@@ -313,133 +407,56 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def controller_restr_fixed(self, status, bindings: list = None):
         if status == ControllerSt.ADD:
             for binding in bindings:
-                if isinstance(binding, (PointBinding,
-                                        SegmentStartBinding,
-                                        SegmentCenterBinding,
-                                        SegmentEndBinding,
-                                        FullSegmentBinding)):
+                if isinstance(
+                    binding,
+                    (
+                        PointBinding,
+                        SegmentStartBinding,
+                        SegmentCenterBinding,
+                        SegmentEndBinding,
+                        FullSegmentBinding
+                    )
+                ):
                     self.choosed_bindings.append(binding)
                     if len(self.choosed_bindings) == 1:
                         self.checkbox_restr_fixed.toggle()
                         self.choose = ChooseSt.NOTHING
+                        print('setting focus')
+                        self.submit_restr_fixed.setFocus()
                     break
+
         elif status == ControllerSt.SUBMIT:
             if len(self.choosed_bindings) != 1:
                 raise RuntimeError
             binding = self.choosed_bindings[0]
             figure_name = binding.get_object_names()[0]
+            coo = self._project.figures[figure_name].get_base_representation()
             if isinstance(binding, PointBinding):
-                restr = PointFixed(*self._project.figures[
-                                       figure_name].get_base_representation())
+                restr = PointFixed(*coo)
             elif isinstance(binding, FullSegmentBinding):
-                restr = SegmentFixed(*self._project.figures[
-                                       figure_name].get_base_representation())
-            else:
+                restr = SegmentFixed(*coo)
+            else:  # Segment spot fixed  # TODO: check?
                 binding_spot_type = self.get_spot_type(binding)
-                restr = SegmentSpotFixed(*self._project.figures[
-                    figure_name].get_base_representation(), binding_spot_type)
+                if binding_spot_type == 'start':
+                    coo = coo[:2]
+                elif binding_spot_type == 'end':
+                    coo = coo[2:]
+                else:  # center
+                    coo = coo[0] + coo[2] / 2, coo[1] + coo[3] / 2
+                restr = SegmentSpotFixed(*coo, binding_spot_type)
+
             try:
-                self._project.add_restriction(restr, tuple([figure_name]))
+                self._project.add_restriction(restr, (figure_name,))
             except CannotSolveSystemError:
                 pass
+
             self.controller_work_st = ControllerWorkSt.NOTHING
             self.choosed_bindings = []
             status = ControllerSt.HIDE
 
         if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
-            self.controller_show_hide(self.widget_restr_fixed,
-                                      status,
-                                      ControllerWorkSt.RESTR_FIXED)
-
-    def controller_add_point(self, status):
-        self._logger.debug(f'controller_add_point start with status {status}')
-
-        if status == ControllerSt.SUBMIT:
-            figure_coo = self.painted_figure.get_base_representation()
-            self._project.add_figure(Point.from_coordinates(*figure_coo))
-            status = ControllerSt.HIDE
-        elif status == ControllerSt.MOUSE_ADD:
-            figure_coo = self.painted_figure.get_base_representation()
-            self._project.add_figure(Point.from_coordinates(*figure_coo))
-            status = ControllerSt.HIDE
-
-        elif status == ControllerSt.SHOW:
-            self.field_x_add_point.setFocus()
-            self.field_x_add_point.selectAll()
-            self.painted_figure = Point.from_coordinates(
-                self.field_x_add_point.value(),
-                self.field_y_add_point.value()
-            )
-            self.creation_st = CreationSt.POINT_SET
-        elif status == ControllerSt.HIDE:
-            pass
-        else:
-            raise RuntimeError(f'Unexpected status {status}')
-
-        if status == ControllerSt.HIDE:
-            self.painted_figure = None
-            self.creation_st = CreationSt.NOTHING
-
-        if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
-            self.controller_show_hide(self.widget_add_point,
-                                      status,
-                                      ControllerWorkSt.ADD_POINT)
-
-    def controller_add_segment(self, status):
-        self._logger.debug(f'controller_add_segment start with status {status}')
-        if status == ControllerSt.SUBMIT:
-            figure_coo = self.painted_figure.get_base_representation()
-            if float(self.field_x1_add_segment.value()) ==\
-                float(self.field_x2_add_segment.value()) ==\
-                float(self.field_y1_add_segment.value()) ==\
-                float(self.field_y2_add_segment.value()):  # TODO: What a strange check??
-                raise ValueError
-            else:
-                s = Segment.from_coordinates(*figure_coo)
-                self._project.add_figure(s)
-                status = ControllerSt.HIDE
-        elif status == ControllerSt.MOUSE_ADD:
-            figure_coo = self.painted_figure.get_base_representation()
-            s = Segment.from_coordinates(*figure_coo)
-            self._project.add_figure(s)
-            status = ControllerSt.HIDE
-
-        elif status == ControllerSt.SHOW:
-            self.field_x1_add_segment.setFocus()
-            self.field_x1_add_segment.selectAll()
-            self.painted_figure = Segment.from_coordinates(
-                self.field_x1_add_segment.value(),
-                self.field_y1_add_segment.value(),
-                self.field_x2_add_segment.value(),
-                self.field_y2_add_segment.value()
-            )
-            self.creation_st = CreationSt.SEGMENT_START_SET
-        elif status == ControllerSt.HIDE:
-            pass
-        else:
-            raise RuntimeError(f'Unexpected status {status}')
-
-        if status == ControllerSt.HIDE:
-            self._logger.debug('Add segment status (2nd) == HIDE: start')
-            self.painted_figure = None
-            self.creation_st = CreationSt.NOTHING
-
-        if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
-            self._logger.debug('Add segment status (2nd) == HIDE or SHOW: start')
-            self.controller_show_hide(self.widget_add_segment,
-                                      status,
-                                      ControllerWorkSt.ADD_SEGMENT)
-
-    @staticmethod
-    def get_spot_type(binding):
-        if isinstance(binding, SegmentStartBinding):
-            return 'start'
-        elif isinstance(binding, SegmentCenterBinding):
-            return 'center'
-        elif isinstance(binding, SegmentEndBinding):
-            return 'end'
-        else:
-            raise TypeError
+            self.show_hide_controller(
+                self.widget_restr_fixed, status, ControllerWorkSt.RESTR_FIXED)
 
     @property
     def _footer_widgets(self) -> dict:
@@ -547,22 +564,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug('mouseReleaseEvent: start')
         if event.button() == Qt.LeftButton:
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
+
             if self.choose == ChooseSt.CHOOSE:
-                best_bindings = choose_best_bindings(self._project.bindings,
-                                                     x,
-                                                     y)
+                bindings = choose_best_bindings(self._project.bindings, x, y)
+
                 if self.controller_work_st == \
                         ControllerWorkSt.RESTR_SEGMENTS_NORMAL:
-                    self.controller_restr_segments_normal(ControllerSt.ADD,
-                                                          best_bindings)
-                elif self.controller_work_st == \
-                    ControllerWorkSt.RESTR_JOINT:
-                    self.controller_restr_joint(ControllerSt.ADD,
-                                                best_bindings)
-                elif self.controller_work_st == \
-                        ControllerWorkSt.RESTR_FIXED:
-                    self.controller_restr_fixed(ControllerSt.ADD,
-                                                best_bindings)
+                    self.controller_restr_segments_normal(
+                        ControllerSt.ADD, bindings)
+                elif self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
+                    self.controller_restr_joint(ControllerSt.ADD, bindings)
+                elif self.controller_work_st == ControllerWorkSt.RESTR_FIXED:
+                    self.controller_restr_fixed(ControllerSt.ADD, bindings)
                 # elif self.controller_work_st == ControllerWorkSt.RES
                 # else:
                 #     raise RuntimeError(f'Unexpected state {self.controller_work_st}')
@@ -607,7 +620,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def exit(self, _=None):
         self._window.close()
-        
+
     def reset(self, _=None):
         self._logger.debug('reset: start')
 
@@ -615,6 +628,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.choose = ChooseSt.NOTHING
         self.creation_st = CreationSt.NOTHING
         self.painted_figure = None
+        self.choosed_bindings = []
 
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
