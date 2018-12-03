@@ -93,6 +93,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._filename = None
 
+        self._move_binding = None
+
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
 
@@ -208,7 +210,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.choose = ChooseSt.CHOOSE
 
     def controller_add_point(self, status,
-                             binding: PointBinding=None,
                              x: int=None,
                              y: int=None):
         self._logger.debug(f'controller_add_point start with status {status}')
@@ -228,9 +229,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.creation_st = CreationSt.POINT_SET
 
         elif status == ControllerSt.MOVE:
-            # print(binding)
-            self._project.move_figure(binding[0], x, y)
-            # print(point_name, type(binding))
+            if isinstance(self._move_binding, PointBinding):
+                self._project.move_figure(self._move_binding, x, y)
+
         elif status == ControllerSt.HIDE:
             pass
         else:
@@ -246,7 +247,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                       status,
                                       ControllerWorkSt.ADD_POINT)
 
-    def controller_add_segment(self, status):
+    def controller_add_segment(self, status,
+                               x: int=None,
+                               y: int=None):
+
         self._logger.debug(f'controller_add_segment start with status {status}')
         if status == ControllerSt.SUBMIT or status == ControllerSt.MOUSE_ADD:
             figure_coo = self.painted_figure.get_base_representation()
@@ -270,6 +274,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.field_y2_add_segment.value()
             )
             self.creation_st = CreationSt.SEGMENT_START_SET
+
+        elif status == ControllerSt.MOVE:
+            if isinstance(self._move_binding, (SegmentStartBinding,
+                                               SegmentEndBinding,
+                                               SegmentCenterBinding,
+                                               FullSegmentBinding)):
+                self._project.move_figure(self._move_binding, x, y)
+
         elif status == ControllerSt.HIDE:
             pass
         else:
@@ -520,12 +532,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
             elif self.controller_work_st == ControllerWorkSt.NOTHING and\
                     self.creation_st == CreationSt.NOTHING:
-                binding = self._glwindow_proc._current_bindings[0]
-                if isinstance(binding, PointBinding):
-                    self.controller_work_st = ControllerWorkSt.ADD_POINT
-                else:
-                    self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
-                self.creation_st = CreationSt.MOVE
+                bindings = self._glwindow_proc._current_bindings
+                if len(bindings) > 0:
+                    self._move_binding = bindings[0]
+
+                    if isinstance(self._move_binding, PointBinding):
+                        self.controller_work_st = ControllerWorkSt.ADD_POINT
+
+                    elif isinstance(self._move_binding, (SegmentStartBinding,
+                                              SegmentCenterBinding,
+                                              SegmentEndBinding,
+                                              FullSegmentBinding)):
+                        self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
+                    self.creation_st = CreationSt.MOVE
 
 
 
@@ -543,9 +562,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 elif self.field_y_add_point.hasFocus():
                     self.field_y_add_point.selectAll()
             elif self.creation_st == CreationSt.MOVE:
-                self.controller_add_point(ControllerSt.MOVE,
-                                          self._glwindow_proc._current_bindings,
-                                          x, y)
+                self.controller_add_point(ControllerSt.MOVE, x, y)
 
         elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
@@ -557,7 +574,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.field_x2_add_segment.setValue(x)
                 self.field_y2_add_segment.setValue(y)
             elif self.creation_st == CreationSt.MOVE:
-                pass
+                self.controller_add_segment(ControllerSt.MOVE, x, y)
+
             # Select field with focus
             if self.field_x1_add_segment.hasFocus():
                 self.field_x1_add_segment.selectAll()

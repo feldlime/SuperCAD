@@ -197,6 +197,7 @@ class CADProject:
             or isinstance(binding, SegmentEndBinding)
             or isinstance(binding, SegmentCenterBinding)
             or isinstance(binding, PointBinding)
+            # TODO: FullSegmentBinding
         ):
             raise IncorrectParamType(f"Incorrect type {type(binding)}")
 
@@ -214,7 +215,7 @@ class CADProject:
         elif isinstance(binding, SegmentEndBinding):
             optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
         else:
-            # TODO: SegmentCenterBinding
+            # TODO: SegmentCenterBinding and FullSegmentBinding
             raise NotImplementedError
 
         current_values = self._get_values()
