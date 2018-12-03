@@ -109,7 +109,7 @@ class GLWindowProcessor:
             if allowed_bindings_types is None \
                     or isinstance(binding, allowed_bindings_types):
                 self._current_bindings.append(binding)
-                self._current_bindings.append(binding)
+                # self._current_bindings.append(binding)
 
     def handle_mouse_release_event(self,
                                    bindings,

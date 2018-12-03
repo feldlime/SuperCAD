@@ -23,6 +23,7 @@ class ControllerSt:
     SUBMIT = 2
     ADD = 3
     MOUSE_ADD = 4
+    MOVE = 5
 
 
 class CreationSt:
@@ -30,5 +31,6 @@ class CreationSt:
     POINT_SET = 1
     SEGMENT_START_SET = 2
     SEGMENT_END_SET = 3
+    MOVE = 4
 
 

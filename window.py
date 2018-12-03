@@ -207,7 +207,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_work_st = controller_work_st
             self.choose = ChooseSt.CHOOSE
 
-    def controller_add_point(self, status):
+    def controller_add_point(self, status,
+                             binding: PointBinding=None,
+                             x: int=None,
+                             y: int=None):
         self._logger.debug(f'controller_add_point start with status {status}')
 
         if status == ControllerSt.SUBMIT or status == ControllerSt.MOUSE_ADD:
@@ -223,10 +226,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.field_y_add_point.value()
             )
             self.creation_st = CreationSt.POINT_SET
+
+        elif status == ControllerSt.MOVE:
+            # print(binding)
+            self._project.move_figure(binding[0], x, y)
+            # print(point_name, type(binding))
         elif status == ControllerSt.HIDE:
             pass
         else:
             raise RuntimeError(f'Unexpected status {status}')
+
 
         if status == ControllerSt.HIDE:
             self.painted_figure = None
@@ -369,15 +378,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if isinstance(b2, PointBinding):
                     restr = PointsJoint()
                 else:
-                    spot_type = self.get_spot_type(b2)
+                    spot_type = get_spot_type(b2)
                     restr = PointAndSegmentSpotJoint(spot_type)
             else:
-                spot_type_1 = self.get_spot_type(b1)
+                spot_type_1 = get_spot_type(b1)
                 if isinstance(b2, PointBinding):
                     b1, b2 = b2, b1
                     restr = PointAndSegmentSpotJoint(spot_type_1)
                 else:
-                    spot_type_2 = self.get_spot_type(b2)
+                    spot_type_2 = get_spot_type(b2)
                     restr = SegmentsSpotsJoint(spot_type_1, spot_type_2)
             try:
                 self._project.add_restriction(restr,
@@ -436,7 +445,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif isinstance(binding, FullSegmentBinding):
                 restr = SegmentFixed(*coo)
             else:  # Segment spot fixed  # TODO: check?
-                binding_spot_type = self.get_spot_type(binding)
+                binding_spot_type = get_spot_type(binding)
                 if binding_spot_type == 'start':
                     coo = coo[:2]
                 elif binding_spot_type == 'end':
@@ -509,18 +518,34 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.controller_add_segment(ControllerSt.MOUSE_ADD)
                     self.painted_figure = None
 
+            elif self.controller_work_st == ControllerWorkSt.NOTHING and\
+                    self.creation_st == CreationSt.NOTHING:
+                binding = self._glwindow_proc._current_bindings[0]
+                if isinstance(binding, PointBinding):
+                    self.controller_work_st = ControllerWorkSt.ADD_POINT
+                else:
+                    self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
+                self.creation_st = CreationSt.MOVE
+
+
+
     def mouseMoveEvent(self, event):
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
         if self.controller_work_st == ControllerWorkSt.ADD_POINT:
-            self.painted_figure.set_param('x', x).set_param('y', y)
-            self.field_x_add_point.setValue(x)
-            self.field_y_add_point.setValue(y)
-            # Select field with focus
-            if self.field_x_add_point.hasFocus():
-                self.field_x_add_point.selectAll()
-            elif self.field_y_add_point.hasFocus():
-                self.field_y_add_point.selectAll()
+            if self.creation_st == CreationSt.POINT_SET:
+                self.painted_figure.set_param('x', x).set_param('y', y)
+                self.field_x_add_point.setValue(x)
+                self.field_y_add_point.setValue(y)
+                # Select field with focus
+                if self.field_x_add_point.hasFocus():
+                    self.field_x_add_point.selectAll()
+                elif self.field_y_add_point.hasFocus():
+                    self.field_y_add_point.selectAll()
+            elif self.creation_st == CreationSt.MOVE:
+                self.controller_add_point(ControllerSt.MOVE,
+                                          self._glwindow_proc._current_bindings,
+                                          x, y)
 
         elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
@@ -531,7 +556,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.painted_figure.set_param('x2', x).set_param('y2', y)
                 self.field_x2_add_segment.setValue(x)
                 self.field_y2_add_segment.setValue(y)
-
+            elif self.creation_st == CreationSt.MOVE:
+                pass
             # Select field with focus
             if self.field_x1_add_segment.hasFocus():
                 self.field_x1_add_segment.selectAll()
@@ -560,6 +586,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             allowed_bindings_types
         )
 
+
+
     def mouseReleaseEvent(self, event):
         self._logger.debug('mouseReleaseEvent: start')
         if event.button() == Qt.LeftButton:
@@ -572,10 +600,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
                         ControllerWorkSt.RESTR_SEGMENTS_NORMAL:
                     self.controller_restr_segments_normal(
                         ControllerSt.ADD, bindings)
+
                 elif self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
                     self.controller_restr_joint(ControllerSt.ADD, bindings)
+
                 elif self.controller_work_st == ControllerWorkSt.RESTR_FIXED:
                     self.controller_restr_fixed(ControllerSt.ADD, bindings)
+
+            if (self.controller_work_st == ControllerWorkSt.ADD_POINT
+                  or self.controller_work_st ==
+                  ControllerWorkSt.ADD_SEGMENT) and self.creation_st == \
+                    CreationSt.MOVE:
+                self.controller_work_st = ControllerWorkSt.NOTHING
+                self.creation_st = CreationSt.NOTHING
                 # elif self.controller_work_st == ControllerWorkSt.RES
                 # else:
                 #     raise RuntimeError(f'Unexpected state {self.controller_work_st}')
