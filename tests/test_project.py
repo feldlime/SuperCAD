@@ -157,35 +157,26 @@ class TestProject:
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
-        n_attempts = 20
-        n_successes = 0
-        for _ in range(n_attempts):
-            new_len = np.random.randint(1, 10)
-            project.change_figure(segment1_name, 'length', new_len)
-            print(project.figures[segment1_name].get_base_representation())
-            answer_1 = {
-                point1_name: (1, 2),
-                point2_name: (5, 6),
-                segment1_name: ((10-new_len) / 2, 0, 10 - (10-new_len) / 2, 0)
-            }
-            answer_2 = {
-                point1_name: (1, 2),
-                point2_name: (5, 6),
-                segment1_name: (0, 0, new_len, 0)
-            }
-            answer_3 = {
-                point1_name: (1, 2),
-                point2_name: (5, 6),
-                segment1_name: (10 - new_len, 0, 10, 0)
-            }
-            if self._is_figures_correct(project.figures, answer_1) \
-                    or self._is_figures_correct(project.figures, answer_2) \
-                    or self._is_figures_correct(project.figures, answer_3):
-                n_successes += 1
-            project.undo()
-
-        print(f'{n_successes} successes from {n_attempts} attempts')
-        assert n_successes / n_attempts > 0.7
+        new_len = 7
+        project.change_figure(segment1_name, 'length', new_len)
+        answer_1 = {
+            point1_name: (1, 2),
+            point2_name: (5, 6),
+            segment1_name: ((10-new_len) / 2, 0, 10 - (10-new_len) / 2, 0)
+        }
+        answer_2 = {
+            point1_name: (1, 2),
+            point2_name: (5, 6),
+            segment1_name: (0, 0, new_len, 0)
+        }
+        answer_3 = {
+            point1_name: (1, 2),
+            point2_name: (5, 6),
+            segment1_name: (10 - new_len, 0, 10, 0)
+        }
+        assert self._is_figures_correct(project.figures, answer_1) \
+            or self._is_figures_correct(project.figures, answer_2) \
+            or self._is_figures_correct(project.figures, answer_3)
 
     def test_moving(self):
         project = CADProject()
@@ -339,25 +330,25 @@ class TestProject:
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
-        # Change length
-        project.change_figure(segment1_name, 'length', 7)
-        correct_figures = {
-            point1_name: (1, 2),
-            point2_name: (5, 6),
-            segment1_name: (1, 2, 8, 2)  # Segment set. save length and angle
-        }
-        assert self._is_figures_correct(project.figures, correct_figures)
-
         # Move segment end
-        bb = choose_best_bindings(project.bindings, 8, 2)[0]
-        project.move_figure(bb, 5, 5)
+        bb = choose_best_bindings(project.bindings, 10, 0)[0]
+        project.move_figure(bb, 12, 2)
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 5, 5)  # Segment set. save length and angle
+            segment1_name: (1, 2, 12, 2)  # Segment set. save length and angle
         }
         assert self._is_figures_correct(project.figures, correct_figures)
         project.commit()
+
+        # Change length
+        project.change_figure(segment1_name, 'length', 11)
+        correct_figures = {
+            point1_name: (1, 2),
+            point2_name: (5, 6),
+            segment1_name: (1, 2, 12, 2)
+        }
+        assert self._is_figures_correct(project.figures, correct_figures)
 
     def test_undo_redo_commit_rollback(self):
         project = CADProject()
