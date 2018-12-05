@@ -1,11 +1,15 @@
 """Module with classes of geometry restrictions."""
 
-from utils import ReferencedToObjects, IncorrectParamValue
+from utils import (
+    ReferencedToObjects,
+    IncorrectParamValue,
+    simplify_angle
+)
 from figures import Point, Segment
 
 # noinspection PyUnresolvedReferences
-from numpy import pi
-from sympy import Eq
+from numpy import pi as np_pi, sign as np_sign, tan as np_tan, cos as np_cos
+from sympy import Eq, sign as sp_sign, sqrt as sp_sqrt
 from contracts import contract
 
 
@@ -145,18 +149,20 @@ class SegmentLengthFixed(Restriction, ReferencedToObjects):
 class SegmentAngleFixed(Restriction, ReferencedToObjects):
     object_types = [Segment]
 
-    @contract(angle='number, > 0, < 2 * $pi')
+    @contract(angle='number, > 0, < 2 * $np_pi')
     def __init__(self, angle):
         super().__init__()
         self._angle = angle
 
     @contract(symbols='dict[4]')
     def get_equations(self, symbols: dict):
-        # TODO
         x1, y1 = symbols['x1'], symbols['y1']
         x2, y2 = symbols['x2'], symbols['y2']
-        equations = [
 
+        sign = np_sign(simplify_angle(self._angle) - np_pi)
+        equations = [
+            Eq((y2 - y1), (x2 - x1) * np_tan(self._angle)),
+            Eq(sp_sign(y2 - y1), sign)  # TODO: Maybe drop?
         ]
         return equations
 
@@ -192,7 +198,7 @@ class SegmentVertical(Restriction, ReferencedToObjects):
 class SegmentsAngleBetweenFixed(Restriction, ReferencedToObjects):
     object_types = [Segment, Segment]
 
-    @contract(angle='number, > 0, < 2 * $pi')
+    @contract(angle='number, > 0, < 2 * $np_pi')
     def __init__(self, angle):
         super().__init__()
         self._angle = angle
@@ -203,11 +209,18 @@ class SegmentsAngleBetweenFixed(Restriction, ReferencedToObjects):
         s1_x2, s1_y2 = symbols_segment_1['x2'], symbols_segment_1['y2']
         s2_x1, s2_y1 = symbols_segment_2['x1'], symbols_segment_2['y1']
         s2_x2, s2_y2 = symbols_segment_2['x2'], symbols_segment_2['y2']
-        equations = [
 
+        s1_dx, s1_dy = s1_x2 - s1_x1, s1_y2 - s1_y1
+        s2_dx, s2_dy = s2_x2 - s2_x1, s2_y2 - s2_y1
+
+        scalar_prod = s1_dx * s2_dx + s1_dy * s2_dy
+        l1 = sp_sqrt(s1_dx ** 2 + s1_dy ** 2)
+        l2 = sp_sqrt(s2_dx ** 2 + s2_dy ** 2)
+
+        equations = [
+            Eq(scalar_prod, l1 * l2 * np_cos(self._angle))  # TODO: simplify?
         ]
         return equations
-        # TODO
 
 
 class SegmentsParallel(Restriction, ReferencedToObjects):

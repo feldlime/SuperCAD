@@ -446,8 +446,10 @@ class Segment(Figure):
         elif param == 'length':
             return [sympy.Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
         elif param == 'angle':
-            raise NotImplementedError
-            # return [sympy.Eq(y1, value)]
-            # TODO
+            sign = np.sign(simplify_angle(value) - np.pi)
+            return [
+                sympy.Eq((y2 - y1), (x2 - x1) * np.tan(value)),
+                sympy.Eq(sympy.sign(y2 - y1), sign)  # TODO: Maybe drop?
+            ]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')

@@ -219,7 +219,7 @@ class CADProject:
             }}  # TODO: Check
         elif isinstance(binding, FullSegmentBinding):
             # TODO: Use min distance
-            return 
+            return
         else:
             raise IncorrectParamType(f"Incorrect type {type(binding)}")
 
