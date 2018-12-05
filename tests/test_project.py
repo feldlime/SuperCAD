@@ -257,7 +257,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 11, 2)  # Segment set. save length and angle
+            segment1_name: (1, 2, 10, 0)  # Segment set. save length and angle
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -335,7 +335,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 11, 2)  # Segment set. save length and angle
+            segment1_name: (1, 2, 10, 0)
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 

@@ -85,6 +85,10 @@ class Figure:
         """Set parameter of figure."""
         raise NotImplementedError
 
+    def set_base_param(self, param_name, value):
+        """Set base parameter of figure."""
+        raise NotImplementedError
+
     def get_setter_equations(self, symbols: dict, param: str, value: float):
         raise NotImplementedError
 
@@ -173,6 +177,28 @@ class Point(Figure):
         ------
         IncorrectParamValue: if param is incorrect.
         """
+        return self.set_base_param(param_name, value)  # All params are base
+
+    @contract(param_name='str', value='number')
+    def set_base_param(self, param_name, value):
+        """Set base parameter of figure.
+
+        Parameters
+        ----------
+        param_name: str
+            Name of parameter to set value.
+            Must be in ['x', 'y'].
+        value: int or float
+            Value too set.
+
+        Returns
+        -------
+        self
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
+        """
 
         if param_name == 'x':
             self._base = (float(value), self._base[1])
@@ -233,7 +259,7 @@ class Segment(Figure):
     base_parameters = ['x1', 'y1', 'x2', 'y2']
 
     @contract(start='tuple(number, number) | None',
-              angle='number | None', length='number, >0 | None')
+              angle='number | None', length='number, >=0 | None')
     def __init__(self, start=(0, 0), angle=0, length=1):
         super().__init__(start, angle)
         self._i_length = float(length)
@@ -338,6 +364,48 @@ class Segment(Figure):
         else:
             raise IncorrectParamValue(
                 f'Incorrect name of parameter: {param_name}.')
+
+        return self
+
+    @contract(param_name='str', value='number')
+    def set_base_param(self, param_name, value):
+        """Set parameter of figure.
+
+        Parameters
+        ----------
+        param_name: str
+            Name of parameter to set value.
+            Must be in ['x1', 'y1', 'x2', 'y2'].
+        value: int or float
+            Value too set.
+
+        Returns
+        -------
+        self
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
+        """
+
+        base_repr = list(self.get_base_representation())
+        if param_name == 'x1':
+            base_repr[0] = value
+            self._base = (float(value), self._base[1])
+        elif param_name == 'y1':
+            base_repr[1] = value
+            self._base = (self._base[0], float(value))
+        elif param_name == 'x2':
+            base_repr[2] = value
+        elif param_name == 'y2':
+            base_repr[3] = value
+        else:
+            raise IncorrectParamValue(
+                f'Incorrect name of parameter: {param_name}.')
+
+        length = segment_length(*base_repr)
+        angle = segment_angle(*base_repr)
+        self._length, self._angle = length, angle
 
         return self
 

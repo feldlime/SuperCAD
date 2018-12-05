@@ -98,6 +98,20 @@ class TestPoint:
         with pytest.raises(IncorrectParamValue):
             p.set_param('y2', 100)
 
+    def test_setting_base_param(self):
+        p = Point((1, 2))
+
+        p.set_base_param('x', 10)
+        rep = p.get_base_representation()
+        assert all(isclose(rep, (10, 2)))
+
+        p.set_base_param('y', 20)
+        rep = p.get_base_representation()
+        assert all(isclose(rep, (10, 20)))
+
+        with pytest.raises(IncorrectParamValue):
+            p.set_base_param('y2', 100)
+
 
 # noinspection PyTypeChecker
 class TestSegment:
@@ -122,9 +136,8 @@ class TestSegment:
             Segment((1, 2), '1')
         with pytest.raises(ContractNotRespected):
             Segment((1, 1), 1, '1')
-        for i in [-1, 0]:
-            with pytest.raises(ContractNotRespected):
-                Segment((1, 2), 0, i)
+        with pytest.raises(ContractNotRespected):
+            Segment((1, 2), 0, -1)
 
     def test_create_from_point(self):
         for coo in random.random((10, 4)) * 100 - 50:
@@ -171,6 +184,7 @@ class TestSegment:
 
     def test_setting_param(self):
         s = Segment((1, 2), 0, 10)
+        # base_repr: (1, 2, 11, 2)
 
         s.set_param('x1', 0)
         rep = s.get_base_representation()
@@ -198,3 +212,26 @@ class TestSegment:
 
         with pytest.raises(IncorrectParamValue):
             s.set_param('y', 100)
+
+    def test_setting_base_param(self):
+        s = Segment((1, 2), 0, 10)
+        # base_repr: (1, 2, 11, 2)
+
+        s.set_base_param('x1', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 2, 11, 2)))
+
+        s.set_base_param('y1', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 11, 2)))
+
+        s.set_base_param('y2', 5)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 11, 5)))
+
+        s.set_base_param('x2', 0)
+        rep = s.get_base_representation()
+        assert all(isclose(rep, (0, 0, 0, 5)))
+
+        with pytest.raises(IncorrectParamValue):
+            s.set_base_param('y', 100)
