@@ -60,7 +60,8 @@ class GLWindowProcessor:
 
     def paint_all(self, event: QPaintEvent,
                   figures: Dict[str, Figure],
-                  painted_figure: Optional[Figure] = None):
+                  painted_figure: Optional[Figure] = None,
+                  selected_figure: Optional[Figure] = None):
         # self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self._glwindow)
@@ -84,6 +85,17 @@ class GLWindowProcessor:
             else:
                 raise RuntimeError(
                     f'Unexpected figure type {type(painted_figure)}')
+
+        # Paint selected figure
+        if selected_figure is not None:
+            coo = selected_figure.get_base_representation()
+            if isinstance(selected_figure, Point):
+                paint.paint_point(painter, coo, 6, Qt.cyan)
+            elif isinstance(selected_figure, Segment):
+                paint.paint_segment(painter, coo, 3, Qt.blue)
+            else:
+                raise RuntimeError(
+                    f'Unexpected figure type {type(selected_figure)}')
 
         # Finish painting
         painter.restore()

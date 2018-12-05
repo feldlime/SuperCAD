@@ -143,6 +143,7 @@ class Ui_window(object):
         self.widget_elements_table.setEnabled(True)
         self.widget_elements_table.setGeometry(QtCore.QRect(50, 0, 256, 581))
         self.widget_elements_table.setAutoFillBackground(False)
+        self.widget_elements_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.widget_elements_table.setObjectName("widget_elements_table")
         self.widget_add_point = QtWidgets.QWidget(self.centralwidget)
         self.widget_add_point.setGeometry(QtCore.QRect(50, 580, 281, 31))

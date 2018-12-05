@@ -5,7 +5,7 @@ from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
 from project import CADProject, ActionImpossible
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QStringListModel
 import logging
 
 from design import Ui_window
@@ -94,6 +94,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._filename = None
 
         self._move_binding = None
+
+        self._selected_figure = None
 
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
@@ -194,6 +196,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_new.triggered['bool'].connect(self.new)
         self.action_exit.triggered['bool'].connect(self.exit)
 
+        # List views
+        self.widget_elements_table.clicked.connect(self.select_figure)
+
+    def select_figure(self, item_idx):
+        # figures_model = QStringListModel()
+        # for i, figure_name in enumerate(self._project.figures.keys()):
+        #     figures_model.insertRow(i)
+        #     figures_model.setData(figures_model.index(i), figure_name)
+        # self.widget_elements_table.setModel(figures_model)
+
+        # I don't know why [0]
+        figure_name = self.widget_elements_table.model().itemData(item_idx)[0]
+        self._selected_figure = self._project.figures[figure_name]
+
+
     def change_painted_figure(self, field: str, value: float):
         if self.painted_figure is not None:
             self.painted_figure.set_param(field, value)
@@ -218,6 +235,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             figure_coo = self.painted_figure.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             status = ControllerSt.HIDE
+            self._update_figures_list_view()
 
         elif status == ControllerSt.SHOW:
             self.field_x_add_point.setFocus()
@@ -236,7 +254,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             pass
         else:
             raise RuntimeError(f'Unexpected status {status}')
-
 
         if status == ControllerSt.HIDE:
             self.painted_figure = None
@@ -263,6 +280,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 s = Segment.from_coordinates(*figure_coo)
                 self._project.add_figure(s)
                 status = ControllerSt.HIDE
+                self._update_figures_list_view()
 
         elif status == ControllerSt.SHOW:
             self.field_x1_add_segment.setFocus()
@@ -506,10 +524,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def paintEvent(self, event):
         # self._logger.debug('paintEvent')
+
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
-            self.painted_figure
+            self.painted_figure,
+            self._selected_figure
         )
 
     def mousePressEvent(self, event):
@@ -545,8 +565,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                               FullSegmentBinding)):
                         self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
                     self.creation_st = CreationSt.MOVE
-
-
 
     def mouseMoveEvent(self, event):
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
@@ -664,6 +682,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.field_x2_add_segment.setValue(0)
         self.field_y2_add_segment.setValue(0)
 
+        self._selected_figure = None
+
     def _uncheck_left_buttons(self):
         for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
@@ -733,3 +753,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if widget_name in dir(self):
                     buttons_to_widgets_dict[name] = widget_name
         return buttons_to_widgets_dict
+
+    def _update_figures_list_view(self):
+        figures_model = QStringListModel()
+        for i, figure_name in enumerate(self._project.figures.keys()):
+            figures_model.insertRow(i)
+            figures_model.setData(figures_model.index(i), figure_name)
+        self.widget_elements_table.setModel(figures_model)
