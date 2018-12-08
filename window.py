@@ -3,6 +3,7 @@
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
 from PyQt5.QtCore import Qt, QStringListModel
 from logging import getLogger
+import re
 
 from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
@@ -70,7 +71,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # Set additional private attributes
         # self._status = Sts.NOTHING
-        self._buttons_to_widgets_dict = self._get_buttons_to_widgets_dict()
+        self._setup_useful_aliases()
 
         # Setup special UI - method _setup_ui
         self._setup_ui()
@@ -96,6 +97,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._move_binding = None
 
         self._selected_figure = None
+
+    def _setup_useful_aliases(self):
+        self._footer_widgets = dict()
+        self._left_buttons = dict()
+        self._footer_checkboxes = dict()
+
+        for name in dir(self):
+            if re.match(r'^checkbox_restr_', name):
+                self._footer_checkboxes[name] = getattr(self, name)
+            elif re.match(r'^button_(add|restr)_', name):
+                self._left_buttons[name] = getattr(self, name)
+            elif re.match(r'^widget_(add|restr)_', name):
+                self._footer_widgets[name] = getattr(self, name)
 
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
@@ -197,19 +211,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_exit.triggered['bool'].connect(self.exit)
 
         # List views
-        self.widget_elements_table.clicked.connect(self.select_figure)
+        self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
 
-    def select_figure(self, item_idx):
-        # figures_model = QStringListModel()
-        # for i, figure_name in enumerate(self._project.figures.keys()):
-        #     figures_model.insertRow(i)
-        #     figures_model.setData(figures_model.index(i), figure_name)
-        # self.widget_elements_table.setModel(figures_model)
-
+    def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
         figure_name = self.widget_elements_table.model().itemData(item_idx)[0]
         self._selected_figure = self._project.figures[figure_name]
-
 
     def change_painted_figure(self, field: str, value: float):
         if self.painted_figure is not None:
@@ -226,9 +233,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_work_st = controller_work_st
             self.choose = ChooseSt.CHOOSE
 
-    def controller_add_point(self, status,
-                             x: int=None,
-                             y: int=None):
+    def controller_add_point(self, status, x: int = None, y: int = None):
         self._logger.debug(f'controller_add_point start with status {status}')
 
         if status == ControllerSt.SUBMIT or status == ControllerSt.MOUSE_ADD:
@@ -264,23 +269,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
                                       status,
                                       ControllerWorkSt.ADD_POINT)
 
-    def controller_add_segment(self, status,
-                               x: int=None,
-                               y: int=None):
+    def controller_add_segment(self, status, x: int = None, y: int = None):
 
         self._logger.debug(f'controller_add_segment start with status {status}')
         if status == ControllerSt.SUBMIT or status == ControllerSt.MOUSE_ADD:
             figure_coo = self.painted_figure.get_base_representation()
-            if float(self.field_x1_add_segment.value()) ==\
-                float(self.field_x2_add_segment.value()) ==\
-                float(self.field_y1_add_segment.value()) ==\
-                float(self.field_y2_add_segment.value()):  # TODO: What a strange check??
-                raise ValueError
-            else:
-                s = Segment.from_coordinates(*figure_coo)
-                self._project.add_figure(s)
-                status = ControllerSt.HIDE
-                self._update_figures_list_view()
+            s = Segment.from_coordinates(*figure_coo)
+            self._project.add_figure(s)
+            status = ControllerSt.HIDE
+            self._update_figures_list_view()
 
         elif status == ControllerSt.SHOW:
             self.field_x1_add_segment.setFocus()
@@ -322,8 +319,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._uncheck_left_buttons()
             self.widget_restr_segments_parallel.show()
         if status == ControllerSt.SUBMIT:
-            if self.checkbox_restr_segments_parallel_1.checkState() == False or \
-                    self.checkbox_restr_segments_parallel_2.checkState() == False:
+            if not self.checkbox_restr_segments_parallel_1.checkState() or \
+                    not self.checkbox_restr_segments_parallel_2.checkState():
                 raise ValueError
             else:
                 pass
@@ -496,28 +493,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if status == ControllerSt.HIDE or status == ControllerSt.SHOW:
             self.show_hide_controller(
                 self.widget_restr_fixed, status, ControllerWorkSt.RESTR_FIXED)
-
-    @property
-    def _footer_widgets(self) -> dict:
-        widgets = dict()
-        for w_name in self._buttons_to_widgets_dict.values():
-            widgets[w_name] = getattr(self, w_name)
-        return widgets
-
-    @property
-    def _left_buttons(self) -> dict:
-        buttons = dict()
-        for b_name in self._buttons_to_widgets_dict.keys():
-            buttons[b_name] = getattr(self, b_name)
-        return buttons
-
-    @property
-    def _footer_checkboxes(self) -> dict:
-        checkboxes = dict()
-        for name in dir(self):
-            if name.startswith('checkbox_restr_'):
-                checkboxes[name] = getattr(self, name)
-        return checkboxes
 
     def animate(self):
         self.update()
@@ -743,16 +718,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         except ActionImpossible:
             # TODO: Status bar / inactive
             pass
-
-    def _get_buttons_to_widgets_dict(self):
-        buttons_to_widgets_dict = dict()
-        for name in dir(self):
-            if name.startswith('button_add_') \
-                    or name.startswith('button_restr_'):
-                widget_name = 'widget' + name[6:]
-                if widget_name in dir(self):
-                    buttons_to_widgets_dict[name] = widget_name
-        return buttons_to_widgets_dict
 
     def _update_figures_list_view(self):
         figures_model = QStringListModel()
