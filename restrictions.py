@@ -1,16 +1,16 @@
 """Module with classes of geometry restrictions."""
 
+# noinspection PyUnresolvedReferences
+from numpy import pi as np_pi, sign as np_sign, tan as np_tan, cos as np_cos
+from sympy import Eq, sign as sp_sign, sqrt as sp_sqrt
+from contracts import contract
+
 from utils import (
     ReferencedToObjects,
     IncorrectParamValue,
     simplify_angle
 )
 from figures import Point, Segment
-
-# noinspection PyUnresolvedReferences
-from numpy import pi as np_pi, sign as np_sign, tan as np_tan, cos as np_cos
-from sympy import Eq, sign as sp_sign, sqrt as sp_sqrt
-from contracts import contract
 
 
 class Restriction:

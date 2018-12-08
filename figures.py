@@ -1,7 +1,7 @@
 """Module with classes of geometry figures."""
 
 import numpy as np
-import sympy
+from sympy import Eq, sign as sympy_sign
 from contracts import contract
 
 from utils import (
@@ -258,7 +258,7 @@ class Point(Figure):
 
         Returns
         -------
-        equations: list[sympy.Eq]
+        equations: list[Eq]
             List of equations.
 
         Raises
@@ -267,9 +267,9 @@ class Point(Figure):
         """
         x, y = symbols['x'], symbols['y']
         if param == 'x':
-            return [sympy.Eq(x, value)]
+            return [Eq(x, value)]
         elif param == 'y':
-            return [sympy.Eq(y, value)]
+            return [Eq(y, value)]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')
 
@@ -457,7 +457,7 @@ class Segment(Figure):
 
         Returns
         -------
-        equations: list[sympy.Eq]
+        equations: list[Eq]
             List of equations.
 
         Raises
@@ -467,20 +467,20 @@ class Segment(Figure):
         x1, y1 = symbols['x1'], symbols['y1']
         x2, y2 = symbols['x2'], symbols['y2']
         if param == 'x1':
-            return [sympy.Eq(x1, value)]
+            return [Eq(x1, value)]
         elif param == 'y1':
-            return [sympy.Eq(y1, value)]
+            return [Eq(y1, value)]
         elif param == 'x2':
-            return [sympy.Eq(x2, value)]
+            return [Eq(x2, value)]
         elif param == 'y2':
-            return [sympy.Eq(y2, value)]
+            return [Eq(y2, value)]
         elif param == 'length':
-            return [sympy.Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
+            return [Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
         elif param == 'angle':
             sign = np.sign(simplify_angle(value) - np.pi)
             return [
-                sympy.Eq((y2 - y1), (x2 - x1) * np.tan(value)),
-                sympy.Eq(sympy.sign(y2 - y1), sign)  # TODO: Maybe drop?
+                Eq((y2 - y1), (x2 - x1) * np.tan(value)),
+                Eq(sympy_sign(y2 - y1), sign)  # TODO: Maybe drop?
             ]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')

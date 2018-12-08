@@ -1,15 +1,15 @@
 """Module with classes of geometry bindings."""
 
+import numpy as np
+from itertools import combinations
+from contracts import contract
+
 from utils import (
     segment_length,
     ReferencedToObjects,
     BIG_DISTANCE,
 )
 from figures import Point, Segment
-
-import numpy as np
-from itertools import combinations
-from contracts import contract
 
 
 class Binding:

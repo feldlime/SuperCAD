@@ -1,7 +1,15 @@
 """Module that provides the means to save and solve systems of equations."""
 
-import numpy as np
-import sympy
+from numpy import array as np_array, ndarray as np_ndarray, random
+from sympy import (
+    Eq,
+    Symbol,
+    lambdify,
+    true as sympy_true,
+    false as sympy_false,
+    Integer as sympy_Integer
+)
+
 import networkx as nx
 import scipy.optimize as sp_optimize
 
@@ -76,7 +84,7 @@ def unroll_values_dict(hierarchical_dict: dict) -> dict:
 
 
 @contract(symbols_names='list(str)')
-def get_equation_symbols_names(equation: sympy.Eq, symbols_names: list) -> set:
+def get_equation_symbols_names(equation: Eq, symbols_names: list) -> set:
     return set([w for w in symbols_names if w in str(equation)])
 
 
@@ -320,7 +328,7 @@ class EquationsSystem:
 
         symbols_names = [compose_full_name(figure_name, sym)
                          for sym in symbols_names]
-        new_symbols = {name: sympy.symbols(name)  # TODO: real=True
+        new_symbols = {name: Symbol(name)  # TODO: real=True
                        for name in symbols_names}
         self._symbols.update(new_symbols)
         self._update_graph()
@@ -629,7 +637,7 @@ class EquationsSystem:
 
         lambdas_names = [compose_full_name('lambda', str(i))
                          for i in range(len(system))]
-        lambdas_dict = {name: sympy.symbols(name)  # TODO: real=True
+        lambdas_dict = {name: Symbol(name)  # TODO: real=True
                         for name in lambdas_names}
         lambdas = lambdas_dict.values()
 
@@ -640,8 +648,8 @@ class EquationsSystem:
         canonical = self._system_to_canonical(system)
         loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
         if loss_part2 == 0:  # System is empty -> no lambdas
-            loss_part2 = sympy.Integer(0)  # To be possible to diff
-        equations = [sympy.Eq(x - desired_values[name] + loss_part2.diff(x), 0)
+            loss_part2 = sympy_Integer(0)  # To be possible to diff
+        equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
                      for name, x in symbols.items()]
 
         equations.extend(system)
@@ -672,11 +680,11 @@ class EquationsSystem:
         simplified_system = substitutor.sub(system)
 
         # Check easy inconsistency
-        if sympy.false in simplified_system:
+        if sympy_false in simplified_system:
             raise SystemIncompatibleError('Get BooleanFalse in system.')
 
         # Check easy inconsistency
-        if sympy.true in simplified_system:
+        if sympy_true in simplified_system:
             raise SystemOverfittedError('Get BooleanTrue in system.')
 
         # Define symbols that are used
@@ -699,7 +707,7 @@ class EquationsSystem:
                 cls._system_to_function(canonical_system, used_symbols)
 
             # Prepare ini values
-            ini_values = list(np.random.random(len(used_symbols)))
+            ini_values = list(random.random(len(used_symbols)))
             if desired_values is not None:
                 for i, symbol_name in enumerate(used_symbols_names):
                     if symbol_name in desired_values:
@@ -707,7 +715,7 @@ class EquationsSystem:
 
             # Solve
             solution = cls._solve_numeric(
-                system_function, np.array(ini_values))
+                system_function, np_array(ini_values))
         else:
             solution = []
 
@@ -720,12 +728,12 @@ class EquationsSystem:
     @staticmethod
     @contract(system='list[N,>0]', symbols='list[N]')
     def _system_to_function(system: list, symbols: list):
-        functions = [sympy.lambdify(symbols, f) for f in system]
+        functions = [lambdify(symbols, f) for f in system]
 
         def fun(x):
             if len(x) != len(symbols):
                 raise ValueError
-            res = np.array([f(*x) for f in functions])
+            res = np_array([f(*x) for f in functions])
             return res
 
         return fun
@@ -736,7 +744,7 @@ class EquationsSystem:
         return [eq.lhs - eq.rhs for eq in system]
 
     @staticmethod
-    def _solve_numeric(fun: callable, init: np.ndarray) -> np.ndarray:
+    def _solve_numeric(fun: callable, init: np_ndarray) -> np_ndarray:
         result = sp_optimize.fsolve(fun, init, full_output=True, maxfev=1000)
         if result[2] != 1:
             raise CannotSolveSystemError(result[3])

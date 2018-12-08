@@ -1,9 +1,10 @@
 """Module with main class of system (backend)."""
 
 from contracts import contract
-import pickle
+from pickle import load as pkl_load, dump as pkl_dump
 from copy import deepcopy
 import numpy as np
+from typing import Dict
 
 
 from figures import Figure, Point, Segment
@@ -398,7 +399,7 @@ class CADProject:
             Name of file to save (with extension).
         """
         with open(filename, 'wb') as f:
-            pickle.dump(self._state, f)
+            pkl_dump(self._state, f)
 
     @contract(filename='str')
     def load(self, filename: str):
@@ -410,7 +411,7 @@ class CADProject:
             Name of file to load.
         """
         with open(filename, 'rb') as f:
-            state = pickle.load(f)
+            state = pkl_load(f)
 
         if not isinstance(state, ProjectState):
             raise IncorrectTypeOfLoadedObject

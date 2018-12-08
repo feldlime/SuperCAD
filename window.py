@@ -1,16 +1,17 @@
 """Module with main class of application that manage system and picture."""
 
-from contracts import contract
-from glwindow_processing import GLWindowProcessor
-from interface import InterfaceProcessor
-from project import CADProject, ActionImpossible
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
 from PyQt5.QtCore import Qt, QStringListModel
-import logging
+from logging import getLogger
 
+from glwindow_processing import GLWindowProcessor
+from interface import InterfaceProcessor
 from design import Ui_window
-from figures import Point, Segment
 from states import ControllerWorkSt, ChooseSt, ControllerSt, CreationSt
+
+from project import CADProject, ActionImpossible
+from solve import CannotSolveSystemError
+from figures import Point, Segment
 from restrictions import (
     PointFixed,
     PointsJoint,
@@ -18,10 +19,10 @@ from restrictions import (
     SegmentAngleFixed,
     SegmentLengthFixed,
     SegmentSpotFixed,
-    SegmentsHorizontal,
-    SegmentsVertical,
+    SegmentHorizontal,
+    SegmentVertical,
     SegmentsParallel,
-    SegmentsPerpendicular,
+    SegmentsNormal,
     SegmentsSpotsJoint,
     SegmentsAngleBetweenFixed,
     PointOnSegmentFixed,
@@ -37,7 +38,6 @@ from bindings import (
     FullSegmentBinding,
     choose_best_bindings
 )
-from solve import CannotSolveSystemError
 
 
 def get_spot_type(binding):
@@ -53,7 +53,7 @@ def get_spot_type(binding):
 
 class WindowContent(QOpenGLWidget, Ui_window):
     def __init__(self, window: QMainWindow):
-        self._logger = logging.getLogger('WindowContent')
+        self._logger = getLogger('WindowContent')
 
         # Set key private attributes
         self._window = window

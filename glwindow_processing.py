@@ -3,28 +3,21 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPaintEvent
 
-import logging
+from logging import getLogger
 from typing import Dict, Tuple, List, Optional, Type
 
 import paint
 
-from states import ControllerWorkSt, ChooseSt, ControllerSt
 from figures import Figure, Point, Segment
 from bindings import (
     Binding,
-    PointBinding,
-    SegmentStartBinding,
-    SegmentCenterBinding,
-    SegmentEndBinding,
-    SegmentsIntersectionBinding,
-    FullSegmentBinding,
     choose_best_bindings
 )
 
 
 class GLWindowProcessor:
     def __init__(self, glwindow):
-        self._logger = logging.getLogger('GLWindowProcessor')
+        self._logger = getLogger('GLWindowProcessor')
 
         # noinspection PyArgumentList
         self._glwindow = glwindow
