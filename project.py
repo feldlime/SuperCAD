@@ -2,9 +2,9 @@
 
 from contracts import contract
 import pickle
-from typing import Dict
 from copy import deepcopy
 import numpy as np
+
 
 from figures import Figure, Point, Segment
 from bindings import (
@@ -25,8 +25,8 @@ from utils import (
 )
 
 
-CIRCLE_BINDING_RADIUS = 8
-SEGMENT_BINDING_MARGIN = 2
+CIRCLE_BINDING_RADIUS = 12
+SEGMENT_BINDING_MARGIN = 6
 
 
 class IncorrectName(IncorrectParamValue):

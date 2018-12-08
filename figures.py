@@ -210,6 +210,37 @@ class Point(Figure):
 
         return self
 
+    @contract(param_name='str', value='number')
+    def set_base_param(self, param_name, value):
+        """Set parameter of figure.
+
+        Parameters
+        ----------
+        param_name: str
+            Name of parameter to set value.
+            Must be in ['x', 'y'].
+        value: int or float
+            Value too set.
+
+        Returns
+        -------
+        self
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
+        """
+
+        if param_name == 'x':
+            self._base = (float(value), self._base[1])
+        elif param_name == 'y':
+            self._base = (self._base[0], float(value))
+        else:
+            raise IncorrectParamValue(
+                f'Incorrect name of parameter: {param_name}.')
+
+        return self
+
     @contract(symbols='dict[2]', param='str', value='number', returns='list')
     def get_setter_equations(self, symbols: dict, param: str, value: float):
         """Return equations for setting parameters of point.
