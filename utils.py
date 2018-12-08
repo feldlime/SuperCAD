@@ -25,7 +25,7 @@ def segment_length(x1, y1, x2, y2):
 
 @contract(angle='number')
 def simplify_angle(angle):
-    """Return equal angle to given, but in range [0, 2*pi]."""
+    """Return equal angle to given, but in range [0, 2*pi)."""
     return angle % (2 * np.pi)
 
 

@@ -85,6 +85,10 @@ class Figure:
         """Set parameter of figure."""
         raise NotImplementedError
 
+    def set_base_param(self, param_name, value):
+        """Set base parameter of figure."""
+        raise NotImplementedError
+
     def get_setter_equations(self, symbols: dict, param: str, value: float):
         raise NotImplementedError
 
@@ -156,6 +160,28 @@ class Point(Figure):
     @contract(param_name='str', value='number')
     def set_param(self, param_name, value):
         """Set parameter of figure.
+
+        Parameters
+        ----------
+        param_name: str
+            Name of parameter to set value.
+            Must be in ['x', 'y'].
+        value: int or float
+            Value too set.
+
+        Returns
+        -------
+        self
+
+        Raises
+        ------
+        IncorrectParamValue: if param is incorrect.
+        """
+        return self.set_base_param(param_name, value)  # All params are base
+
+    @contract(param_name='str', value='number')
+    def set_base_param(self, param_name, value):
+        """Set base parameter of figure.
 
         Parameters
         ----------
@@ -451,8 +477,10 @@ class Segment(Figure):
         elif param == 'length':
             return [sympy.Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
         elif param == 'angle':
-            raise NotImplementedError
-            # return [sympy.Eq(y1, value)]
-            # TODO
+            sign = np.sign(simplify_angle(value) - np.pi)
+            return [
+                sympy.Eq((y2 - y1), (x2 - x1) * np.tan(value)),
+                sympy.Eq(sympy.sign(y2 - y1), sign)  # TODO: Maybe drop?
+            ]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')

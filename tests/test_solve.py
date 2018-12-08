@@ -304,8 +304,8 @@ class TestEquationsSystem:
             'figure2': {
                 'x1': 1.,
                 'y1': 2.,
-                'x2': 1. + 5 * np.cos(np.pi / 6),  # TODO: think!!!
-                'y2': 2. + 5 * np.sin(np.pi / 6)  # TODO: think!!!
+                'x2': 1. + 5 * np.cos(np.pi / 6),
+                'y2': 2. + 5 * np.sin(np.pi / 6)
             }
         }
         assert_2_level_dicts_equal(result, answer, is_close=True)

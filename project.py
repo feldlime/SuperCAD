@@ -3,7 +3,8 @@
 from contracts import contract
 import pickle
 from copy import deepcopy
-from typing import Dict
+import numpy as np
+
 
 from figures import Figure, Point, Segment
 from bindings import (
@@ -11,6 +12,7 @@ from bindings import (
     SegmentEndBinding,
     SegmentCenterBinding,
     PointBinding,
+    FullSegmentBinding,
     create_bindings
 )
 from restrictions import Restriction
@@ -192,14 +194,6 @@ class CADProject:
         cursor_x, cursor_y: int or float
             Coordinates of cursor.
         """
-        if not (
-            isinstance(binding, SegmentStartBinding)
-            or isinstance(binding, SegmentEndBinding)
-            or isinstance(binding, SegmentCenterBinding)
-            or isinstance(binding, PointBinding)
-            # TODO: FullSegmentBinding
-        ):
-            raise IncorrectParamType(f"Incorrect type {type(binding)}")
 
         obj_name = binding.get_object_names()[0]
         if obj_name not in self._figures:
@@ -214,9 +208,20 @@ class CADProject:
             optimizing_values = {obj_name: {'x1': cursor_x, 'y1': cursor_y}}
         elif isinstance(binding, SegmentEndBinding):
             optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
+        elif isinstance(binding, SegmentCenterBinding):
+            params = self._figures[obj_name].get_params()
+            length, angle = params['length'], params['angle']
+            optimizing_values = {obj_name: {
+                'x1': cursor_x - length * np.cos(angle) / 2,
+                'y1': cursor_y - length * np.sin(angle) / 2,
+                'x2': cursor_x + length * np.cos(angle) / 2,
+                'y2': cursor_y + length * np.sin(angle) / 2
+            }}  # TODO: Check
+        elif isinstance(binding, FullSegmentBinding):
+            # TODO: Use min distance
+            return
         else:
-            # TODO: SegmentCenterBinding and FullSegmentBinding
-            raise NotImplementedError
+            raise IncorrectParamType(f"Incorrect type {type(binding)}")
 
         current_values = self._get_values()
         try:
