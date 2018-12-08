@@ -34,3 +34,11 @@ class CreationSt:
     MOVE = 4
 
 
+class ActionSt:
+    NOTHING = 0
+    MOUSE_PRESSED = 1
+    SELECT = 2
+    MOVE = 3
+
+
+
