@@ -320,22 +320,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.reset()
 
     def controller_restr_joint(self, cmd, bindings: list = None):
-        if cmd == ControllerCmd.STEP:
-            binding = find_first(bindings, is_normal_point_binding)
-            if binding:
-                if len(self.chosen_bindings) == 0:
-                    self.chosen_bindings.append(binding)
-                    self.checkbox_restr_joint_1.toggle()
-                elif len(self.chosen_bindings) == 1:
-                    self.chosen_bindings.append(binding)
-                    self.checkbox_restr_joint_2.toggle()
-                    self.submit_restr_joint.setFocus()
-
-        elif cmd == ControllerCmd.SUBMIT:
-            if len(self.chosen_bindings) < 2:
-                return
-
-            b1, b2 = self.chosen_bindings
+        def get_restr_fun(b1, b2):
             if isinstance(b1, PointBinding):
                 if isinstance(b2, PointBinding):
                     restr = PointsJoint()
@@ -347,30 +332,51 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     b1, b2 = b2, b1
                 else:
                     restr = SegmentsSpotsJoint(b1.spot_type, b2.spot_type)
-            try:
-                self._project.add_restriction(restr,
-                                              (b1.get_object_names()[0],
-                                               b2.get_object_names()[0]))
-            except CannotSolveSystemError:
-                pass
+            return restr
 
-            self.reset()
-
-        elif cmd == ControllerCmd.SHOW:
-            self.widget_restr_joint.show()
-            self.controller_work_st = ControllerWorkSt.RESTR_JOINT
-
-        elif cmd == ControllerCmd.HIDE:
-            self.reset()
+        self._controller_restr_two_objects(
+            'joint',
+            cmd,
+            bindings,
+            get_restr_fun,
+            (is_normal_point_binding, is_normal_point_binding)
+        )
 
     def controller_restr_point_on_segment_line(self, cmd, bindings: list = None):
-        pass
+        def get_restr_fun(b1, b2):
+            return PointOnSegmentLine()
+
+        self._controller_restr_two_objects(
+            'point_on_segment_line',
+            cmd,
+            bindings,
+            get_restr_fun,
+            (lambda b: isinstance(b, PointBinding), is_any_segment_binding)
+        )
 
     def controller_restr_segments_parallel(self, cmd, bindings: list = None):
-        pass
+        def get_restr_fun(b1, b2):
+            return SegmentsParallel()
+
+        self._controller_restr_two_objects(
+            'segments_parallel',
+            cmd,
+            bindings,
+            get_restr_fun,
+            (is_any_segment_binding, is_any_segment_binding)
+        )
 
     def controller_restr_segments_normal(self, cmd, bindings: list = None):
-        pass
+        def get_restr_fun(b1, b2):
+            return SegmentsNormal()
+
+        self._controller_restr_two_objects(
+            'segments_normal',
+            cmd,
+            bindings,
+            get_restr_fun,
+            (is_any_segment_binding, is_any_segment_binding)
+        )
 
     def controller_restr_segment_vertical(self, cmd, bindings: list = None):
         def get_restr_fun(binding):
@@ -454,12 +460,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_segment_angle_between_fixed(self, cmd, bindings: list = None):
+        # TODO
         pass
 
     def _controller_restr_single_object(self, name, cmd, bindings,
-                                        get_restr_fun, check_binding_fun):
+                                        get_restr_fun, check_binding_func):
         if cmd == ControllerCmd.STEP:
-            binding = find_first(bindings, check_binding_fun)
+            binding = find_first(bindings, check_binding_func)
             if binding:
                 if len(self.chosen_bindings) == 0:
                     self.chosen_bindings.append(binding)
@@ -474,6 +481,46 @@ class WindowContent(QOpenGLWidget, Ui_window):
             restr = get_restr_fun(binding)
             try:
                 self._project.add_restriction(restr, (figure_name,))
+            except CannotSolveSystemError:
+                pass
+
+            self.controller_work_st = ControllerWorkSt.NOTHING
+            self.chosen_bindings = []
+            self.reset()
+
+        elif cmd == ControllerCmd.SHOW:
+            status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
+            widget = getattr(self, f'widget_restr_{name}')
+            widget.show()
+            self.controller_work_st = status
+
+        elif cmd == ControllerCmd.HIDE:
+            self.reset()
+
+    def _controller_restr_two_objects(self, name, cmd, bindings,
+                                      get_restr_fun, check_binding_funcs):
+        if cmd == ControllerCmd.STEP:
+            if len(self.chosen_bindings) == 0:
+                binding = find_first(bindings, check_binding_funcs[0])
+                if binding:
+                    self.chosen_bindings.append(binding)
+                    getattr(self, f'checkbox_restr_{name}_1').toggle()
+            elif len(self.chosen_bindings) == 1:
+                binding = find_first(bindings, check_binding_funcs[0])
+                if binding:
+                    self.chosen_bindings.append(binding)
+                    getattr(self, f'checkbox_restr_{name}_2').toggle()
+                    getattr(self, f'submit_restr_{name}').setFocus()
+
+        elif cmd == ControllerCmd.SUBMIT:
+            if len(self.chosen_bindings) != 2:
+                raise RuntimeError
+            b1, b2 = self.chosen_bindings
+            f1_name = b1.get_object_names()[0]
+            f2_name = b2.get_object_names()[0]
+            restr = get_restr_fun(b1, b2)
+            try:
+                self._project.add_restriction(restr, (f1_name, f2_name))
             except CannotSolveSystemError:
                 pass
 
