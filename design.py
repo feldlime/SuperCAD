@@ -422,7 +422,7 @@ class Ui_window(object):
         self.action_redo.setObjectName("action_redo")
         self.action_show_elements_table = QtWidgets.QAction(window)
         self.action_show_elements_table.setCheckable(True)
-        self.action_show_elements_table.setChecked(True)
+        self.action_show_elements_table.setChecked(False)
         self.action_show_elements_table.setObjectName("action_show_elements_table")
         self.action_exit = QtWidgets.QAction(window)
         self.action_exit.setObjectName("action_exit")

@@ -217,9 +217,8 @@ class CADProject:
                 'y1': cursor_y - length * np.sin(angle) / 2,
                 'x2': cursor_x + length * np.cos(angle) / 2,
                 'y2': cursor_y + length * np.sin(angle) / 2
-            }}  # TODO: Check
+            }}
         elif isinstance(binding, FullSegmentBinding):
-            # TODO: Use min distance
             return
         else:
             raise IncorrectParamType(f"Incorrect type {type(binding)}")

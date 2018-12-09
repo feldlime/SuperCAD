@@ -1,7 +1,7 @@
 """Module with main class of application that manage system and picture."""
 
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
-from PyQt5.QtCore import Qt, QStringListModel
+from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
 from logging import getLogger
 import re
 
@@ -97,7 +97,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._selected_binding = None
 
-        self._selected_figure = None
+        self._selected_figure_name = None
 
     def _setup_useful_aliases(self):
         self._footer_widgets = dict()
@@ -217,7 +217,25 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
         figure_name = self.widget_elements_table.model().itemData(item_idx)[0]
-        self._selected_figure = self._project.figures[figure_name]
+        self._selected_figure_name = figure_name
+
+    def select_figure_on_list_view(self):
+        print('select_figure_on_list_view')
+        print(self._selected_figure_name)
+        if self._selected_figure_name is not None:
+            model = self.widget_elements_table.model()
+            i = 0
+            while True:
+                index = model.index(i)
+                item_data = model.itemData(index)
+                if item_data:
+                    if item_data[0] == self._selected_figure_name:
+                        print(f'find i = {i},  index = {index}')
+                        self.widget_elements_table.selectionModel().select(index, QItemSelectionModel.Select)
+                        break
+                else:
+                    break
+                i += 1
 
     def change_painted_figure(self, field: str, value: float):
         if self.painted_figure is not None:
@@ -490,11 +508,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def paintEvent(self, event):
         # self._logger.debug('paintEvent')
 
+        selected_figure = None
+        if self._selected_figure_name is not None:
+            selected_figure = self._project.figures[self._selected_figure_name]
+
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
             self.painted_figure,
-            self._selected_figure
+            selected_figure
         )
 
     def mousePressEvent(self, event):
@@ -521,13 +543,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 bindings = choose_best_bindings(self._project.bindings, x, y)
                 if len(bindings) > 0:
                     self._selected_binding = bindings[0]
-                    self.action_st = ActionSt.MOUSE_PRESSED
+                    self.action_st = ActionSt.BINDING_PRESSED
 
     def mouseMoveEvent(self, event):
         # self._logger.debug('mouseMoveEvent: start')
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-        if self.action_st == ActionSt.MOUSE_PRESSED:
+        if self.action_st == ActionSt.BINDING_PRESSED:
             self.action_st = ActionSt.MOVE
 
         if self.action_st == ActionSt.MOVE:
@@ -607,24 +629,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
             if self.action_st == ActionSt.MOVE:
                 self._project.commit()
                 self.action_st = ActionSt.NOTHING
-                self.controller_work_st = ControllerWorkSt.NOTHING
-                self.creation_st = CreationSt.NOTHING
-            elif self.action_st == ActionSt.MOUSE_PRESSED:
-                self.action_st = ActionSt.SELECT
-                self.controller_work_st = ControllerWorkSt.NOTHING
-                self.creation_st = CreationSt.NOTHING
-
-
-                # elif self.controller_work_st == ControllerWorkSt.RES
-                # else:
-                #     raise RuntimeError(f'Unexpected state {self.controller_work_st}')
-
-
-
-        # self._glwindow_proc.handle_mouse_release_event(event,
-        #                                                self._project.bindings,
-        #                                                self.choose,
-        #                                                self.controller_work_st)
+            elif self.action_st == ActionSt.BINDING_PRESSED:
+                selected_figures = self._selected_binding.get_object_names()
+                if len(selected_figures) == 1:
+                    self._selected_figure_name = selected_figures[0]
+                    self.select_figure_on_list_view()
+                self.action_st = ActionSt.NOTHING
 
     def _trigger_widget(self, button, widget_name, show: bool = False):
         widget = getattr(self, widget_name)
@@ -648,7 +658,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.field_x2_add_segment.setValue(0)
         self.field_y2_add_segment.setValue(0)
 
-        self._selected_figure = None
+        self._selected_figure_name = None
 
     def _uncheck_left_buttons(self):
         for b_name, button in self._left_buttons.items():
