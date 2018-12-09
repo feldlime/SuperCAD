@@ -342,7 +342,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             (is_normal_point_binding, is_normal_point_binding)
         )
 
-    def controller_restr_point_on_segment_line(self, cmd, bindings: list = None):
+    def controller_restr_point_on_segment_line(
+            self, cmd, bindings: list = None):
         def get_restr_fun(_b1, _b2):
             return PointOnSegmentLine()
 
@@ -431,7 +432,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             is_any_normal_binding
         )
 
-    def controller_restr_segment_length_fixed(self, cmd, bindings: list = None):
+    def controller_restr_segment_length_fixed(
+            self, cmd, bindings: list = None):
         def get_restr_fun(binding):
             segment_name = binding.get_object_names()[0]
             length = self._project.figures[segment_name].get_params()['length']
@@ -459,7 +461,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             is_any_segment_binding
         )
 
-    def controller_restr_segment_angle_between_fixed(self, cmd, bindings: list = None):
+    def controller_restr_segment_angle_between_fixed(
+            self, cmd, bindings: list = None):
         # TODO
         pass
 
@@ -625,7 +628,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif self.field_y2_add_segment.hasFocus():
                 self.field_y2_add_segment.selectAll()
 
-
         # Work with bindings
         if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
             allowed_bindings_types = (PointBinding, SegmentSpotBinding)
@@ -663,6 +665,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.action_st = ActionSt.NOTHING
             elif self.action_st == ActionSt.BINDING_PRESSED:
                 selected_figures = self._selected_binding.get_object_names()
+                self._selected_binding = None
                 if len(selected_figures) == 1:
                     self._selected_figure_name = selected_figures[0]
                     self.select_figure_on_list_view()
@@ -700,8 +703,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         print('delete')
         if self._selected_figure_name is not None:
             self._project.remove_figure(self._selected_figure_name)
-            if self._selected_binding and self._selected_figure_name in self._selected_binding.get_object_names():
-                self._selected_binding = None
             self._selected_figure_name = None
 
     def new(self, _=None):

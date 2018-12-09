@@ -24,7 +24,7 @@ class CreationSt:
 class ActionSt:
     NOTHING = 0
     BINDING_PRESSED = 1
-    MOVE = 3
+    MOVE = 2
 
 
 class ControllerCmd:
