@@ -347,11 +347,7 @@
         <enum>Qt::StrongFocus</enum>
        </property>
        <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>resources/fix_angle.svg</normaloff>resources/fix_angle.svg</iconset>
+        <string>SABF</string>
        </property>
        <property name="iconSize">
         <size>

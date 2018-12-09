@@ -139,29 +139,35 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.button_add_segment.clicked['bool'].connect(
             lambda ev: self.controller_add_segment(ControllerCmd.SHOW)
         )
-        self.button_restr_fixed.clicked['bool'].connect(
-            self.controller_restr_fixed
-        )
-        self.button_restr_point_on_segment.clicked['bool'].connect(
-            self.controller_restr_point_on_segment
-        )
         self.button_restr_joint.clicked['bool'].connect(
             self.controller_restr_joint
         )
-        self.button_restr_segment_angle_fixed.clicked['bool'].connect(
-            self.controller_restr_segment_angle_fixed
+        self.button_restr_point_on_segment_line.clicked['bool'].connect(
+            self.controller_restr_point_on_segment_line
         )
-        self.button_restr_segment_horizontal.clicked['bool'].connect(
-            self.controller_restr_segment_horizontal
-        )
-        self.button_restr_segment_length_fixed.clicked['bool'].connect(
-            self.controller_restr_segment_length_fixed
+        self.button_restr_segments_parallel.clicked['bool'].connect(
+            self.controller_restr_segments_parallel
         )
         self.button_restr_segments_normal.clicked['bool'].connect(
             self.controller_restr_segments_normal
         )
-        self.button_restr_segments_parallel.clicked['bool'].connect(
-            self.controller_restr_segments_parallel
+        self.button_restr_segment_vertical.clicked['bool'].connect(
+            self.controller_restr_segment_vertical
+        )
+        self.button_restr_segment_horizontal.clicked['bool'].connect(
+            self.controller_restr_segment_horizontal
+        )
+        self.button_restr_fixed.clicked['bool'].connect(
+            self.controller_restr_fixed
+        )
+        self.button_restr_segment_length_fixed.clicked['bool'].connect(
+            self.controller_restr_segment_length_fixed
+        )
+        self.button_restr_segment_angle_fixed.clicked['bool'].connect(
+            self.controller_restr_segment_angle_fixed
+        )
+        self.button_restr_segments_angle_between_fixed.clicked['bool'].connect(
+            self.controller_restr_segment_angle_between_fixed
         )
 
         # Submits
@@ -171,11 +177,35 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.submit_add_segment.clicked['bool'].connect(
             lambda ev: self.controller_add_segment(ControllerCmd.SUBMIT)
         )
+        self.submit_restr_joint.clicked['bool'].connect(
+            lambda ev: self.controller_restr_joint(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_point_on_segment_line.clicked['bool'].connect(
+            lambda ev: self.controller_restr_point_on_segment_line(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_segments_parallel.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segments_parallel(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_segments_normal.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segments_normal(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_segment_vertical.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segment_vertical(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_segment_horizontal.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segment_horizontal(ControllerCmd.SUBMIT)
+        )
         self.submit_restr_fixed.clicked['bool'].connect(
             lambda ev: self.controller_restr_fixed(ControllerCmd.SUBMIT)
         )
-        self.submit_restr_joint.clicked['bool'].connect(
-            lambda ev: self.controller_restr_joint(ControllerCmd.SUBMIT)
+        self.submit_restr_segment_length_fixed.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segment_length_fixed(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_segment_angle_fixed.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segment_angle_fixed(ControllerCmd.SUBMIT)
+        )
+        self.submit_restr_segments_angle_between_fixed.clicked['bool'].connect(
+            lambda ev: self.controller_restr_segment_angle_between_fixed(ControllerCmd.SUBMIT)
         )
 
         # Fields
@@ -358,112 +388,20 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._show_hide_controller(
                 self.widget_restr_joint, cmd, ControllerWorkSt.RESTR_JOINT)
 
+    def controller_restr_point_on_segment_line(self, cmd, bindings: list = None):
+        pass
+
     def controller_restr_segments_parallel(self, cmd, bindings: list = None):
-        if cmd == ControllerCmd.STEP:
-            binding = find_first(bindings, is_any_segment_binding)
-            if binding:
-                self.choosed_bindings.append(binding)
-                if len(self.choosed_bindings) == 1:
-                    self.checkbox_restr_fixed.toggle()
-                    self.choose = ChooseSt.NOTHING
-                    self.submit_restr_fixed.setFocus()
-
-        elif cmd == ControllerCmd.SUBMIT:
-            if len(self.choosed_bindings) != 1:
-                raise RuntimeError
-            binding = self.choosed_bindings[0]
-            figure_name = binding.get_object_names()[0]
-            coo = self._project.figures[figure_name].get_base_representation()
-            if isinstance(binding, PointBinding):
-                restr = PointFixed(*coo)
-            elif isinstance(binding, FullSegmentBinding):
-                restr = SegmentFixed(*coo)
-            elif isinstance(binding, SegmentSpotBinding):
-                binding_spot_type = binding.spot_type
-                if binding_spot_type == 'start':
-                    coo = coo[:2]
-                elif binding_spot_type == 'end':
-                    coo = coo[2:]
-                else:  # center
-                    coo = coo[0] + coo[2] / 2, coo[1] + coo[3] / 2
-                restr = SegmentSpotFixed(*coo, binding_spot_type)
-            else:
-                raise RuntimeError(f'Unexpected binding type {type(binding)}')
-
-            try:
-                self._project.add_restriction(restr, (figure_name,))
-            except CannotSolveSystemError:
-                pass
-
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.choosed_bindings = []
-            cmd = ControllerCmd.HIDE
-
-        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
-            self._show_hide_controller(
-                self.widget_restr_fixed, cmd, ControllerWorkSt.RESTR_FIXED)
+        pass
 
     def controller_restr_segments_normal(self, cmd, bindings: list = None):
-        if status == ControllerCmd.SUBMIT:
-            if not self.checkbox_restr_segments_normal_1.checkState() or \
-                    not self.checkbox_restr_segments_normal_2.checkState():
-                self.choosed_bindings.append(figure)
-            else:
-                restr = SegmentsParallel()
-                self.controller_work_st = ControllerWorkSt.NOTHING
-                self.choose = ChooseSt.NOTHING
-                self.choosed_bindings = []
-        else:
-            self._show_hide_controller(self.widget_restr_segments_normal,
-                                       status,
-                                       ControllerWorkSt.RESTR_SEGMENTS_NORMAL)
+        pass
 
-    def controller_restr_segment_length_fixed(self, cmd, bindings: list = None):
-        if status == ControllerCmd.SUBMIT:
-            if not self.checkbox_restr_segment_length_fixed.checkState():
-                pass
-            else:
-                pass
-        else:
-            self._show_hide_controller(self.widget_restr_segment_length_fixed,
-                                       status,
-                                       ControllerWorkSt.
-                                       RESTR_SEGMENT_LENGTH_FIXED)
+    def controller_restr_segment_vertical(self, cmd, bindings: list = None):
+        pass
 
     def controller_restr_segment_horizontal(self, cmd, bindings: list = None):
-        if status == ControllerCmd.SUBMIT:
-            if not self.checkbox_restr_segment_horizontal.checkState():
-                pass
-            else:
-                pass
-        else:
-            self._show_hide_controller(self.widget_restr_segment_horizontal,
-                                       status,
-                                       ControllerWorkSt.RESTR_SEGMENT_HORIZONTAL)
-
-    def controller_restr_segment_angle_fixed(self, cmd, bindings: list = None):
-        if status == ControllerCmd.SUBMIT:
-            if not self.checkbox_restr_segment_angle_fixed_1.checkState() or not\
-                    self.checkbox_restr_segment_angle_fixed_2.checkState():
-                pass
-            else:
-                pass
-        else:
-            self._show_hide_controller(self.widget_restr_segment_angle_fixed,
-                                       status,
-                                       ControllerWorkSt.
-                                       RESTR_SEGMENT_ANGLE_FIXED)
-
-
-    def controller_restr_point_on_segment(self, cmd, bindings: list = None):
-        if status == ControllerCmd.SUBMIT:
-            if not self.checkbox_restr_point_on_segment_line.checkState() or \
-                    not self.checkbox_restr_point_on_segment_point.checkState():
-                raise ValueError
-            else:
-                pass
-        else:
-            pass
+        pass
 
     def controller_restr_fixed(self, cmd, bindings: list = None):
         if cmd == ControllerCmd.STEP:
@@ -509,6 +447,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
             self._show_hide_controller(
                 self.widget_restr_fixed, cmd, ControllerWorkSt.RESTR_FIXED)
+
+    def controller_restr_segment_length_fixed(self, cmd, bindings: list = None):
+        pass
+
+    def controller_restr_segment_angle_fixed(self, cmd, bindings: list = None):
+        pass
+
+    def controller_restr_segment_angle_between_fixed(self, cmd, bindings: list = None):
+        pass
+
+
+
+
 
     # ====================================== Events ========================
     def animate(self):

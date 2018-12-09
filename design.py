@@ -150,8 +150,6 @@ class Ui_window(object):
         self.Instruments.addWidget(self.button_restr_segment_angle_fixed)
         self.button_restr_segments_angle_between_fixed = QtWidgets.QPushButton(self.layoutWidget_2)
         self.button_restr_segments_angle_between_fixed.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.button_restr_segments_angle_between_fixed.setText("")
-        self.button_restr_segments_angle_between_fixed.setIcon(icon10)
         self.button_restr_segments_angle_between_fixed.setIconSize(QtCore.QSize(30, 30))
         self.button_restr_segments_angle_between_fixed.setCheckable(True)
         self.button_restr_segments_angle_between_fixed.setAutoRepeat(True)
@@ -542,6 +540,7 @@ class Ui_window(object):
         _translate = QtCore.QCoreApplication.translate
         window.setWindowTitle(_translate("window", "MainWindow"))
         self.button_restr_segment_vertical.setText(_translate("window", "Vert"))
+        self.button_restr_segments_angle_between_fixed.setText(_translate("window", "SABF"))
         self.label_x_add_point.setText(_translate("window", "X:"))
         self.label_y_add_point.setText(_translate("window", "Y:"))
         self.submit_add_point.setText(_translate("window", "Submit"))
