@@ -1,7 +1,7 @@
 """Module with main class of application that manage system and picture."""
 
-from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog, QWidget
-from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel, QEvent
+from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
+from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
 from logging import getLogger
 import re
 
@@ -26,14 +26,14 @@ from restrictions import (
     SegmentsNormal,
     SegmentsSpotsJoint,
     SegmentsAngleBetweenFixed,
-    PointOnSegmentFixed,
+    # PointOnSegmentFixed,
     PointOnSegmentLine,
     PointAndSegmentSpotJoint,
 )
 from bindings import (
     PointBinding,
     SegmentSpotBinding,
-    SegmentsIntersectionBinding,
+    # SegmentsIntersectionBinding,
     FullSegmentBinding,
     choose_best_bindings,
     is_any_segment_binding,
@@ -85,7 +85,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self.action_st = ActionSt.NOTHING
 
-        self.choosed_bindings = []
+        self.chosen_bindings = []
 
         self.painted_figure = None  # Figure that is painted at this moment
         self.creation_st = CreationSt.NOTHING
@@ -348,19 +348,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.STEP:
             binding = find_first(bindings, is_normal_point_binding)
             if binding:
-                if len(self.choosed_bindings) == 0:
-                    self.choosed_bindings.append(binding)
+                if len(self.chosen_bindings) == 0:
+                    self.chosen_bindings.append(binding)
                     self.checkbox_restr_joint_1.toggle()
-                elif len(self.choosed_bindings) == 1:
-                    self.choosed_bindings.append(binding)
+                elif len(self.chosen_bindings) == 1:
+                    self.chosen_bindings.append(binding)
                     self.checkbox_restr_joint_2.toggle()
                     self.submit_restr_joint.setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
-            if len(self.choosed_bindings) < 2:
+            if len(self.chosen_bindings) < 2:
                 return
 
-            b1, b2 = self.choosed_bindings
+            b1, b2 = self.chosen_bindings
             if isinstance(b1, PointBinding):
                 if isinstance(b2, PointBinding):
                     restr = PointsJoint()
@@ -380,7 +380,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 pass
 
             self.controller_work_st = ControllerWorkSt.NOTHING
-            self.choosed_bindings = []
+            self.chosen_bindings = []
             cmd = ControllerCmd.HIDE
 
         if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
@@ -396,25 +396,62 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def controller_restr_segments_normal(self, cmd, bindings: list = None):
         pass
 
-    def controller_restr_segment_vertical(self, cmd, bindings: list = None):
-        pass
-
-    def controller_restr_segment_horizontal(self, cmd, bindings: list = None):
-        pass
-
-    def controller_restr_fixed(self, cmd, bindings: list = None):
+    def _controller_restr_single_object(self, name, cmd, bindings,
+                                        get_restr_fun, check_binding_fun):
         if cmd == ControllerCmd.STEP:
-            binding = find_first(bindings, is_any_normal_binding)
+            binding = find_first(bindings, check_binding_fun)
             if binding:
-                if len(self.choosed_bindings) == 0:
-                    self.choosed_bindings.append(binding)
-                    self.checkbox_restr_fixed.toggle()
-                    self.submit_restr_fixed.setFocus()
+                if len(self.chosen_bindings) == 0:
+                    self.chosen_bindings.append(binding)
+                    getattr(self, f'checkbox_restr_{name}').toggle()
+                    getattr(self, f'submit_restr_{name}').setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
-            if len(self.choosed_bindings) != 1:
+            if len(self.chosen_bindings) != 1:
                 raise RuntimeError
-            binding = self.choosed_bindings[0]
+            binding = self.chosen_bindings[0]
+            figure_name = binding.get_object_names()[0]
+            restr = get_restr_fun(binding)
+            try:
+                self._project.add_restriction(restr, (figure_name,))
+            except CannotSolveSystemError:
+                pass
+
+            self.controller_work_st = ControllerWorkSt.NOTHING
+            self.chosen_bindings = []
+            cmd = ControllerCmd.HIDE
+
+        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
+            status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
+            widget = getattr(self, f'widget_restr_{name}')
+            self._show_hide_controller(widget, cmd, status)
+
+    def controller_restr_segment_vertical(self, cmd, bindings: list = None):
+        def get_restr_fun(binding):
+            return SegmentVertical()
+
+        self._controller_restr_single_object(
+            'segment_vertical',
+            cmd,
+            bindings,
+            get_restr_fun,
+            is_any_segment_binding
+        )
+
+    def controller_restr_segment_horizontal(self, cmd, bindings: list = None):
+        def get_restr_fun(binding):
+            return SegmentHorizontal()
+
+        self._controller_restr_single_object(
+            'segment_vertical',
+            cmd,
+            bindings,
+            get_restr_fun,
+            is_any_segment_binding
+        )
+
+    def controller_restr_fixed(self, cmd, bindings: list = None):
+        def get_restr_fun(binding):
             figure_name = binding.get_object_names()[0]
             coo = self._project.figures[figure_name].get_base_representation()
             if isinstance(binding, PointBinding):
@@ -432,32 +469,46 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 restr = SegmentSpotFixed(*coo, binding_spot_type)
             else:
                 raise RuntimeError(f'Unexpected binding type {type(binding)}')
+            return restr
 
-            try:
-                self._project.add_restriction(restr, (figure_name,))
-            except CannotSolveSystemError:
-                pass
-
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.choosed_bindings = []
-            cmd = ControllerCmd.HIDE
-
-        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
-            self._show_hide_controller(
-                self.widget_restr_fixed, cmd, ControllerWorkSt.RESTR_FIXED)
+        self._controller_restr_single_object(
+            'segment_vertical',
+            cmd,
+            bindings,
+            get_restr_fun,
+            is_any_normal_binding
+        )
 
     def controller_restr_segment_length_fixed(self, cmd, bindings: list = None):
-        pass
+        def get_restr_fun(binding):
+            segment_name = binding.get_object_names()[0]
+            length = self._project.figures[segment_name].get_params()['length']
+            return SegmentLengthFixed(length)
+
+        self._controller_restr_single_object(
+            'segment_length_fixed',
+            cmd,
+            bindings,
+            get_restr_fun,
+            is_any_segment_binding
+        )
 
     def controller_restr_segment_angle_fixed(self, cmd, bindings: list = None):
-        pass
+        def get_restr_fun(binding):
+            segment_name = binding.get_object_names()[0]
+            length = self._project.figures[segment_name].get_params()['angle']
+            return SegmentLengthFixed(length)
+
+        self._controller_restr_single_object(
+            'segment_angle_fixed',
+            cmd,
+            bindings,
+            get_restr_fun,
+            is_any_segment_binding
+        )
 
     def controller_restr_segment_angle_between_fixed(self, cmd, bindings: list = None):
         pass
-
-
-
-
 
     # ====================================== Events ========================
     def animate(self):
@@ -568,18 +619,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
             if self.controller_work_st != ControllerWorkSt.NOTHING:
+                # Make restriction step
                 bindings = choose_best_bindings(self._project.bindings, x, y)
-
-                if self.controller_work_st == \
-                        ControllerWorkSt.RESTR_SEGMENTS_NORMAL:
-                    self.controller_restr_segments_normal(
-                        ControllerCmd.STEP, bindings)
-
-                elif self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
-                    self.controller_restr_joint(ControllerCmd.STEP, bindings)
-
-                elif self.controller_work_st == ControllerWorkSt.RESTR_FIXED:
-                    self.controller_restr_fixed(ControllerCmd.STEP, bindings)
+                for name in dir(ControllerWorkSt):
+                    if re.match(r'^RESTR_', name):
+                        status = getattr(ControllerWorkSt, name)
+                        if self.controller_work_st == status:
+                            controller = getattr(
+                                self,
+                                f'controller_{name.lower()}'
+                            )
+                            controller(ControllerCmd.STEP, bindings)
 
             if self.action_st == ActionSt.MOVE:
                 self._project.commit()
@@ -622,7 +672,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def delete(self, _=None):
         print('delete')
         if self._selected_figure_name is not None:
-            self._project.remove_figure(self._selected_figure_name)
+            try:
+                self._project.remove_figure(self._selected_figure_name)
+            except Exception as e:
+                print(e)
+                return
             if self._selected_binding and self._selected_figure_name in self._selected_binding.get_object_names():
                 self._selected_binding = None
             self._selected_figure_name = None
@@ -641,7 +695,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.controller_work_st = ControllerWorkSt.NOTHING
         self.creation_st = CreationSt.NOTHING
         self.painted_figure = None
-        self.choosed_bindings = []
+        self.chosen_bindings = []
         self._selected_binding = None
         self.action_st = ActionSt.NOTHING
 
