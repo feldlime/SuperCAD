@@ -394,3 +394,38 @@ class PointAndSegmentSpotJoint(Restriction, ReferencedToObjects):
             ]
 
         return equations
+
+
+class SegmentSpotAndPointJoint(Restriction, ReferencedToObjects):
+    object_types = [Segment, Point]
+
+    @contract(spot_type='str')
+    def __init__(self, spot_type):
+        super().__init__()
+        if spot_type not in ('start', 'end', 'center'):
+            raise IncorrectParamValue(f'Incorrect spot_type {spot_type}.')
+        self._spot_type = spot_type
+
+    @contract(symbols_point='dict', symbols_segment='dict')
+    def get_equations(self, symbols_segment: dict, symbols_point: dict):
+        x, y = symbols_point['x'], symbols_point['y']
+        x1, y1 = symbols_segment['x1'], symbols_segment['y1']
+        x2, y2 = symbols_segment['x2'], symbols_segment['y2']
+
+        if self._spot_type == 'start':
+            equations = [
+                Eq(x, x1),
+                Eq(y, y1)
+            ]
+        elif self._spot_type == 'end':
+            equations = [
+                Eq(x, x2),
+                Eq(y, y2)
+            ]
+        else:  # center
+            equations = [
+                Eq(x, (x1 + x2) / 2),
+                Eq(y, (y1 + y2) / 2)
+            ]
+
+        return equations

@@ -29,6 +29,7 @@ from restrictions import (
     # PointOnSegmentFixed,
     PointOnSegmentLine,
     PointAndSegmentSpotJoint,
+    SegmentSpotAndPointJoint
 )
 from bindings import (
     PointBinding,
@@ -328,8 +329,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     restr = PointAndSegmentSpotJoint(b2.spot_type)
             else:
                 if isinstance(b2, PointBinding):
-                    restr = PointAndSegmentSpotJoint(b1.spot_type)
-                    b1, b2 = b2, b1
+                    restr = SegmentSpotAndPointJoint(b1.spot_type)
                 else:
                     restr = SegmentsSpotsJoint(b1.spot_type, b2.spot_type)
             return restr
@@ -343,7 +343,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_point_on_segment_line(self, cmd, bindings: list = None):
-        def get_restr_fun(b1, b2):
+        def get_restr_fun(_b1, _b2):
             return PointOnSegmentLine()
 
         self._controller_restr_two_objects(
@@ -355,7 +355,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_segments_parallel(self, cmd, bindings: list = None):
-        def get_restr_fun(b1, b2):
+        def get_restr_fun(_b1, _b2):
             return SegmentsParallel()
 
         self._controller_restr_two_objects(
@@ -367,7 +367,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_segments_normal(self, cmd, bindings: list = None):
-        def get_restr_fun(b1, b2):
+        def get_restr_fun(_b1, _b2):
             return SegmentsNormal()
 
         self._controller_restr_two_objects(
@@ -379,7 +379,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_segment_vertical(self, cmd, bindings: list = None):
-        def get_restr_fun(binding):
+        def get_restr_fun(_binding):
             return SegmentVertical()
 
         self._controller_restr_single_object(
@@ -391,7 +391,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_segment_horizontal(self, cmd, bindings: list = None):
-        def get_restr_fun(binding):
+        def get_restr_fun(_binding):
             return SegmentHorizontal()
 
         self._controller_restr_single_object(
@@ -448,8 +448,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def controller_restr_segment_angle_fixed(self, cmd, bindings: list = None):
         def get_restr_fun(binding):
             segment_name = binding.get_object_names()[0]
-            length = self._project.figures[segment_name].get_params()['angle']
-            return SegmentLengthFixed(length)
+            angle = self._project.figures[segment_name].get_params()['angle']
+            return SegmentAngleFixed(angle)
 
         self._controller_restr_single_object(
             'segment_angle_fixed',
