@@ -268,15 +268,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.painted_figure.set_param(field, value)
         # TODO: Move mouse
 
-    def _show_hide_controller(self, widget, controller_st, controller_work_st):
-        if controller_st == ControllerCmd.HIDE:
-            self._hide_footer_widgets()
-            self._uncheck_left_buttons()
-            self.reset()
-        if controller_st == ControllerCmd.SHOW:
-            widget.show()
-            self.controller_work_st = controller_work_st
-
     # ======================== Controllers ==================
 
     def controller_add_point(self, cmd):
@@ -285,7 +276,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.SUBMIT:
             figure_coo = self.painted_figure.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
-            cmd = ControllerCmd.HIDE
+            self.reset()
             self._update_figures_list_view()
 
         elif cmd == ControllerCmd.SHOW:
@@ -296,28 +287,20 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.field_y_add_point.value()
             )
             self.creation_st = CreationSt.POINT_SET
+            self.widget_add_point.show()
+            self.controller_work_st = ControllerWorkSt.ADD_POINT
 
         elif cmd == ControllerCmd.HIDE:
-            pass
-        else:
-            raise RuntimeError(f'Unexpected status {cmd}')
-
-        if cmd == ControllerCmd.HIDE:
-            self.painted_figure = None
-            self.creation_st = CreationSt.NOTHING
-
-        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
-            self._show_hide_controller(self.widget_add_point,
-                                       cmd,
-                                       ControllerWorkSt.ADD_POINT)
+            self.reset()
 
     def controller_add_segment(self, cmd):
         self._logger.debug(f'controller_add_segment start with status {cmd}')
+
         if cmd == ControllerCmd.SUBMIT:
             figure_coo = self.painted_figure.get_base_representation()
             s = Segment.from_coordinates(*figure_coo)
             self._project.add_figure(s)
-            cmd = ControllerCmd.HIDE
+            self.reset()
             self._update_figures_list_view()
 
         elif cmd == ControllerCmd.SHOW:
@@ -330,19 +313,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.field_y2_add_segment.value()
             )
             self.creation_st = CreationSt.SEGMENT_START_SET
+            self.widget_add_segment.show()
+            self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
 
         elif cmd == ControllerCmd.HIDE:
-            pass
-        else:
-            raise RuntimeError(f'Unexpected status {cmd}')
-
-        if cmd == ControllerCmd.HIDE:
-            self.painted_figure = None
-            self.creation_st = CreationSt.NOTHING
-
-        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
-            self._show_hide_controller(
-                self.widget_add_segment, cmd, ControllerWorkSt.ADD_SEGMENT)
+            self.reset()
 
     def controller_restr_joint(self, cmd, bindings: list = None):
         if cmd == ControllerCmd.STEP:
@@ -379,13 +354,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
             except CannotSolveSystemError:
                 pass
 
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.chosen_bindings = []
-            cmd = ControllerCmd.HIDE
+            self.reset()
 
-        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
-            self._show_hide_controller(
-                self.widget_restr_joint, cmd, ControllerWorkSt.RESTR_JOINT)
+        elif cmd == ControllerCmd.SHOW:
+            self.widget_restr_joint.show()
+            self.controller_work_st = ControllerWorkSt.RESTR_JOINT
+
+        elif cmd == ControllerCmd.HIDE:
+            self.reset()
 
     def controller_restr_point_on_segment_line(self, cmd, bindings: list = None):
         pass
@@ -395,36 +371,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_segments_normal(self, cmd, bindings: list = None):
         pass
-
-    def _controller_restr_single_object(self, name, cmd, bindings,
-                                        get_restr_fun, check_binding_fun):
-        if cmd == ControllerCmd.STEP:
-            binding = find_first(bindings, check_binding_fun)
-            if binding:
-                if len(self.chosen_bindings) == 0:
-                    self.chosen_bindings.append(binding)
-                    getattr(self, f'checkbox_restr_{name}').toggle()
-                    getattr(self, f'submit_restr_{name}').setFocus()
-
-        elif cmd == ControllerCmd.SUBMIT:
-            if len(self.chosen_bindings) != 1:
-                raise RuntimeError
-            binding = self.chosen_bindings[0]
-            figure_name = binding.get_object_names()[0]
-            restr = get_restr_fun(binding)
-            try:
-                self._project.add_restriction(restr, (figure_name,))
-            except CannotSolveSystemError:
-                pass
-
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.chosen_bindings = []
-            cmd = ControllerCmd.HIDE
-
-        if cmd == ControllerCmd.HIDE or cmd == ControllerCmd.SHOW:
-            status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
-            widget = getattr(self, f'widget_restr_{name}')
-            self._show_hide_controller(widget, cmd, status)
 
     def controller_restr_segment_vertical(self, cmd, bindings: list = None):
         def get_restr_fun(binding):
@@ -509,6 +455,40 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_segment_angle_between_fixed(self, cmd, bindings: list = None):
         pass
+
+    def _controller_restr_single_object(self, name, cmd, bindings,
+                                        get_restr_fun, check_binding_fun):
+        if cmd == ControllerCmd.STEP:
+            binding = find_first(bindings, check_binding_fun)
+            if binding:
+                if len(self.chosen_bindings) == 0:
+                    self.chosen_bindings.append(binding)
+                    getattr(self, f'checkbox_restr_{name}').toggle()
+                    getattr(self, f'submit_restr_{name}').setFocus()
+
+        elif cmd == ControllerCmd.SUBMIT:
+            if len(self.chosen_bindings) != 1:
+                raise RuntimeError
+            binding = self.chosen_bindings[0]
+            figure_name = binding.get_object_names()[0]
+            restr = get_restr_fun(binding)
+            try:
+                self._project.add_restriction(restr, (figure_name,))
+            except CannotSolveSystemError:
+                pass
+
+            self.controller_work_st = ControllerWorkSt.NOTHING
+            self.chosen_bindings = []
+            self.reset()
+
+        elif cmd == ControllerCmd.SHOW:
+            status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
+            widget = getattr(self, f'widget_restr_{name}')
+            widget.show()
+            self.controller_work_st = status
+
+        elif cmd == ControllerCmd.HIDE:
+            self.reset()
 
     # ====================================== Events ========================
     def animate(self):
