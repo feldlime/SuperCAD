@@ -293,8 +293,8 @@ class SegmentsSpotsJoint(Restriction, ReferencedToObjects):
             ]
         else:  # center
             left_parts = [
-                s1_x1 + s1_x2,
-                s1_y1 + s1_y2  # not need '/ 2' here
+                (s1_x1 + s1_x2) / 2,
+                (s1_y1 + s1_y2) / 2
             ]
 
         if self._spot2_type == 'start':
@@ -309,8 +309,8 @@ class SegmentsSpotsJoint(Restriction, ReferencedToObjects):
             ]
         else:  # center
             right_parts = [
-                s2_x1 + s1_x2,
-                s2_y1 + s1_y2  # not need '/ 2' here
+                (s2_x1 + s2_x2) / 2,
+                (s2_y1 + s2_y2) / 2
             ]
 
         equations = [

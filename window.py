@@ -672,11 +672,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def delete(self, _=None):
         print('delete')
         if self._selected_figure_name is not None:
-            try:
-                self._project.remove_figure(self._selected_figure_name)
-            except Exception as e:
-                print(e)
-                return
+            self._project.remove_figure(self._selected_figure_name)
             if self._selected_binding and self._selected_figure_name in self._selected_binding.get_object_names():
                 self._selected_binding = None
             self._selected_figure_name = None
