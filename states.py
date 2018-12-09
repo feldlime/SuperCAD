@@ -1,8 +1,3 @@
-class ChooseSt:
-    NOTHING = 0
-    CHOOSE = 1
-
-
 class ControllerWorkSt:
     NOTHING = 0
     ADD_POINT = 1

@@ -8,7 +8,7 @@ import re
 from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
 from design import Ui_window
-from states import ControllerWorkSt, ChooseSt, ControllerCmd, CreationSt, ActionSt
+from states import ControllerWorkSt, ControllerCmd, CreationSt, ActionSt
 
 from project import CADProject, ActionImpossible
 from solve import CannotSolveSystemError
@@ -82,7 +82,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._setup_handlers()
 
         self.controller_work_st = ControllerWorkSt.NOTHING
-        self.choose = ChooseSt.NOTHING
+
         self.action_st = ActionSt.NOTHING
 
         self.choosed_bindings = []
@@ -276,7 +276,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if controller_st == ControllerCmd.SHOW:
             widget.show()
             self.controller_work_st = controller_work_st
-            self.choose = ChooseSt.CHOOSE
 
     # ======================== Controllers ==================
 
@@ -349,12 +348,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.STEP:
             binding = find_first(bindings, is_normal_point_binding)
             if binding:
-                self.choosed_bindings.append(binding)
-                if len(self.choosed_bindings) == 1:
+                if len(self.choosed_bindings) == 0:
+                    self.choosed_bindings.append(binding)
                     self.checkbox_restr_joint_1.toggle()
-                elif len(self.choosed_bindings) == 2:
+                elif len(self.choosed_bindings) == 1:
+                    self.choosed_bindings.append(binding)
                     self.checkbox_restr_joint_2.toggle()
-                    self.choose = ChooseSt.NOTHING
                     self.submit_restr_joint.setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
@@ -407,10 +406,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.STEP:
             binding = find_first(bindings, is_any_normal_binding)
             if binding:
-                self.choosed_bindings.append(binding)
-                if len(self.choosed_bindings) == 1:
+                if len(self.choosed_bindings) == 0:
+                    self.choosed_bindings.append(binding)
                     self.checkbox_restr_fixed.toggle()
-                    self.choose = ChooseSt.NOTHING
                     self.submit_restr_fixed.setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
@@ -569,7 +567,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if event.button() == Qt.LeftButton:
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-            if self.choose == ChooseSt.CHOOSE:
+            if self.controller_work_st != ControllerWorkSt.NOTHING:
                 bindings = choose_best_bindings(self._project.bindings, x, y)
 
                 if self.controller_work_st == \
@@ -641,7 +639,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug('reset: start')
 
         self.controller_work_st = ControllerWorkSt.NOTHING
-        self.choose = ChooseSt.NOTHING
         self.creation_st = CreationSt.NOTHING
         self.painted_figure = None
         self.choosed_bindings = []
