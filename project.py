@@ -256,7 +256,7 @@ class CADProject:
             # Remove restrictions
             restrictions_to_remove = []
             for name, restriction in self._restrictions.items():
-                if figure_name in restriction.get_objects_name():
+                if figure_name in restriction.get_object_names():
                     restrictions_to_remove.append(name)
             for restriction_name in restrictions_to_remove:
                 self._restrictions.pop(restriction_name)
@@ -333,6 +333,7 @@ class CADProject:
                 raise e
 
             # Add
+            restriction.set_object_names(list(figures_names))
             self._restrictions[name] = restriction
 
             # Update values
