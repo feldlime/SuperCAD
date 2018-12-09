@@ -1,7 +1,7 @@
 """Module with main class of application that manage system and picture."""
 
-from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
-from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
+from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog, QWidget
+from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel, QEvent
 from logging import getLogger
 import re
 
@@ -210,6 +210,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_reset.triggered['bool'].connect(self.reset)
         self.action_new.triggered['bool'].connect(self.new)
         self.action_exit.triggered['bool'].connect(self.exit)
+        self.action_delete.triggered['bool'].connect(self.delete)
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
@@ -222,6 +223,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def select_figure_on_list_view(self):
         print('select_figure_on_list_view')
         print(self._selected_figure_name)
+        self.widget_elements_table.clearSelection()
         if self._selected_figure_name is not None:
             model = self.widget_elements_table.model()
             i = 0
@@ -636,6 +638,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.select_figure_on_list_view()
                 self.action_st = ActionSt.NOTHING
 
+    def keyPressEvent(self, event):
+        print('key press')
+        key = event.key()
+        print(f'key: {key}')
+        print(f'Qt.Key_Delete: {Qt.Key_Delete:}')
+        if key == Qt.Key_Delete:
+            self.delete()
+
     def _trigger_widget(self, button, widget_name, show: bool = False):
         widget = getattr(self, widget_name)
         self._hide_footer_widgets()
@@ -663,6 +673,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _uncheck_left_buttons(self):
         for b_name, button in self._left_buttons.items():
             self._interface_proc.trigger_button(button, False)
+
+    def delete(self, _=None):
+        print('delete')
+        if self._selected_figure_name is not None:
+            self._project.remove_figure(self._selected_figure_name)
+            if self._selected_binding and self._selected_figure_name in self._selected_binding.get_object_names():
+                self._selected_binding = None
+            self._selected_figure_name = None
 
     def new(self, _=None):
         self.reset()
