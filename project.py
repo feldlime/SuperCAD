@@ -9,9 +9,7 @@ from typing import Dict
 
 from figures import Figure, Point, Segment
 from bindings import (
-    SegmentStartBinding,
-    SegmentEndBinding,
-    SegmentCenterBinding,
+    SegmentSpotBinding,
     PointBinding,
     FullSegmentBinding,
     create_bindings
@@ -205,19 +203,21 @@ class CADProject:
 
         if isinstance(binding, PointBinding):
             optimizing_values = {obj_name: {'x': cursor_x, 'y': cursor_y}}
-        elif isinstance(binding, SegmentStartBinding):
-            optimizing_values = {obj_name: {'x1': cursor_x, 'y1': cursor_y}}
-        elif isinstance(binding, SegmentEndBinding):
-            optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
-        elif isinstance(binding, SegmentCenterBinding):
-            params = self._figures[obj_name].get_params()
-            length, angle = params['length'], params['angle']
-            optimizing_values = {obj_name: {
-                'x1': cursor_x - length * np.cos(angle) / 2,
-                'y1': cursor_y - length * np.sin(angle) / 2,
-                'x2': cursor_x + length * np.cos(angle) / 2,
-                'y2': cursor_y + length * np.sin(angle) / 2
-            }}
+        elif isinstance(binding, SegmentSpotBinding):
+            spot_type = binding.spot_type
+            if spot_type == 'start':
+                optimizing_values = {obj_name: {'x1': cursor_x, 'y1': cursor_y}}
+            elif spot_type == 'end':
+                optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
+            else:  # center
+                params = self._figures[obj_name].get_params()
+                length, angle = params['length'], params['angle']
+                optimizing_values = {obj_name: {
+                    'x1': cursor_x - length * np.cos(angle) / 2,
+                    'y1': cursor_y - length * np.sin(angle) / 2,
+                    'x2': cursor_x + length * np.cos(angle) / 2,
+                    'y2': cursor_y + length * np.sin(angle) / 2
+                }}
         elif isinstance(binding, FullSegmentBinding):
             return
         else:
@@ -233,7 +233,6 @@ class CADProject:
             raise e
 
         self._set_values(new_values)
-        # TODO: do commit / rollback from outside
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):

@@ -32,25 +32,21 @@ from restrictions import (
 )
 from bindings import (
     PointBinding,
-    SegmentStartBinding,
-    SegmentCenterBinding,
-    SegmentEndBinding,
+    SegmentSpotBinding,
     SegmentsIntersectionBinding,
     FullSegmentBinding,
     choose_best_bindings,
-    find_first_binding
+    is_any_segment_binding,
+    is_normal_point_binding,
+    is_any_normal_binding
 )
 
 
-def get_spot_type(binding):
-    if isinstance(binding, SegmentStartBinding):
-        return 'start'
-    elif isinstance(binding, SegmentCenterBinding):
-        return 'center'
-    elif isinstance(binding, SegmentEndBinding):
-        return 'end'
-    else:
-        raise TypeError
+def find_first(lst, cond_fun):
+    for elem in lst:
+        if cond_fun(elem):
+            return elem
+    return None
 
 
 class WindowContent(QOpenGLWidget, Ui_window):
@@ -388,32 +384,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_joint(self, status, bindings: list = None):
         if status == ControllerCmd.STEP:
-            binding = find_first_binding(
-                bindings,
-                (
-                    PointBinding,
-                    SegmentStartBinding,
-                    SegmentCenterBinding,
-                    SegmentEndBinding
-                )
-            )
-                if isinstance(
-                    binding,
-                    (
-                        PointBinding,
-                        SegmentStartBinding,
-                        SegmentCenterBinding,
-                        SegmentEndBinding
-                    )
-                ):
-                    self.choosed_bindings.append(binding)
-                    if len(self.choosed_bindings) == 1:
-                        self.checkbox_restr_joint_1.toggle()
-                    elif len(self.choosed_bindings) == 2:
-                        self.checkbox_restr_joint_2.toggle()
-                        self.choose = ChooseSt.NOTHING
-                        self.submit_restr_joint.setFocus()
-                    break
+            binding = find_first(bindings, is_normal_point_binding)
+            if binding:
+                self.choosed_bindings.append(binding)
+                if len(self.choosed_bindings) == 1:
+                    self.checkbox_restr_joint_1.toggle()
+                elif len(self.choosed_bindings) == 2:
+                    self.checkbox_restr_joint_2.toggle()
+                    self.choose = ChooseSt.NOTHING
+                    self.submit_restr_joint.setFocus()
+
         elif status == ControllerCmd.SUBMIT:
             if len(self.choosed_bindings) < 2:
                 return
@@ -423,16 +403,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if isinstance(b2, PointBinding):
                     restr = PointsJoint()
                 else:
-                    spot_type = get_spot_type(b2)
-                    restr = PointAndSegmentSpotJoint(spot_type)
+                    restr = PointAndSegmentSpotJoint(b2.spot_type)
             else:
-                spot_type_1 = get_spot_type(b1)
                 if isinstance(b2, PointBinding):
+                    restr = PointAndSegmentSpotJoint(b1.spot_type)
                     b1, b2 = b2, b1
-                    restr = PointAndSegmentSpotJoint(spot_type_1)
                 else:
-                    spot_type_2 = get_spot_type(b2)
-                    restr = SegmentsSpotsJoint(spot_type_1, spot_type_2)
+                    restr = SegmentsSpotsJoint(b1.spot_type, b2.spot_type)
             try:
                 self._project.add_restriction(restr,
                                               (b1.get_object_names()[0],
@@ -460,23 +437,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def controller_restr_fixed(self, cmd, bindings: list = None):
         if cmd == ControllerCmd.STEP:
-            for binding in bindings:
-                if isinstance(
-                    binding,
-                    (
-                        PointBinding,
-                        SegmentStartBinding,
-                        SegmentCenterBinding,
-                        SegmentEndBinding,
-                        FullSegmentBinding
-                    )
-                ):
-                    self.choosed_bindings.append(binding)
-                    if len(self.choosed_bindings) == 1:
-                        self.checkbox_restr_fixed.toggle()
-                        self.choose = ChooseSt.NOTHING
-                        self.submit_restr_fixed.setFocus()
-                    break
+            binding = find_first(bindings, is_any_normal_binding)
+            if binding:
+                self.choosed_bindings.append(binding)
+                if len(self.choosed_bindings) == 1:
+                    self.checkbox_restr_fixed.toggle()
+                    self.choose = ChooseSt.NOTHING
+                    self.submit_restr_fixed.setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
             if len(self.choosed_bindings) != 1:
@@ -488,8 +455,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 restr = PointFixed(*coo)
             elif isinstance(binding, FullSegmentBinding):
                 restr = SegmentFixed(*coo)
-            else:  # Segment spot fixed  # TODO: check?
-                binding_spot_type = get_spot_type(binding)
+            elif isinstance(binding, SegmentSpotBinding):
+                binding_spot_type = binding.spot_type
                 if binding_spot_type == 'start':
                     coo = coo[:2]
                 elif binding_spot_type == 'end':
@@ -497,6 +464,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 else:  # center
                     coo = coo[0] + coo[2] / 2, coo[1] + coo[3] / 2
                 restr = SegmentSpotFixed(*coo, binding_spot_type)
+            else:
+                raise RuntimeError(f'Unexpected binding type {type(binding)}')
 
             try:
                 self._project.add_restriction(restr, (figure_name,))
@@ -601,10 +570,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # Work with bindings
         if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
-            allowed_bindings_types = (
-                PointBinding,
-                SegmentStartBinding, SegmentCenterBinding, SegmentEndBinding
-            )
+            allowed_bindings_types = (PointBinding, SegmentSpotBinding)
             # TODO: check all variants
         else:
             allowed_bindings_types = None

@@ -11,11 +11,18 @@ from utils import (
 )
 from figures import Point, Segment
 
-def is_segment_spot_binding(binding):
-    return isinstance(
-        binding,
-        (Seg)
-    )
+
+def is_any_segment_binding(binding):
+    return isinstance(binding, (SegmentSpotBinding, FullSegmentBinding))
+
+
+def is_normal_point_binding(binding):
+    return isinstance(binding, (SegmentSpotBinding, PointBinding))
+
+
+def is_any_normal_binding(binding):
+    return isinstance(binding, (SegmentSpotBinding, FullSegmentBinding, PointBinding))
+
 
 class Binding:
     """Class of binding."""
@@ -158,8 +165,8 @@ class PointBinding(CircleBinding, ReferencedToObjects):
         return self._point.get_base_representation()
 
 
-class SegmentStartBinding(CircleBinding, ReferencedToObjects):
-    """Central binding to start of segment with circle binding zone.
+class SegmentSpotBinding(CircleBinding, ReferencedToObjects):
+    """Central binding to spot of segment with circle binding zone.
 
     Parameters
     ----------
@@ -167,73 +174,36 @@ class SegmentStartBinding(CircleBinding, ReferencedToObjects):
         Radius of zone to bind.
     segment: Segment
         Segment for binding.
+    spot_type: {'start', 'end', 'center'}
     """
     _n_objects = 1
 
-    @contract(radius='number, >0', segment='$Segment')
-    def __init__(self, radius, segment):
+    @contract(radius='number, >0', segment='$Segment', spot_type='str')
+    def __init__(self, radius, segment: Segment, spot_type: str):
         super().__init__(radius)
+
         if not isinstance(segment, Segment):
             raise TypeError(
                 f'Given object has type {type(segment)}, not Segment')
         self._segment = segment
 
-    def _coordinates(self):
-        """Return coordinates of binding."""
-        x1, y1, x2, y2 = self._segment.get_base_representation()
-        return x1, y1
+        if spot_type not in ('start', 'end', 'center'):
+            raise ValueError(f'Incorrect spot_type {spot_type}.')
+        self._spot_type = spot_type
 
-
-class SegmentEndBinding(CircleBinding, ReferencedToObjects):
-    """Central binding to end of segment with circle binding zone.
-
-    Parameters
-    ----------
-    radius: int or float
-        Radius of zone to bind.
-    segment: Segment
-        Segment for binding.
-    """
-    _n_objects = 1
-
-    @contract(radius='number, >0', segment='$Segment')
-    def __init__(self, radius, segment):
-        super().__init__(radius)
-        if not isinstance(segment, Segment):
-            raise TypeError(
-                f'Given object has type {type(segment)}, not Segment')
-        self._segment = segment
+    @property
+    def spot_type(self):
+        return self._spot_type
 
     def _coordinates(self):
         """Return coordinates of binding."""
         x1, y1, x2, y2 = self._segment.get_base_representation()
-        return x2, y2
-
-
-class SegmentCenterBinding(CircleBinding, ReferencedToObjects):
-    """Central binding to center of segment with circle binding zone.
-
-    Parameters
-    ----------
-    radius: int or float
-        Radius of zone to bind.
-    segment: Segment
-        Segment for binding.
-    """
-    _n_objects = 1
-
-    @contract(radius='number, >0', segment='$Segment')
-    def __init__(self, radius, segment):
-        super().__init__(radius)
-        if not isinstance(segment, Segment):
-            raise TypeError(
-                f'Given object has type {type(segment)}, not Segment')
-        self._segment = segment
-
-    def _coordinates(self):
-        """Return coordinates of binding."""
-        x1, y1, x2, y2 = self._segment.get_base_representation()
-        return (x1 + x2) / 2, (y1 + y2) / 2
+        if self._spot_type == 'start':
+            return x1, y1
+        elif self._spot_type == 'end':
+            return x2, y2
+        else:  # center
+            return (x1 + x2) / 2, (y1 + y2) / 2
 
 
 class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
@@ -435,6 +405,8 @@ def choose_best_bindings(bindings: list, x, y) -> list:
 
         if isinstance(binding, FullSegmentBinding):
             dist += BIG_DISTANCE  # Prefer point bindings to segment
+        if isinstance(binding, SegmentsIntersectionBinding):
+            dist += BIG_DISTANCE // 2  # Prefer point bindings to segment
 
         if np.isclose(dist, min_dist, atol=atol):
             best_bindings.append(binding)
@@ -476,15 +448,18 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
             bindings.append(binding)
 
         elif isinstance(figure, Segment):
-            binding = SegmentStartBinding(circle_bindings_radius, figure)
+            binding = SegmentSpotBinding(circle_bindings_radius, figure,
+                                         spot_type='start')
             binding.set_object_names([name])
             bindings.append(binding)
 
-            binding = SegmentEndBinding(circle_bindings_radius, figure)
+            binding = SegmentSpotBinding(circle_bindings_radius, figure,
+                                         spot_type='end')
             binding.set_object_names([name])
             bindings.append(binding)
 
-            binding = SegmentCenterBinding(circle_bindings_radius, figure)
+            binding = SegmentSpotBinding(circle_bindings_radius, figure,
+                                         spot_type='center')
             binding.set_object_names([name])
             bindings.append(binding)
 
@@ -508,11 +483,3 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
         bindings.append(binding)
 
     return bindings
-
-
-def find_first_binding(bindings, types):
-    types = tuple(types)
-    for binding in bindings:
-        if isinstance(binding, types):
-            return binding
-    return None

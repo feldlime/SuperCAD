@@ -6,9 +6,7 @@ from figures import Figure, Point, Segment
 from bindings import (
     Binding,
     PointBinding,
-    SegmentStartBinding,
-    SegmentCenterBinding,
-    SegmentEndBinding,
+    SegmentSpotBinding,
     SegmentsIntersectionBinding,
     FullSegmentBinding
 )
@@ -41,8 +39,7 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
     for binding in bindings:
         if isinstance(binding, PointBinding):
             paint_point(painter, binding.bind(), 6, Qt.cyan)
-        elif isinstance(binding, (SegmentStartBinding,
-                                  SegmentCenterBinding, SegmentEndBinding)):
+        elif isinstance(binding, SegmentSpotBinding):
             paint_point(painter, binding.bind(), 6, Qt.blue)
         elif isinstance(binding, SegmentsIntersectionBinding):
             x, y = binding.bind()
