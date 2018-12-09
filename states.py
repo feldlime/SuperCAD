@@ -17,14 +17,6 @@ class ControllerWorkSt:
     RESTR_SEGMENTS_PARALLEL = 10
 
 
-class ControllerSt:
-    HIDE = 0
-    SHOW = 1
-    SUBMIT = 2
-    ADD = 3
-    MOUSE_ADD = 4
-
-
 class CreationSt:
     NOTHING = 0
     POINT_SET = 1
@@ -36,6 +28,13 @@ class ActionSt:
     NOTHING = 0
     BINDING_PRESSED = 1
     MOVE = 3
+
+
+class ControllerCmd:
+    HIDE = 0
+    SHOW = 1
+    STEP = 2
+    SUBMIT = 3
 
 
 

@@ -11,6 +11,11 @@ from utils import (
 )
 from figures import Point, Segment
 
+def is_segment_spot_binding(binding):
+    return isinstance(
+        binding,
+        (Seg)
+    )
 
 class Binding:
     """Class of binding."""
@@ -503,3 +508,11 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
         bindings.append(binding)
 
     return bindings
+
+
+def find_first_binding(bindings, types):
+    types = tuple(types)
+    for binding in bindings:
+        if isinstance(binding, types):
+            return binding
+    return None
