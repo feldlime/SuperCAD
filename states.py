@@ -32,6 +32,7 @@ class ControllerCmd:
     SHOW = 1
     STEP = 2
     SUBMIT = 3
+    MOVE = 4
 
 
 

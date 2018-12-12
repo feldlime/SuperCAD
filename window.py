@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
 from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
 from logging import getLogger
 import re
+from numpy import pi
 
 from glwindow_processing import GLWindowProcessor
 from interface import InterfaceProcessor
@@ -129,7 +130,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.setTabOrder(self.field_x1_add_segment, self.field_y1_add_segment)
         self.setTabOrder(self.field_y1_add_segment, self.field_x2_add_segment)
         self.setTabOrder(self.field_x2_add_segment, self.field_y2_add_segment)
-        self.setTabOrder(self.field_y2_add_segment, self.submit_add_segment)
+        self.setTabOrder(self.field_y2_add_segment,
+                         self.field_length_add_segment)
+        self.setTabOrder(self.field_length_add_segment,
+                         self.field_angle_add_segment)
+        self.setTabOrder(self.field_angle_add_segment, self.submit_add_segment)
 
     def _setup_handlers(self):
 
@@ -228,6 +233,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.field_y2_add_segment.valueChanged.connect(
             lambda new_value: self.change_painted_figure('y2', new_value)
         )
+        self.field_length_add_segment.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('length', new_value)
+        )
+        self.field_angle_add_segment.valueChanged.connect(
+            lambda new_value: self.change_painted_figure('angle',
+                                                         new_value*pi/180)
+        )
 
         # Actions
         self.action_undo.triggered['bool'].connect(self.undo)
@@ -242,6 +254,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
+
+    def field_update(self):
+        if isinstance(self.painted_figure, Point):
+            self.controller_add_point(ControllerCmd.MOVE)
+        elif isinstance(self.painted_figure, Segment):
+            self.controller_add_segment(ControllerCmd.MOVE)
 
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
@@ -263,11 +281,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 else:
                     break
                 i += 1
+            self.change_selected_figure()
 
     def change_painted_figure(self, field: str, value: float):
         if self.painted_figure is not None:
             self.painted_figure.set_param(field, value)
         # TODO: Move mouse
+
+    def change_selected_figure(self):
+        # pass
+        self.painted_figure = self._project.figures.pop(
+            self._selected_figure_name)
+        if isinstance(self.painted_figure, Point):
+            self.controller_add_point(ControllerCmd.MOVE)
+        elif isinstance(self.painted_figure, Segment):
+            self.controller_add_segment(ControllerCmd.MOVE)
 
     # ======================== Controllers ==================
 
@@ -289,7 +317,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
             )
             self.creation_st = CreationSt.POINT_SET
             self.widget_add_point.show()
+            self.submit_add_point.show()
             self.controller_work_st = ControllerWorkSt.ADD_POINT
+
+        elif cmd == ControllerCmd.MOVE:
+            self.field_x_add_point.setFocus()
+            self.field_x_add_point.selectAll()
+            choo = self.painted_figure.get_base_representation()
+            self.field_x_add_point.setValue(choo[0])
+            self.field_y_add_point.setValue(choo[1])
+            self.widget_add_point.show()
+            self.submit_add_point.hide()
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
@@ -307,15 +345,39 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif cmd == ControllerCmd.SHOW:
             self.field_x1_add_segment.setFocus()
             self.field_x1_add_segment.selectAll()
-            self.painted_figure = Segment.from_coordinates(
-                self.field_x1_add_segment.value(),
-                self.field_y1_add_segment.value(),
-                self.field_x2_add_segment.value(),
-                self.field_y2_add_segment.value()
-            )
+            if self.field_length_add_segment.value() != 0:
+                self.painted_figure = Segment.from_coordinates(
+                    self.field_x1_add_segment.value(),
+                    self.field_y1_add_segment.value(),
+                    self.field_x2_add_segment.value(),
+                    self.field_y2_add_segment.value(),
+                )
+            else:
+                self.painted_figure = Segment(
+                    start=(
+                        self.field_x1_add_segment.value(),
+                        self.field_y1_add_segment.value()
+                    ),
+                    angle=self.field_length_add_segment.value(),
+                    length=self.field_angle_add_segment.value()
+                )
             self.creation_st = CreationSt.SEGMENT_START_SET
             self.widget_add_segment.show()
+            self.submit_add_segment.show()
             self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
+
+        elif cmd == ControllerCmd.MOVE:
+                    self.field_x1_add_segment.setFocus()
+                    self.field_x1_add_segment.selectAll()
+                    choo = self.painted_figure.get_params()
+                    self.field_x1_add_segment.setValue(choo['x1']),
+                    self.field_y1_add_segment.setValue(choo['y1']),
+                    self.field_x2_add_segment.setValue(choo['x2']),
+                    self.field_y2_add_segment.setValue(choo['y2']),
+                    self.field_length_add_segment.setValue(choo['length'])
+                    self.field_angle_add_segment.setValue(choo['angle']*180/pi)
+                    self.widget_add_segment.show()
+                    self.submit_add_segment.hide()
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
@@ -396,7 +458,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             return SegmentHorizontal()
 
         self._controller_restr_single_object(
-            'segment_vertical',
+            'segment_horizontal',
             cmd,
             bindings,
             get_restr_fun,
@@ -425,7 +487,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             return restr
 
         self._controller_restr_single_object(
-            'segment_vertical',
+            'fixed',
             cmd,
             bindings,
             get_restr_fun,
@@ -588,12 +650,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # self._logger.debug('mouseMoveEvent: start')
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-        if self.action_st == ActionSt.BINDING_PRESSED:
+        if self.action_st == ActionSt.BINDING_PRESSED and \
+                self._selected_figure_name is not None:
             self.action_st = ActionSt.MOVE
 
         if self.action_st == ActionSt.MOVE:
             try:
                 self._project.move_figure(self._selected_binding, x, y)
+                self.field_update()
             except CannotSolveSystemError:
                 self._project.rollback()
 
