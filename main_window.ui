@@ -70,6 +70,9 @@
      <property name="spacing">
       <number>0</number>
      </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
      <property name="leftMargin">
       <number>0</number>
      </property>
@@ -110,6 +113,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="button_add_segment">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -364,25 +370,6 @@
       </widget>
      </item>
     </layout>
-   </widget>
-   <widget class="QListView" name="widget_elements_table">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>0</y>
-      <width>256</width>
-      <height>571</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="editTriggers">
-     <set>QAbstractItemView::NoEditTriggers</set>
-    </property>
    </widget>
    <widget class="QWidget" name="widget_add_point" native="true">
     <property name="geometry">
@@ -1400,10 +1387,39 @@
      </property>
     </widget>
    </widget>
+   <widget class="QTreeWidget" name="widget_elements_table">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>0</y>
+      <width>256</width>
+      <height>570</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::StrongFocus</enum>
+    </property>
+    <property name="headerHidden">
+     <bool>false</bool>
+    </property>
+    <property name="columnCount">
+     <number>1</number>
+    </property>
+    <attribute name="headerVisible">
+     <bool>true</bool>
+    </attribute>
+    <attribute name="headerCascadingSectionResizes">
+     <bool>false</bool>
+    </attribute>
+    <column>
+     <property name="text">
+      <string notr="true">1</string>
+     </property>
+    </column>
+   </widget>
    <zorder>footer_widget</zorder>
    <zorder>work_plane</zorder>
    <zorder>layoutWidget_2</zorder>
-   <zorder>widget_elements_table</zorder>
    <zorder>widget_add_point</zorder>
    <zorder>widget_restr_fixed</zorder>
    <zorder>widget_restr_joint</zorder>
@@ -1416,6 +1432,7 @@
    <zorder>widget_restr_segments_normal</zorder>
    <zorder>widget_restr_segments_angle_between_fixed</zorder>
    <zorder>widget_add_segment</zorder>
+   <zorder>widget_elements_table</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1564,7 +1581,6 @@
   <tabstop>button_restr_fixed</tabstop>
   <tabstop>button_restr_segment_length_fixed</tabstop>
   <tabstop>button_restr_segment_angle_fixed</tabstop>
-  <tabstop>widget_elements_table</tabstop>
   <tabstop>widget_add_point</tabstop>
   <tabstop>field_y_add_point</tabstop>
   <tabstop>field_x_add_point</tabstop>
@@ -1597,22 +1613,6 @@
  </tabstops>
  <resources/>
  <connections>
-  <connection>
-   <sender>action_show_elements_table</sender>
-   <signal>triggered(bool)</signal>
-   <receiver>widget_elements_table</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>-1</x>
-     <y>-1</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>177</x>
-     <y>322</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>button_add_point</sender>
    <signal>clicked(bool)</signal>

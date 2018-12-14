@@ -1,6 +1,9 @@
 """Module with main class of application that manage system and picture."""
 
-from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
+from PyQt5.QtWidgets import (QOpenGLWidget,
+                             QMainWindow,
+                             QFileDialog,
+                             QTreeWidgetItem)
 from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import (QWidget, QPushButton,
@@ -225,6 +228,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
+        self.widget_elements_table.setHeaderHidden(True)
+
+        self.widget_elements_table_figures = QTreeWidgetItem(['Elements'])
+        self.widget_elements_table_restrictions = QTreeWidgetItem([
+            'Restrictions'])
+        # self.figures_list_view = {}
+        # self.restrictions_list_view = {}
+
+        self.widget_elements_table.addTopLevelItems([self.widget_elements_table_figures,
+                                                     self.widget_elements_table_restrictions])
+
+
+
+
+    # def widget_elements_table.
 
 
     def update_fields(self):
@@ -233,7 +251,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             print('created figure')
             figure = self._created_figure
         elif self._selected_figure_name is not None:
-            print('selected figure')
+            print('selected figure ', self._selected_figure_name)
             figure = self._project.figures[self._selected_figure_name]
         else:
             return
@@ -272,22 +290,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # elif self.field_angle_add_segment.hasFocus():
             #     self.field_angle_add_segment.selectAll()
 
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Enter or key == Qt.Key_Return:
-            if self.controller_work_st == ControllerWorkSt.ADD_POINT:
-                self.controller_add_point(ControllerCmd.SUBMIT)
-            elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
-                self.controller_add_segment(ControllerCmd.SUBMIT)
-            elif ControllerWorkSt.is_restr(self.controller_work_st):
-                name = None
-                for name in dir(ControllerWorkSt):
-                    if re.match('^RESTR_', name):
-                        break
-                if name:
-                    controller_name = f'controller_{name.lower()}'
-                    getattr(self, controller_name)(ControllerCmd.SUBMIT)
-
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
         figure_name = self.widget_elements_table.model().itemData(item_idx)[0]
@@ -297,18 +299,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def select_figure_on_list_view(self):
         self.widget_elements_table.clearSelection()
         if self._selected_figure_name is not None:
-            model = self.widget_elements_table.model()
-            i = 0
-            while True:
-                index = model.index(i)
-                item_data = model.itemData(index)
-                if item_data:
-                    if item_data[0] == self._selected_figure_name:
-                        self.widget_elements_table.selectionModel().select(index, QItemSelectionModel.Select)
-                        break
-                else:
-                    break
-                i += 1
+            figure_to_select = self.widget_elements_table.findItems(
+                str(self._selected_figure_name),
+                # Qt.MatchExactly,
+                Qt.MatchRecursive
+                )
+            self.widget_elements_table.setCurrentItem(figure_to_select[0])
         self.begin_figure_selection()
 
     def change_created_or_selected_figure(self, field: str, value: float):
@@ -322,7 +318,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def begin_figure_selection(self):
         if self._selected_figure_name is None:
             return
-        print('begin figure selection')
+        print('begin figure selection', self._selected_figure_name)
 
         selected_figure_name = self._selected_figure_name
         self.reset()
@@ -344,7 +340,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             figure_coo = self._created_figure.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
-            self._update_figures_list_view()
+            self._update_list_view()
 
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
@@ -372,7 +368,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             s = Segment.from_coordinates(*figure_coo)
             self._project.add_figure(s)
             self.reset()
-            self._update_figures_list_view()
+            self._update_list_view()
 
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
@@ -711,7 +707,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._created_figure.set_param('x2', x).set_param('y2', y)
                 self.update_fields()
 
-
         # Work with bindings
         if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
             allowed_bindings_types = (PointBinding, SegmentSpotBinding)
@@ -761,6 +756,23 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.select_figure_on_list_view()  # Also start changing and set action_st = SELECTED
                 print('789')
                 self.action_st = ActionSt.SELECTED
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_Enter or key == Qt.Key_Return:
+            if self.controller_work_st == ControllerWorkSt.ADD_POINT:
+                self.controller_add_point(ControllerCmd.SUBMIT)
+            elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
+                self.controller_add_segment(ControllerCmd.SUBMIT)
+            elif ControllerWorkSt.is_restr(self.controller_work_st):
+                name = None
+                for name in dir(ControllerWorkSt):
+                    if re.match('^RESTR_', name):
+                        break
+                if name:
+                    controller_name = f'controller_{name.lower()}'
+                    getattr(self, controller_name)(
+                        ControllerCmd.SUBMIT)
 
     def _hide_footer_widgets(self):
         for box in self._footer_checkboxes.values():
@@ -852,9 +864,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # TODO: Status bar / inactive
             pass
 
-    def _update_figures_list_view(self):
-        figures_model = QStringListModel()
-        for i, figure_name in enumerate(self._project.figures.keys()):
-            figures_model.insertRow(i)
-            figures_model.setData(figures_model.index(i), figure_name)
-        self.widget_elements_table.setModel(figures_model)
+    def _update_list_view(self):
+        updateble_types = [[self.widget_elements_table_figures,
+                            self._project.figures],
+                           [self.widget_elements_table_restrictions,
+                            self._project.restrictions]
+                           ]
+
+        for updateble_type_tree, updateble_type in updateble_types:
+            for i in reversed(range(updateble_type_tree.childCount())):
+                updateble_type_tree.removeChild(
+                    updateble_type_tree.child(i))
+
+            for name in updateble_type.keys():
+                element = QTreeWidgetItem([name])
+                updateble_type_tree.addChild(element)
+
+        # for restriction_name in self._project.restrictions.keys():
+        #     restriction = QTreeWidgetItem([restriction_name])
+        #     self.widget_elements_table_restrictions.addChild(restriction)

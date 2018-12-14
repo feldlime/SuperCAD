@@ -7,8 +7,12 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QTreeWidget
+
 
 class Ui_window(object):
+    widget_elements_table: QTreeWidget
+
     def setupUi(self, window):
         window.setObjectName("window")
         window.resize(1280, 650)
@@ -33,6 +37,7 @@ class Ui_window(object):
         self.layoutWidget_2.setGeometry(QtCore.QRect(0, 0, 41, 571))
         self.layoutWidget_2.setObjectName("layoutWidget_2")
         self.Instruments = QtWidgets.QVBoxLayout(self.layoutWidget_2)
+        self.Instruments.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
         self.Instruments.setContentsMargins(0, 0, 0, 0)
         self.Instruments.setSpacing(0)
         self.Instruments.setObjectName("Instruments")
@@ -49,6 +54,7 @@ class Ui_window(object):
         self.button_add_point.setObjectName("button_add_point")
         self.Instruments.addWidget(self.button_add_point)
         self.button_add_segment = QtWidgets.QPushButton(self.layoutWidget_2)
+        self.button_add_segment.setEnabled(True)
         self.button_add_segment.setText("")
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap("resources/line.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -156,12 +162,6 @@ class Ui_window(object):
         self.button_restr_segments_angle_between_fixed.setAutoRepeat(True)
         self.button_restr_segments_angle_between_fixed.setObjectName("button_restr_segments_angle_between_fixed")
         self.Instruments.addWidget(self.button_restr_segments_angle_between_fixed)
-        self.widget_elements_table = QtWidgets.QListView(self.centralwidget)
-        self.widget_elements_table.setEnabled(True)
-        self.widget_elements_table.setGeometry(QtCore.QRect(40, 0, 256, 571))
-        self.widget_elements_table.setAutoFillBackground(False)
-        self.widget_elements_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.widget_elements_table.setObjectName("widget_elements_table")
         self.widget_add_point = QtWidgets.QWidget(self.centralwidget)
         self.widget_add_point.setGeometry(QtCore.QRect(50, 572, 281, 31))
         self.widget_add_point.setFocusPolicy(QtCore.Qt.TabFocus)
@@ -447,10 +447,18 @@ class Ui_window(object):
         self.checkbox_restr_segments_angle_between_fixed_2.setCheckable(True)
         self.checkbox_restr_segments_angle_between_fixed_2.setChecked(False)
         self.checkbox_restr_segments_angle_between_fixed_2.setObjectName("checkbox_restr_segments_angle_between_fixed_2")
+        self.widget_elements_table = QtWidgets.QTreeWidget(self.centralwidget)
+        self.widget_elements_table.setGeometry(QtCore.QRect(40, 0, 256, 570))
+        self.widget_elements_table.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.widget_elements_table.setHeaderHidden(False)
+        self.widget_elements_table.setColumnCount(1)
+        self.widget_elements_table.setObjectName("widget_elements_table")
+        self.widget_elements_table.headerItem().setText(0, "1")
+        self.widget_elements_table.header().setVisible(True)
+        self.widget_elements_table.header().setCascadingSectionResizes(False)
         self.footer_widget.raise_()
         self.work_plane.raise_()
         self.layoutWidget_2.raise_()
-        self.widget_elements_table.raise_()
         self.widget_add_point.raise_()
         self.widget_restr_fixed.raise_()
         self.widget_restr_joint.raise_()
@@ -463,6 +471,7 @@ class Ui_window(object):
         self.widget_restr_segments_normal.raise_()
         self.widget_restr_segments_angle_between_fixed.raise_()
         self.widget_add_segment.raise_()
+        self.widget_elements_table.raise_()
         window.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(window)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1280, 22))
@@ -517,7 +526,6 @@ class Ui_window(object):
         self.menubar.addAction(self.menu_menu.menuAction())
 
         self.retranslateUi(window)
-        self.action_show_elements_table.triggered['bool'].connect(self.widget_elements_table.hide)
         self.button_add_point.clicked['bool'].connect(self.widget_add_point.hide)
         self.button_add_segment.clicked['bool'].connect(self.widget_add_segment.hide)
         QtCore.QMetaObject.connectSlotsByName(window)
@@ -528,8 +536,7 @@ class Ui_window(object):
         window.setTabOrder(self.button_restr_segment_horizontal, self.button_restr_fixed)
         window.setTabOrder(self.button_restr_fixed, self.button_restr_segment_length_fixed)
         window.setTabOrder(self.button_restr_segment_length_fixed, self.button_restr_segment_angle_fixed)
-        window.setTabOrder(self.button_restr_segment_angle_fixed, self.widget_elements_table)
-        window.setTabOrder(self.widget_elements_table, self.widget_add_point)
+        window.setTabOrder(self.button_restr_segment_angle_fixed, self.widget_add_point)
         window.setTabOrder(self.widget_add_point, self.field_y_add_point)
         window.setTabOrder(self.field_y_add_point, self.field_x_add_point)
         window.setTabOrder(self.field_x_add_point, self.submit_add_point)
