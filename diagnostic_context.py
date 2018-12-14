@@ -47,10 +47,11 @@ class DiagnosticContext:
         return _Measurer(self, step_name)
 
 
-class DiagnosticContextTimer(DiagnosticContext):
+class DiagnosticContextTotal(DiagnosticContext):
     def __init__(self, title: str = None, file=None):
         super().__init__(title=title, file=file)
         self._times = defaultdict(float)
+        self._counts = defaultdict(int)
 
     def _log(self, message: str):
         pass
@@ -61,9 +62,10 @@ class DiagnosticContextTimer(DiagnosticContext):
         super()._stop_step(step_name, step_identity, elapsed_seconds)
         current_full_name = ' | '.join(self._level_names + [step_name])
         self._times[current_full_name] += elapsed_seconds
+        self._counts[current_full_name] += 1
 
     def get_times(self):
-        return self._times
+        return self._times, self._counts
 
 
 class _Measurer:
@@ -84,7 +86,7 @@ class _Measurer:
 
 
 DEFAULT_CONTEXT = DiagnosticContext()
-DEFAULT_CONTEXT_TIMER = DiagnosticContextTimer()
+DEFAULT_CONTEXT_TIMER = DiagnosticContextTotal()
 
 
 def measured(
