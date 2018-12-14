@@ -30,7 +30,7 @@ def main():
     logging.basicConfig(
         format=logfile_format,
         level=logging.DEBUG,
-        handlers=[logging.FileHandler(logfile_name, 'w', 'utf-8')]
+        # handlers=[logging.FileHandler(logfile_name, 'w', 'utf-8')]
     )
 
     logging.info('Start working')
