@@ -92,7 +92,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self.chosen_bindings = []
 
-        self.painted_figure = None  # Figure that is painted at this moment
+        self._created_figure = None  # Figure that is painted at this moment
         self.creation_st = CreationSt.NOTHING
 
         self._filename = None
@@ -219,29 +219,29 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # Fields
         self.field_x_add_point.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('x', new_value)
+            lambda new_value: self.change_created_or_selected_figure('x', new_value)
         )
         self.field_y_add_point.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('y', new_value)
+            lambda new_value: self.change_created_or_selected_figure('y', new_value)
         )
         self.field_x1_add_segment.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('x1', new_value)
+            lambda new_value: self.change_created_or_selected_figure('x1', new_value)
         )
         self.field_y1_add_segment.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('y1', new_value)
+            lambda new_value: self.change_created_or_selected_figure('y1', new_value)
         )
         self.field_x2_add_segment.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('x2', new_value)
+            lambda new_value: self.change_created_or_selected_figure('x2', new_value)
         )
         self.field_y2_add_segment.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('y2', new_value)
+            lambda new_value: self.change_created_or_selected_figure('y2', new_value)
         )
         self.field_length_add_segment.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('length', new_value)
+            lambda new_value: self.change_created_or_selected_figure('length', new_value)
         )
         self.field_angle_add_segment.valueChanged.connect(
-            lambda new_value: self.change_painted_figure('angle',
-                                                         new_value*pi/180)
+            lambda new_value: self.change_created_or_selected_figure(
+                'angle', new_value*pi/180)
         )
 
         # Actions
@@ -258,16 +258,56 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
 
-    def field_update(self):
-        if isinstance(self.painted_figure, Point):
-            self.controller_add_point(ControllerCmd.MOVE)
-        elif isinstance(self.painted_figure, Segment):
-            self.controller_add_segment(ControllerCmd.MOVE)
+    def update_fields(self):
+        self._logger.debug('update fields')
+        if self._created_figure is not None:
+            print('created figure')
+            figure = self._created_figure
+        elif self._selected_figure_name is not None:
+            print('selected figure')
+            figure = self._project.figures[self._selected_figure_name]
+        else:
+            return
+
+        print(f'figure: {figure}')
+        if isinstance(figure, Point):
+            params = figure.get_params()
+            self.field_x_add_point.setValue(params['x'])
+            self.field_y_add_point.setValue(params['y'])
+            # Select field with focus
+            if self.field_x_add_point.hasFocus():
+                self.field_x_add_point.selectAll()
+            elif self.field_y_add_point.hasFocus():
+                self.field_y_add_point.selectAll()
+
+        elif isinstance(figure, Segment):
+            params = figure.get_params()
+            self.field_x1_add_segment.setValue(params['x1'])
+            self.field_y1_add_segment.setValue(params['y1'])
+            self.field_x2_add_segment.setValue(params['x2'])
+            self.field_y2_add_segment.setValue(params['y2'])
+            # self.field_length_add_segment.setValue(params['length'])
+            # self.field_angle_add_segment.setValue(params['angle'])
+
+            # Select field with focus
+            if self.field_x1_add_segment.hasFocus():
+                self.field_x1_add_segment.selectAll()
+            elif self.field_y1_add_segment.hasFocus():
+                self.field_y1_add_segment.selectAll()
+            elif self.field_x2_add_segment.hasFocus():
+                self.field_x2_add_segment.selectAll()
+            elif self.field_y2_add_segment.hasFocus():
+                self.field_y2_add_segment.selectAll()
+            # elif self.field_length_add_segment.hasFocus():
+            #     self.field_length_add_segment.selectAll()
+            # elif self.field_angle_add_segment.hasFocus():
+            #     self.field_angle_add_segment.selectAll()
 
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
         figure_name = self.widget_elements_table.model().itemData(item_idx)[0]
         self._selected_figure_name = figure_name
+        self.begin_figure_selection()
 
     def select_figure_on_list_view(self):
         self.widget_elements_table.clearSelection()
@@ -284,21 +324,31 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 else:
                     break
                 i += 1
-            self.change_selected_figure()
+        self.begin_figure_selection()
 
-    def change_painted_figure(self, field: str, value: float):
-        if self.painted_figure is not None:
-            self.painted_figure.set_param(field, value)
+    def change_created_or_selected_figure(self, field: str, value: float):
+        # For angle value in radians
+        if self._created_figure is not None:
+            self._created_figure.set_param(field, value)
+        elif self._selected_figure_name is not None:
+            self._project.change_figure(self._selected_figure_name, field, value)
         # TODO: Move mouse
 
-    def change_selected_figure(self):
-        # pass
-        self.painted_figure = self._project.figures.pop(
-            self._selected_figure_name)
-        if isinstance(self.painted_figure, Point):
-            self.controller_add_point(ControllerCmd.MOVE)
-        elif isinstance(self.painted_figure, Segment):
-            self.controller_add_segment(ControllerCmd.MOVE)
+    def begin_figure_selection(self):
+        if self._selected_figure_name is None:
+            return
+        print('begin figure selection')
+
+        selected_figure_name = self._selected_figure_name
+        self.reset()
+        self._selected_figure_name = selected_figure_name
+        self.action_st = ActionSt.SELECTED
+        self.update_fields()
+        figure = self._project.figures[self._selected_figure_name]
+        if isinstance(figure, Point):
+            self.controller_add_point(ControllerCmd.SHOW)
+        elif isinstance(figure, Segment):
+            self.controller_add_segment(ControllerCmd.SHOW)
 
     # ======================== Controllers ==================
 
@@ -306,31 +356,25 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug(f'controller_add_point start with status {cmd}')
 
         if cmd == ControllerCmd.SUBMIT:
-            figure_coo = self.painted_figure.get_base_representation()
+            figure_coo = self._created_figure.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
             self._update_figures_list_view()
 
         elif cmd == ControllerCmd.SHOW:
-            self.field_x_add_point.setFocus()
-            self.field_x_add_point.selectAll()
-            self.painted_figure = Point.from_coordinates(
-                self.field_x_add_point.value(),
-                self.field_y_add_point.value()
-            )
-            self.creation_st = CreationSt.POINT_SET
+            if self.action_st == ActionSt.NOTHING:
+                self._reset_behind_statuses()
+                self.controller_work_st = ControllerWorkSt.ADD_POINT
+                self.creation_st = CreationSt.POINT_SET
+                self._created_figure = Point.from_coordinates(
+                    self.field_x_add_point.value(),
+                    self.field_y_add_point.value()
+                )
+
             self.widget_add_point.show()
             self.submit_add_point.show()
-            self.controller_work_st = ControllerWorkSt.ADD_POINT
-
-        elif cmd == ControllerCmd.MOVE:
             self.field_x_add_point.setFocus()
             self.field_x_add_point.selectAll()
-            choo = self.painted_figure.get_base_representation()
-            self.field_x_add_point.setValue(choo[0])
-            self.field_y_add_point.setValue(choo[1])
-            self.widget_add_point.show()
-            self.submit_add_point.hide()
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
@@ -339,48 +383,39 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug(f'controller_add_segment start with status {cmd}')
 
         if cmd == ControllerCmd.SUBMIT:
-            figure_coo = self.painted_figure.get_base_representation()
+            figure_coo = self._created_figure.get_base_representation()
             s = Segment.from_coordinates(*figure_coo)
             self._project.add_figure(s)
             self.reset()
             self._update_figures_list_view()
 
         elif cmd == ControllerCmd.SHOW:
-            self.field_x1_add_segment.setFocus()
-            self.field_x1_add_segment.selectAll()
-            if self.field_length_add_segment.value() != 0:
-                self.painted_figure = Segment.from_coordinates(
-                    self.field_x1_add_segment.value(),
-                    self.field_y1_add_segment.value(),
-                    self.field_x2_add_segment.value(),
-                    self.field_y2_add_segment.value(),
-                )
-            else:
-                self.painted_figure = Segment(
-                    start=(
+            if self.action_st == ActionSt.NOTHING:
+                self._reset_behind_statuses()
+                self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
+                self.creation_st = CreationSt.SEGMENT_START_SET
+
+                if self.field_length_add_segment.value() != 0:
+                    self._created_figure = Segment.from_coordinates(
                         self.field_x1_add_segment.value(),
-                        self.field_y1_add_segment.value()
-                    ),
-                    angle=self.field_length_add_segment.value(),
-                    length=self.field_angle_add_segment.value()
-                )
-            self.creation_st = CreationSt.SEGMENT_START_SET
+                        self.field_y1_add_segment.value(),
+                        self.field_x2_add_segment.value(),
+                        self.field_y2_add_segment.value(),
+                    )
+                else:
+                    self._created_figure = Segment(
+                        start=(
+                            self.field_x1_add_segment.value(),
+                            self.field_y1_add_segment.value()
+                        ),
+                        angle=self.field_length_add_segment.value(),
+                        length=self.field_angle_add_segment.value()
+                    )
+
             self.widget_add_segment.show()
             self.submit_add_segment.show()
-            self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
-
-        elif cmd == ControllerCmd.MOVE:
-                    self.field_x1_add_segment.setFocus()
-                    self.field_x1_add_segment.selectAll()
-                    choo = self.painted_figure.get_params()
-                    self.field_x1_add_segment.setValue(choo['x1']),
-                    self.field_y1_add_segment.setValue(choo['y1']),
-                    self.field_x2_add_segment.setValue(choo['x2']),
-                    self.field_y2_add_segment.setValue(choo['y2']),
-                    self.field_length_add_segment.setValue(choo['length'])
-                    self.field_angle_add_segment.setValue(choo['angle']*180/pi)
-                    self.widget_add_segment.show()
-                    self.submit_add_segment.hide()
+            self.field_x1_add_segment.setFocus()
+            self.field_x1_add_segment.selectAll()
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
@@ -557,6 +592,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.reset()
 
         elif cmd == ControllerCmd.SHOW:
+            self._reset_behind_statuses()
             status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
             widget = getattr(self, f'widget_restr_{name}')
             widget.show()
@@ -597,6 +633,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.reset()
 
         elif cmd == ControllerCmd.SHOW:
+            self._reset_behind_statuses()
             status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
             widget = getattr(self, f'widget_restr_{name}')
             widget.show()
@@ -619,7 +656,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
-            self.painted_figure,
+            self._created_figure,
             selected_figure
         )
 
@@ -634,66 +671,67 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
             elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
                 if self.creation_st == CreationSt.SEGMENT_START_SET:
-                    self.painted_figure.set_param('x1', x).set_param('y1', y)
+                    self._created_figure.set_param('x1', x).set_param('y1', y)
                     self.creation_st = CreationSt.SEGMENT_END_SET
                     self.field_x2_add_segment.setFocus()
                     self.field_x2_add_segment.selectAll()
                 elif self.creation_st == CreationSt.SEGMENT_END_SET:
                     self.controller_add_segment(ControllerCmd.SUBMIT)
-                    self.painted_figure = None
+                    self._created_figure = None
 
-            elif self.controller_work_st == ControllerWorkSt.NOTHING and\
-                    self.creation_st == CreationSt.NOTHING:
+            elif self.controller_work_st == ControllerWorkSt.NOTHING and self.creation_st == CreationSt.NOTHING:
+                print('680')
                 bindings = choose_best_bindings(self._project.bindings, x, y)
                 if len(bindings) > 0:
-                    self._selected_binding = bindings[0]
-                    self.action_st = ActionSt.BINDING_PRESSED
+                    print(683)
+                    if self.action_st == ActionSt.NOTHING:
+                        print('NOTHING')
+                        self._selected_binding = bindings[0]
+                        self.action_st = ActionSt.BINDING_PRESSED
+                    if self.action_st == ActionSt.SELECTED:
+                        print('SELECTED')
+                        self._selected_binding = bindings[0]
+                        self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
+
 
     def mouseMoveEvent(self, event):
-        # self._logger.debug('mouseMoveEvent: start')
+        self._logger.debug('mouseMoveEvent: start')
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-        if self.action_st == ActionSt.BINDING_PRESSED and \
-                self._selected_figure_name is not None:
+        if self.action_st == ActionSt.BINDING_PRESSED:
             self.action_st = ActionSt.MOVE
+            print(f'BINDING_PRESSED -> MOVE, selected_binding: {self._selected_binding}')
 
-        if self.action_st == ActionSt.MOVE:
+        elif self.action_st == ActionSt.BINDING_PRESSED_WHILE_SELECTED:
+            self.action_st = ActionSt.MOVE_WHILE_SELECTED
+            print(f'BINDING_PRESSED_WHILE_SELECTED -> MOVE_WHILE_SELECTED, selected_binding: {self._selected_binding}')
+
+        if self.action_st == ActionSt.MOVE or \
+                self.action_st == ActionSt.MOVE_WHILE_SELECTED and \
+                self._selected_binding.get_object_names()[0] == self._selected_figure_name:
+
             try:
+                print(f'MOVE or MOVE_WHILE_SELECTED, action_st = {self.action_st}')
                 self._project.move_figure(self._selected_binding, x, y)
-                self.field_update()
+                print('moved')
+                self.update_fields()
+                print('fields updated')
             except CannotSolveSystemError:
                 self._project.rollback()
 
         if self.controller_work_st == ControllerWorkSt.ADD_POINT:
             if self.creation_st == CreationSt.POINT_SET:
-                self.painted_figure.set_param('x', x).set_param('y', y)
-                self.field_x_add_point.setValue(x)
-                self.field_y_add_point.setValue(y)
-                # Select field with focus
-                if self.field_x_add_point.hasFocus():
-                    self.field_x_add_point.selectAll()
-                elif self.field_y_add_point.hasFocus():
-                    self.field_y_add_point.selectAll()
+                self._created_figure.set_param('x', x).set_param('y', y)
+                self.update_fields()
 
         elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
-                self.painted_figure.set_param('x1', x).set_param('y1', y)
-                self.field_x1_add_segment.setValue(x)
-                self.field_y1_add_segment.setValue(y)
+                self._created_figure.set_param('x1', x).set_param('y1', y)
+                self.update_fields()
             elif self.creation_st == CreationSt.SEGMENT_END_SET:
-                self.painted_figure.set_param('x2', x).set_param('y2', y)
-                self.field_x2_add_segment.setValue(x)
-                self.field_y2_add_segment.setValue(y)
+                self._created_figure.set_param('x2', x).set_param('y2', y)
+                self.update_fields()
 
-            # Select field with focus
-            if self.field_x1_add_segment.hasFocus():
-                self.field_x1_add_segment.selectAll()
-            elif self.field_y1_add_segment.hasFocus():
-                self.field_y1_add_segment.selectAll()
-            elif self.field_x2_add_segment.hasFocus():
-                self.field_x2_add_segment.selectAll()
-            elif self.field_y2_add_segment.hasFocus():
-                self.field_y2_add_segment.selectAll()
 
         # Work with bindings
         if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
@@ -702,6 +740,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         else:
             allowed_bindings_types = None
 
+        print('before handle')
         self._glwindow_proc.handle_mouse_move_event(
             event,
             self._project.bindings,
@@ -729,14 +768,20 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
             if self.action_st == ActionSt.MOVE:
                 self._project.commit()
+                print('777')
                 self.action_st = ActionSt.NOTHING
+            if self.action_st == ActionSt.MOVE_WHILE_SELECTED:
+                self._project.commit()
+                self.action_st = ActionSt.SELECTED
+
             elif self.action_st == ActionSt.BINDING_PRESSED:
                 selected_figures = self._selected_binding.get_object_names()
                 self._selected_binding = None
                 if len(selected_figures) == 1:
                     self._selected_figure_name = selected_figures[0]
-                    self.select_figure_on_list_view()
-                self.action_st = ActionSt.NOTHING
+                    self.select_figure_on_list_view()  # Also start changing and set action_st = SELECTED
+                print('789')
+                self.action_st = ActionSt.SELECTED
 
     def keyPressEvent(self, event):
         print('key press')
@@ -767,7 +812,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._interface_proc.trigger_button(button, False)
 
     def delete(self, _=None):
-        print('delete')
+        self._logger.debug('delete: start')
         if self._selected_figure_name is not None:
             self._project.remove_figure(self._selected_figure_name)
             self._selected_figure_name = None
