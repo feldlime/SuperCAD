@@ -2,6 +2,9 @@
 
 from PyQt5.QtWidgets import QOpenGLWidget, QMainWindow, QFileDialog
 from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtWidgets import (QWidget, QPushButton,
+    QHBoxLayout, QVBoxLayout, QApplication)
 from logging import getLogger
 import re
 from numpy import pi
@@ -70,6 +73,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # Init GLWidget: self.work_plane - QOpenGLWidget that was created into
         # setupUi in design.py
         super().__init__(self.work_plane)
+
+        #Set focus on window for keyPressEvent
+        self.setFocusPolicy(Qt.StrongFocus)
 
         # Set additional private attributes
         # self._status = Sts.NOTHING
@@ -179,44 +185,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_restr_segment_angle_between_fixed
         )
 
-        # Submits
-        self.submit_add_point.clicked['bool'].connect(
-            lambda ev: self.controller_add_point(ControllerCmd.SUBMIT)
-        )
-        self.submit_add_segment.clicked['bool'].connect(
-            lambda ev: self.controller_add_segment(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_joint.clicked['bool'].connect(
-            lambda ev: self.controller_restr_joint(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_point_on_segment_line.clicked['bool'].connect(
-            lambda ev: self.controller_restr_point_on_segment_line(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segments_parallel.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segments_parallel(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segments_normal.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segments_normal(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segment_vertical.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_vertical(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segment_horizontal.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_horizontal(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_fixed(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segment_length_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_length_fixed(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segment_angle_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_angle_fixed(ControllerCmd.SUBMIT)
-        )
-        self.submit_restr_segments_angle_between_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_angle_between_fixed(ControllerCmd.SUBMIT)
-        )
-
         # Fields
         self.field_x_add_point.valueChanged.connect(
             lambda new_value: self.change_created_or_selected_figure('x', new_value)
@@ -257,6 +225,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
+
 
     def update_fields(self):
         self._logger.debug('update fields')
@@ -302,6 +271,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
             #     self.field_length_add_segment.selectAll()
             # elif self.field_angle_add_segment.hasFocus():
             #     self.field_angle_add_segment.selectAll()
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_Enter or key == Qt.Key_Return:
+            if self.controller_work_st == ControllerWorkSt.ADD_POINT:
+                self.controller_add_point(ControllerCmd.SUBMIT)
+            elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
+                self.controller_add_segment(ControllerCmd.SUBMIT)
+            elif ControllerWorkSt.is_restr(self.controller_work_st):
+                name = None
+                for name in dir(ControllerWorkSt):
+                    if re.match('^RESTR_', name):
+                        break
+                if name:
+                    controller_name = f'controller_{name.lower()}'
+                    getattr(self, controller_name)(ControllerCmd.SUBMIT)
 
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
@@ -574,7 +559,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if len(self.chosen_bindings) == 0:
                     self.chosen_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}').toggle()
-                    getattr(self, f'submit_restr_{name}').setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
             if len(self.chosen_bindings) != 1:
@@ -614,7 +598,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if binding:
                     self.chosen_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_2').toggle()
-                    getattr(self, f'submit_restr_{name}').setFocus()
 
         elif cmd == ControllerCmd.SUBMIT:
             if len(self.chosen_bindings) != 2:
@@ -782,14 +765,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.select_figure_on_list_view()  # Also start changing and set action_st = SELECTED
                 print('789')
                 self.action_st = ActionSt.SELECTED
-
-    def keyPressEvent(self, event):
-        print('key press')
-        key = event.key()
-        print(f'key: {key}')
-        print(f'Qt.Key_Delete: {Qt.Key_Delete:}')
-        if key == Qt.Key_Delete:
-            self.delete()
 
     def _hide_footer_widgets(self):
         for box in self._footer_checkboxes.values():
