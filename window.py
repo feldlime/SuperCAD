@@ -250,7 +250,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if self._created_figure is not None:
             print('created figure')
             figure = self._created_figure
-        elif self._selected_figure_name is not None:
+        elif str(self._selected_figure_name) not in ('None',
+                                                     'Elements',
+                                                     'Restrictions'):
+
             print('selected figure ', self._selected_figure_name)
             figure = self._project.figures[self._selected_figure_name]
         else:
@@ -305,6 +308,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 Qt.MatchRecursive
                 )
             self.widget_elements_table.setCurrentItem(figure_to_select[0])
+            # if self._project.bindings.key()
         self.begin_figure_selection()
 
     def change_created_or_selected_figure(self, field: str, value: float):
@@ -316,7 +320,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # TODO: Move mouse
 
     def begin_figure_selection(self):
-        if self._selected_figure_name is None:
+        if str(self._selected_figure_name) in ('None',
+                                               'Elements',
+                                               'Restrictions'):
             return
         print('begin figure selection', self._selected_figure_name)
 
@@ -570,6 +576,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_work_st = ControllerWorkSt.NOTHING
             self.chosen_bindings = []
             self.reset()
+            self._update_list_view()
 
         elif cmd == ControllerCmd.SHOW:
             self._reset_behind_statuses()
@@ -610,6 +617,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_work_st = ControllerWorkSt.NOTHING
             self.chosen_bindings = []
             self.reset()
+            self._update_list_view()
 
         elif cmd == ControllerCmd.SHOW:
             self._reset_behind_statuses()
@@ -629,7 +637,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # self._logger.debug('paintEvent')
 
         selected_figure = None
-        if self._selected_figure_name is not None:
+        if str(self._selected_figure_name) not in ('None',
+                                                   'Elements',
+                                                   'Restrictions'):
             selected_figure = self._project.figures[self._selected_figure_name]
 
         self._glwindow_proc.paint_all(
@@ -879,7 +889,3 @@ class WindowContent(QOpenGLWidget, Ui_window):
             for name in updateble_type.keys():
                 element = QTreeWidgetItem([name])
                 updateble_type_tree.addChild(element)
-
-        # for restriction_name in self._project.restrictions.keys():
-        #     restriction = QTreeWidgetItem([restriction_name])
-        #     self.widget_elements_table_restrictions.addChild(restriction)
