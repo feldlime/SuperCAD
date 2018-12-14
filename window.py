@@ -107,6 +107,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._selected_figure_name = None
 
+
+
     def _setup_useful_aliases(self):
         self._footer_widgets = dict()
         self._left_buttons = dict()
@@ -282,7 +284,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif ControllerWorkSt.is_restr(self.controller_work_st):
                 name = None
                 for name in dir(ControllerWorkSt):
-                    if re.match('^RESTR_', name):
+                    if re.match('^RESTR_', name) and getattr(ControllerWorkSt, name) == self.controller_work_st:
                         break
                 if name:
                     controller_name = f'controller_{name.lower()}'
