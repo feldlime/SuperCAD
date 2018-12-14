@@ -782,16 +782,23 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def reset(self, _=None):
         self._logger.debug('reset: start')
+        self._reset_behind_statuses()
+        self._reset_statuses()
 
-        self.controller_work_st = ControllerWorkSt.NOTHING
-        self.creation_st = CreationSt.NOTHING
-        self.painted_figure = None
+    def _reset_behind_statuses(self):
+        self._created_figure = None
+        self._selected_figure_name = None
         self.chosen_bindings = []
         self._selected_binding = None
-        self.action_st = ActionSt.NOTHING
 
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
+
+    def _reset_statuses(self):
+        self.controller_work_st = ControllerWorkSt.NOTHING
+        self.creation_st = CreationSt.NOTHING
+        self.action_st = ActionSt.NOTHING
+
 
     def save(self, _=None):
         if self._filename is None:
