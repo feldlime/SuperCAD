@@ -699,7 +699,7 @@ class EquationsSystem:
             except SubstitutionError as e:
                 raise CannotSolveSystemError(f'{type(e)}: {e.args}')
 
-            simplified_system = system[:-n_last_for_sub] + substitutor.sub(system[-n_last_for_sub:])
+            simplified_system = substitutor.sub(system)
 
             # Check easy inconsistency
             if sympy_false in simplified_system:
