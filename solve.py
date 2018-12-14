@@ -85,7 +85,7 @@ def unroll_values_dict(hierarchical_dict: dict) -> dict:
             result[full_name] = value
     return result
 
-@measured_total
+
 @contract(symbols_names='list(str)')
 def get_equation_symbols_names(equation: Eq, symbols_names: list) -> set:
     # res =  set([w for w in symbols_names if w in str(equation)])
@@ -635,46 +635,40 @@ class EquationsSystem:
               desired_values='dict[M]', returns='dict[M]')
     def _solve_optimization_task(self, system: list, symbols: dict,
                                  desired_values: dict) -> dict:
-        with measure('check keys'):
-            assert set(symbols.keys()) == set(desired_values.keys()), \
-                'symbols.keys() must be equal to best_values.keys()'
+        assert set(symbols.keys()) == set(desired_values.keys()), \
+            'symbols.keys() must be equal to best_values.keys()'
 
-        with measure('if len == len'):
-            if len(system) == len(symbols):  # Optimization
-                result = self._solve_square_system(system, symbols, desired_values)
-                result = {name: value for name, value in result.items()}
-                return result
+        if len(system) == len(symbols):  # Optimization
+            result = self._solve_square_system(system, symbols, desired_values)
+            result = {name: value for name, value in result.items()}
+            return result
 
-        with measure('get lambdas'):
-            lambdas_names = [compose_full_name('lambda', str(i))
-                             for i in range(len(system))]
-            lambdas_dict = {name: Symbol(name)  # TODO: real=True
-                            for name in lambdas_names}
-            lambdas = lambdas_dict.values()
+        lambdas_names = [compose_full_name('lambda', str(i))
+                         for i in range(len(system))]
+        lambdas_dict = {name: Symbol(name)  # TODO: real=True
+                        for name in lambdas_names}
+        lambdas = lambdas_dict.values()
 
         # Loss function: F = 1/2 * sum((xi - xi0) ** 2) + sum(lambda_j * eqj)
         # Derivatives by xi: dF/dxi = (xi - xi0) + d(sum(lambda_j * eqj)) / dxi
         # Derivatives by lambda_j: dF/d lambda_j = eqj (source system)
 
-        with measure('to_canonical + loss_part2'):
-            canonical = self._system_to_canonical(system)
-            loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
-            if loss_part2 == 0:  # System is empty -> no lambdas
-                loss_part2 = sympy_Integer(0)  # To be possible to diff
+        canonical = self._system_to_canonical(system)
+        loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
+        if loss_part2 == 0:  # System is empty -> no lambdas
+            loss_part2 = sympy_Integer(0)  # To be possible to diff
 
         with measure('get equations with diff'):
             equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
                          for name, x in symbols.items()]
 
-        with measure('extend and solve square'):
-            equations.extend(system)
-            lambdas_dict.update(symbols)
-            result = self._solve_square_system(equations, lambdas_dict,
-                                               desired_values, n_last_for_sub=len(system))
+        equations.extend(system)
+        lambdas_dict.update(symbols)
+        result = self._solve_square_system(equations, lambdas_dict,
+                                           desired_values, n_last_for_sub=len(system))
 
-        with measure('combine result'):
-            result = {name: value for name, value in result.items()
-                      if split_full_name(name)[0] != 'lambda'}
+        result = {name: value for name, value in result.items()
+                  if split_full_name(name)[0] != 'lambda'}
         return result
 
     @classmethod
@@ -685,8 +679,7 @@ class EquationsSystem:
                              desired_values: dict = None, n_last_for_sub=None):
         """Desired values only for setting initial conditions."""
 
-        with measure('symbol_names'):
-            symbols_names = list(symbols_dict.keys())
+        symbols_names = list(symbols_dict.keys())
 
         with measure('sub'):
             # Simplify by substitutions
@@ -710,48 +703,40 @@ class EquationsSystem:
                 raise SystemOverfittedError('Get BooleanTrue in system.')
 
         # Define symbols that are used
-        with measure('used symbols'):
-            with measure('create empty set'):
-                used_symbols_names = set()
-            with measure('get all symbols names'):
-                for eq in simplified_system:
-                    used_symbols_names |= get_equation_symbols_names(eq, symbols_names)
-            with measure('list from set'):
-                used_symbols_names = list(used_symbols_names)
-            with measure('values from names'):
-                used_symbols = [symbols_dict[name] for name in used_symbols_names]
+        used_symbols_names = set()
+        for eq in simplified_system:
+            used_symbols_names |= get_equation_symbols_names(eq, symbols_names)
+        used_symbols_names = list(used_symbols_names)
+        used_symbols = [symbols_dict[name] for name in used_symbols_names]
 
-            if len(used_symbols) != len(simplified_system):
-                raise RuntimeError(
-                    f'len(used_symbols) = {len(used_symbols)},'
-                    f'len(simplified_system) = {len(simplified_system)}'
-                )
+        if len(used_symbols) != len(simplified_system):
+            raise RuntimeError(
+                f'len(used_symbols) = {len(used_symbols)},'
+                f'len(simplified_system) = {len(simplified_system)}'
+            )
 
-        with measure('before if'):
-            if simplified_system:
-                # Prepare
-                canonical_system = cls._system_to_canonical(simplified_system)
-                system_function = \
-                    cls._system_to_function(canonical_system, used_symbols)
+        if simplified_system:
+            # Prepare
+            canonical_system = cls._system_to_canonical(simplified_system)
+            system_function = \
+                cls._system_to_function(canonical_system, used_symbols)
 
-                # Prepare ini values
-                ini_values = list(random.random(len(used_symbols)))
-                if desired_values is not None:
-                    for i, symbol_name in enumerate(used_symbols_names):
-                        if symbol_name in desired_values:
-                            ini_values[i] = desired_values[symbol_name]
+            # Prepare ini values
+            ini_values = list(random.random(len(used_symbols)))
+            if desired_values is not None:
+                for i, symbol_name in enumerate(used_symbols_names):
+                    if symbol_name in desired_values:
+                        ini_values[i] = desired_values[symbol_name]
 
-                # Solve
-                with measure('solve numeric'):
-                    solution = cls._solve_numeric(
-                        system_function, np_array(ini_values))
-            else:
-                solution = []
+            # Solve
+            solution = cls._solve_numeric(
+                system_function, np_array(ini_values))
+        else:
+            solution = []
 
-        with measure('solution dict and restore sub'):
-            # Add values for symbols that were substituted
-            solution_dict = dict(zip(used_symbols_names, solution))
-            full_solution_dict = substitutor.restore(solution_dict)
+        # Add values for symbols that were substituted
+        solution_dict = dict(zip(used_symbols_names, solution))
+        full_solution_dict = substitutor.restore(solution_dict)
 
         return full_solution_dict
 
@@ -759,15 +744,13 @@ class EquationsSystem:
     @measured
     @contract(system='list[N,>0]', symbols='list[N]')
     def _system_to_function(system: list, symbols: list):
-        with measure('lambdify'):
-            functions = [lambdify(symbols, f, dummify=False) for f in system]
+        functions = [lambdify(symbols, f, dummify=False) for f in system]
 
-        with measure('form fun'):
-            def fun(x):
-                if len(x) != len(symbols):
-                    raise ValueError
-                res = np_array([f(*x) for f in functions])
-                return res
+        def fun(x):
+            if len(x) != len(symbols):
+                raise ValueError
+            res = np_array([f(*x) for f in functions])
+            return res
 
         return fun
 

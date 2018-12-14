@@ -23,7 +23,7 @@ from utils import (
     EmptyStackError
 )
 
-from diagnostic_context import measured, DEFAULT_CONTEXT_TIMER as timer_context
+from diagnostic_context import measured
 
 CIRCLE_BINDING_RADIUS = 12
 SEGMENT_BINDING_MARGIN = 6
@@ -235,7 +235,6 @@ class CADProject:
             raise e
 
         self._set_values(new_values)
-        print(timer_context.get_times())
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
