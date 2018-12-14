@@ -44,6 +44,7 @@ from bindings import (
     is_normal_point_binding,
     is_any_normal_binding
 )
+from diagnostic_context import measure, measured
 
 import sys
 sys.stdout = sys.stderr
@@ -623,7 +624,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     # ====================================== Events ========================
     def paintEvent(self, event):
-        self._logger.debug('paintEvent')
+        self._logger.info('paintEvent')
 
         selected_figure = None
         if self._selected_figure_name is not None:
@@ -706,7 +707,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         else:
             allowed_bindings_types = None
 
-        print('before handle')
         self._glwindow_proc.handle_mouse_move_event(
             event,
             self._project.bindings,

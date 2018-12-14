@@ -20,7 +20,7 @@ import re
 
 from utils import IncorrectParamValue
 
-from diagnostic_context import measure, measured, measured_total
+from diagnostic_context import measure, measured, measured_total, measure_total, DEFAULT_CONTEXT_TOTAL as context_total
 
 
 DELIMITER = '___'
@@ -246,7 +246,8 @@ class Substitutor:
             if not self._is_simple_equation(eq):
                 new_eq = eq
                 for k, v in self._subs.items():
-                    new_eq = new_eq.subs(k, v)
+                    with measure_total('subs'):
+                        new_eq = new_eq.subs(k, v)
                 new_system.append(new_eq)
 
         return new_system
@@ -278,6 +279,7 @@ class Substitutor:
         full_solution.update(self._subs)
         return full_solution
 
+    @measured_total
     def _is_simple_equation(self, eq):
         """Check if equation is simple (looks like x = y or x = 5)."""
         l_str, r_str = str(eq.lhs), str(eq.rhs)
@@ -681,26 +683,32 @@ class EquationsSystem:
 
         symbols_names = list(symbols_dict.keys())
 
-        with measure('sub'):
-            # Simplify by substitutions
-            substitutor = Substitutor()
-            if n_last_for_sub is None or n_last_for_sub == 0:
-                n_last_for_sub = len(system)
+        simplified_system = system
 
-            try:
-                substitutor.fit(system[-n_last_for_sub:], symbols_names)
-            except SubstitutionError as e:
-                raise CannotSolveSystemError(f'{type(e)}: {e.args}')
-
-            simplified_system = substitutor.sub(system)
-
-            # Check easy inconsistency
-            if sympy_false in simplified_system:
-                raise SystemIncompatibleError('Get BooleanFalse in system.')
-
-            # Check easy inconsistency
-            if sympy_true in simplified_system:
-                raise SystemOverfittedError('Get BooleanTrue in system.')
+        # # Simplify by substitutions
+        # substitutor = Substitutor()
+        # if n_last_for_sub is None or n_last_for_sub == 0:
+        #     n_last_for_sub = len(system)
+        #
+        # try:
+        #     with measure('substitutor fit'):
+        #         substitutor.fit(system[-n_last_for_sub:], symbols_names)
+        # except SubstitutionError as e:
+        #     raise CannotSolveSystemError(f'{type(e)}: {e.args}')
+        #
+        # with measure('substitutor sub'):
+        #     simplified_system = substitutor.sub(system)
+        # print(context_total.get_times())
+        #
+        # # Check easy inconsistency
+        # if sympy_false in simplified_system:
+        #     raise SystemIncompatibleError('Get BooleanFalse in system.')
+        #
+        # # Check easy inconsistency
+        # if sympy_true in simplified_system:
+        #     raise SystemOverfittedError('Get BooleanTrue in system.')
+        #
+        # simplified_system = system  # TODO: Remove
 
         # Define symbols that are used
         used_symbols_names = set()
@@ -736,7 +744,8 @@ class EquationsSystem:
 
         # Add values for symbols that were substituted
         solution_dict = dict(zip(used_symbols_names, solution))
-        full_solution_dict = substitutor.restore(solution_dict)
+        full_solution_dict = solution_dict
+        # full_solution_dict = substitutor.restore(solution_dict)
 
         return full_solution_dict
 

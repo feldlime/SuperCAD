@@ -86,7 +86,7 @@ class _Measurer:
 
 
 DEFAULT_CONTEXT = DiagnosticContext()
-DEFAULT_CONTEXT_TIMER = DiagnosticContextTotal()
+DEFAULT_CONTEXT_TOTAL = DiagnosticContextTotal()
 
 
 def measured(
@@ -112,11 +112,11 @@ def measured(
 
 
 measure = DEFAULT_CONTEXT.measure
-measure_total = DEFAULT_CONTEXT_TIMER.measure
+measure_total = DEFAULT_CONTEXT_TOTAL.measure
 
 
 def measured_total(_func=None):
-    return measured(_func, diagnostic_context=DEFAULT_CONTEXT_TIMER)
+    return measured(_func, diagnostic_context=DEFAULT_CONTEXT_TOTAL)
 
 
 if __name__ == '__main__':

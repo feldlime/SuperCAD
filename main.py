@@ -28,7 +28,7 @@ def main():
     # logfile_format = '%(name)-20s %(levelname)-8s %(message)s'
     logging.basicConfig(
         format=logfile_format,
-        level=logging.DEBUG,
+        level=logging.INFO,
         # handlers=[logging.FileHandler(logfile_name, 'w', 'utf-8')]
     )
 
