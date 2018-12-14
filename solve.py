@@ -640,9 +640,33 @@ class EquationsSystem:
         assert set(symbols.keys()) == set(desired_values.keys()), \
             'symbols.keys() must be equal to best_values.keys()'
 
+        # Simplify by substitutions
+        substitutor = Substitutor()
+        try:
+            with measure('substitutor fit'):
+                substitutor.fit(system, list(symbols.keys()))
+        except SubstitutionError as e:
+            raise CannotSolveSystemError(f'{type(e)}: {e.args}')
+
+        with measure('substitutor sub'):
+            simplified_system = substitutor.sub(system)
+        print(context_total.get_times())
+
+        # Check easy inconsistency
+        if sympy_false in simplified_system:
+            raise SystemIncompatibleError('Get BooleanFalse in system.')
+
+        # Check easy inconsistency
+        if sympy_true in simplified_system:
+            raise SystemOverfittedError('Get BooleanTrue in system.')
+
+        system = simplified_system
+
+        # ############################################################3
         if len(system) == len(symbols):  # Optimization
             result = self._solve_square_system(system, symbols, desired_values)
             result = {name: value for name, value in result.items()}
+            result = substitutor.restore(result)
             return result
 
         lambdas_names = [compose_full_name('lambda', str(i))
@@ -660,6 +684,10 @@ class EquationsSystem:
         if loss_part2 == 0:  # System is empty -> no lambdas
             loss_part2 = sympy_Integer(0)  # To be possible to diff
 
+        # TODO: do more correct
+        for sub_sym in substitutor._subs.keys():
+            symbols.pop(sub_sym)
+            
         with measure('get equations with diff'):
             equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
                          for name, x in symbols.items()]
@@ -671,6 +699,7 @@ class EquationsSystem:
 
         result = {name: value for name, value in result.items()
                   if split_full_name(name)[0] != 'lambda'}
+        result = substitutor.restore(result)
         return result
 
     @classmethod
