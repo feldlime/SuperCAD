@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         timer = QTimer(self)
         # noinspection PyUnresolvedReferences
         timer.timeout.connect(self._content.animate)
-        timer.start(10)
+        timer.start(50)
 
 
 def main():
