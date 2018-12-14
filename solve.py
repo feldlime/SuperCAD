@@ -760,7 +760,7 @@ class EquationsSystem:
     @contract(system='list[N,>0]', symbols='list[N]')
     def _system_to_function(system: list, symbols: list):
         with measure('lambdify'):
-            functions = [lambdify(symbols, f) for f in system]
+            functions = [lambdify(symbols, f, dummify=False) for f in system]
 
         with measure('form fun'):
             def fun(x):
