@@ -116,10 +116,3 @@ class GLWindowProcessor:
                 self._current_bindings.append(binding)
                 # self._current_bindings.append(binding)
 
-    def handle_mouse_release_event(self,
-                                   bindings,
-                                   event,
-                                   choose,
-                                   controller_work_st):
-        pass
-
