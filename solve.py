@@ -88,7 +88,10 @@ def unroll_values_dict(hierarchical_dict: dict) -> dict:
 @measured_total
 @contract(symbols_names='list(str)')
 def get_equation_symbols_names(equation: Eq, symbols_names: list) -> set:
-    return set([w for w in symbols_names if w in str(equation)])
+    # res =  set([w for w in symbols_names if w in str(equation)])
+    str_atoms = [str(a) for a in equation.atoms()]
+    res = set([w for w in symbols_names if w in str_atoms])
+    return res
 
 
 class CannotSolveSystemError(Exception):
