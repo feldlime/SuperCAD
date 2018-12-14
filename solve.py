@@ -20,6 +20,9 @@ import re
 
 from utils import IncorrectParamValue
 
+from diagnostic_context import measure, measured, measured_total
+
+
 DELIMITER = '___'
 SPECIAL_NAME = 'special_name'
 GROWTH_NODE_NAME = 'growth_node'
@@ -85,7 +88,10 @@ def unroll_values_dict(hierarchical_dict: dict) -> dict:
 
 @contract(symbols_names='list(str)')
 def get_equation_symbols_names(equation: Eq, symbols_names: list) -> set:
-    return set([w for w in symbols_names if w in str(equation)])
+    # res =  set([w for w in symbols_names if w in str(equation)])
+    str_atoms = [str(a) for a in equation.atoms()]
+    res = set([w for w in symbols_names if w in str_atoms])
+    return res
 
 
 class CannotSolveSystemError(Exception):
@@ -555,6 +561,7 @@ class EquationsSystem:
 
         return roll_up_values_dict(result)
 
+    @measured
     @contract(optimizing_values='figures_values',
               current_values='figures_values', returns='figures_values')
     def solve_optimization_task(self, optimizing_values: dict,
@@ -623,6 +630,7 @@ class EquationsSystem:
 
         return self._solve_optimization_task(system, symbols, desired_values)
 
+    @measured
     @contract(system='list[N]', symbols='dict[M], M >= N',
               desired_values='dict[M]', returns='dict[M]')
     def _solve_optimization_task(self, system: list, symbols: dict,
@@ -649,43 +657,50 @@ class EquationsSystem:
         loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
         if loss_part2 == 0:  # System is empty -> no lambdas
             loss_part2 = sympy_Integer(0)  # To be possible to diff
-        equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
-                     for name, x in symbols.items()]
+
+        with measure('get equations with diff'):
+            equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
+                         for name, x in symbols.items()]
 
         equations.extend(system)
         lambdas_dict.update(symbols)
         result = self._solve_square_system(equations, lambdas_dict,
-                                           desired_values)
+                                           desired_values, n_last_for_sub=len(system))
 
         result = {name: value for name, value in result.items()
                   if split_full_name(name)[0] != 'lambda'}
         return result
 
     @classmethod
+    @measured
     @contract(system='list[N]', symbols_dict='dict[N]',
               desired_values='dict | None', returns='dict[N]')
     def _solve_square_system(cls, system: list, symbols_dict: dict,
-                             desired_values: dict = None):
+                             desired_values: dict = None, n_last_for_sub=None):
         """Desired values only for setting initial conditions."""
+
         symbols_names = list(symbols_dict.keys())
 
-        # Simplify by substitutions
-        substitutor = Substitutor()
+        with measure('sub'):
+            # Simplify by substitutions
+            substitutor = Substitutor()
+            if n_last_for_sub is None or n_last_for_sub == 0:
+                n_last_for_sub = len(system)
 
-        try:
-            substitutor.fit(system, symbols_names)
-        except SubstitutionError as e:
-            raise CannotSolveSystemError(f'{type(e)}: {e.args}')
+            try:
+                substitutor.fit(system[-n_last_for_sub:], symbols_names)
+            except SubstitutionError as e:
+                raise CannotSolveSystemError(f'{type(e)}: {e.args}')
 
-        simplified_system = substitutor.sub(system)
+            simplified_system = substitutor.sub(system)
 
-        # Check easy inconsistency
-        if sympy_false in simplified_system:
-            raise SystemIncompatibleError('Get BooleanFalse in system.')
+            # Check easy inconsistency
+            if sympy_false in simplified_system:
+                raise SystemIncompatibleError('Get BooleanFalse in system.')
 
-        # Check easy inconsistency
-        if sympy_true in simplified_system:
-            raise SystemOverfittedError('Get BooleanTrue in system.')
+            # Check easy inconsistency
+            if sympy_true in simplified_system:
+                raise SystemOverfittedError('Get BooleanTrue in system.')
 
         # Define symbols that are used
         used_symbols_names = set()
@@ -726,9 +741,10 @@ class EquationsSystem:
         return full_solution_dict
 
     @staticmethod
+    @measured
     @contract(system='list[N,>0]', symbols='list[N]')
     def _system_to_function(system: list, symbols: list):
-        functions = [lambdify(symbols, f) for f in system]
+        functions = [lambdify(symbols, f, dummify=False) for f in system]
 
         def fun(x):
             if len(x) != len(symbols):
@@ -739,11 +755,13 @@ class EquationsSystem:
         return fun
 
     @staticmethod
+    @measured
     @contract(system='list')
     def _system_to_canonical(system: list):
         return [eq.lhs - eq.rhs for eq in system]
 
     @staticmethod
+    @measured
     def _solve_numeric(fun: callable, init: np_ndarray) -> np_ndarray:
         result = sp_optimize.fsolve(fun, init, full_output=True, maxfev=1000)
         if result[2] != 1:
