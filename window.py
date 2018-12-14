@@ -43,6 +43,9 @@ from bindings import (
     is_any_normal_binding
 )
 
+import sys
+sys.stdout = sys.stderr
+
 
 def find_first(lst, cond_fun):
     for elem in lst:
