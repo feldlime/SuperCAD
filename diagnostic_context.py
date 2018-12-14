@@ -117,3 +117,31 @@ measure_total = DEFAULT_CONTEXT_TIMER.measure
 
 def measured_total(_func=None):
     return measured(_func, diagnostic_context=DEFAULT_CONTEXT_TIMER)
+
+
+if __name__ == '__main__':
+    from restrictions import SegmentsNormal
+    from project import CADProject
+    from figures import Segment
+    from bindings import choose_best_bindings
+
+    with measure('create project'):
+        project = CADProject()
+
+    with measure('create figures'):
+        segment1 = Segment((0, 0), 0, 10)
+        segment1_name = project.add_figure(segment1)
+        segment2 = Segment((1, 1), 1, 10)
+        segment2_name = project.add_figure(segment2)
+        segment3 = Segment((2, 5), -1, 10)
+        segment3_name = project.add_figure(segment3)
+
+    with measure('choose binding'):
+        bb = choose_best_bindings(project.bindings, 10, 0)[0]  # end of segment 1
+
+    with measure('add restrictions'):
+        project.add_restriction(SegmentsNormal(), (segment1_name, segment2_name))
+        project.add_restriction(SegmentsNormal(), (segment2_name, segment3_name))
+
+    with measure('move segment 1 end'):
+        project.move_figure(bb, 10 + 1, 0)
