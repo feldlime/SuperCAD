@@ -22,6 +22,9 @@ class MainWindow(QMainWindow):
         timer.timeout.connect(self._content.animate)
         timer.start(10)
 
+    def keyPressEvent(self, event):
+        self._content.keyPressEvent(event)
+
 
 def main():
     logfile_name = f'log.log'

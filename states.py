@@ -13,6 +13,10 @@ class ControllerWorkSt:
     RESTR_SEGMENT_ANGLE_FIXED = 11
     RESTR_SEGMENT_ANGLE_BETWEEN_FIXED = 12
 
+    @staticmethod
+    def is_restr(st):
+        return 3 <= st <= 12
+
 
 class CreationSt:
     NOTHING = 0
