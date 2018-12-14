@@ -16,21 +16,16 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self._content = WindowContent(self)
-        self._content.animate()
-
-        # timer = QTimer(self)
-        # # noinspection PyUnresolvedReferences
-        # timer.timeout.connect(self._content.animate)
-        # timer.start(50)
+        self._content.update()
 
     def keyPressEvent(self, event):
         self._content.keyPressEvent(event)
 
 
 def main():
-    logfile_name = f'log.log'
-    # logfile_format = '[%(asctime)s] %(name)-20s %(levelname)-8s %(message)s'
-    logfile_format = '%(name)-20s %(levelname)-8s %(message)s'
+    # logfile_name = f'log.log'
+    logfile_format = '[%(asctime)s] %(name)-20s %(levelname)-8s %(message)s'
+    # logfile_format = '%(name)-20s %(levelname)-8s %(message)s'
     logging.basicConfig(
         format=logfile_format,
         level=logging.DEBUG,

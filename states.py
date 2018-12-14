@@ -1,4 +1,4 @@
-class ControllerWorkSt:
+class ControllerSt:
     NOTHING = 0
     ADD_POINT = 1
     ADD_SEGMENT = 2

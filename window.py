@@ -11,7 +11,7 @@ from numpy import pi
 
 from glwindow_processing import GLWindowProcessor
 from design import Ui_window
-from states import ControllerWorkSt, ControllerCmd, CreationSt, ActionSt
+from states import ControllerSt, ControllerCmd, CreationSt, ActionSt
 
 from project import CADProject, ActionImpossible
 from solve import CannotSolveSystemError
@@ -72,11 +72,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # setupUi in design.py
         super().__init__(self.work_plane)
 
-        #Set focus on window for keyPressEvent
-        self.setFocusPolicy(Qt.StrongFocus)
-
         # Set additional private attributes
-        # self._status = Sts.NOTHING
         self._setup_useful_aliases()
 
         # Setup special UI - method _setup_ui
@@ -90,20 +86,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # default methods)
         self._setup_handlers()
 
-        self.controller_work_st = ControllerWorkSt.NOTHING
+        # States
+        self.controller_st = ControllerSt.NOTHING  # Left buttons controllers
+        self.creation_st = CreationSt.NOTHING  # Stages of figures creation
+        self.action_st = ActionSt.NOTHING  # Moving and changing figures
 
-        self.action_st = ActionSt.NOTHING
-
-        self.chosen_bindings = []
-
-        self._created_figure = None  # Figure that is painted at this moment
-        self.creation_st = CreationSt.NOTHING
-
+        # Special attributes
+        self._moved_binding = None  # Binding used to move figure
+        self._selected_figure_name = None  # Name of figure that selected now
+        self._chosen_bindings = []  # Selected bindings for restriction
+        self._created_figure = None  # Figure that is created at this moment
         self._filename = None
-
-        self._selected_binding = None
-
-        self._selected_figure_name = None
 
     def _setup_useful_aliases(self):
         self._footer_widgets = dict()
@@ -224,19 +217,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
 
-
     def update_fields(self):
         self._logger.debug('update fields')
         if self._created_figure is not None:
-            print('created figure')
             figure = self._created_figure
         elif self._selected_figure_name is not None:
-            print('selected figure')
             figure = self._project.figures[self._selected_figure_name]
         else:
             return
 
-        print(f'figure: {figure}')
         if isinstance(figure, Point):
             params = figure.get_params()
             self.field_x_add_point.setValue(params['x'])
@@ -273,14 +262,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def keyPressEvent(self, event):
         key = event.key()
         if key == Qt.Key_Enter or key == Qt.Key_Return:
-            if self.controller_work_st == ControllerWorkSt.ADD_POINT:
+            if self.controller_st == ControllerSt.ADD_POINT:
                 self.controller_add_point(ControllerCmd.SUBMIT)
-            elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
+            elif self.controller_st == ControllerSt.ADD_SEGMENT:
                 self.controller_add_segment(ControllerCmd.SUBMIT)
-            elif ControllerWorkSt.is_restr(self.controller_work_st):
+            elif ControllerSt.is_restr(self.controller_st):
                 name = None
-                for name in dir(ControllerWorkSt):
-                    if re.match('^RESTR_', name) and getattr(ControllerWorkSt, name) == self.controller_work_st:
+                for name in dir(ControllerSt):
+                    if re.match('^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
                         break
                 if name:
                     controller_name = f'controller_{name.lower()}'
@@ -322,7 +311,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def begin_figure_selection(self):
         if self._selected_figure_name is None:
             return
-        print('begin figure selection')
 
         selected_figure_name = self._selected_figure_name
         self.reset()
@@ -349,7 +337,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
                 self._reset_behind_statuses()
-                self.controller_work_st = ControllerWorkSt.ADD_POINT
+                self.controller_st = ControllerSt.ADD_POINT
                 self.creation_st = CreationSt.POINT_SET
                 self._created_figure = Point.from_coordinates(
                     self.field_x_add_point.value(),
@@ -379,7 +367,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
                 self._reset_behind_statuses()
-                self.controller_work_st = ControllerWorkSt.ADD_SEGMENT
+                self.controller_st = ControllerSt.ADD_SEGMENT
                 self.creation_st = CreationSt.SEGMENT_START_SET
 
                 if self.field_length_add_segment.value() != 0:
@@ -560,14 +548,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.STEP:
             binding = find_first(bindings, check_binding_func)
             if binding:
-                if len(self.chosen_bindings) == 0:
-                    self.chosen_bindings.append(binding)
+                if len(self._chosen_bindings) == 0:
+                    self._chosen_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}').toggle()
 
         elif cmd == ControllerCmd.SUBMIT:
-            if len(self.chosen_bindings) != 1:
+            if len(self._chosen_bindings) != 1:
                 raise RuntimeError
-            binding = self.chosen_bindings[0]
+            binding = self._chosen_bindings[0]
             figure_name = binding.get_object_names()[0]
             restr = get_restr_fun(binding)
             try:
@@ -575,16 +563,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
             except CannotSolveSystemError:
                 pass
 
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.chosen_bindings = []
+            self.controller_st = ControllerSt.NOTHING
+            self._chosen_bindings = []
             self.reset()
 
         elif cmd == ControllerCmd.SHOW:
             self._reset_behind_statuses()
-            status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
+            status = getattr(ControllerSt, f'restr_{name}'.upper())
             widget = getattr(self, f'widget_restr_{name}')
             widget.show()
-            self.controller_work_st = status
+            self.controller_st = status
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
@@ -594,21 +582,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _controller_restr_two_objects(self, name, cmd, bindings,
                                       get_restr_fun, check_binding_funcs):
         if cmd == ControllerCmd.STEP:
-            if len(self.chosen_bindings) == 0:
+            if len(self._chosen_bindings) == 0:
                 binding = find_first(bindings, check_binding_funcs[0])
                 if binding:
-                    self.chosen_bindings.append(binding)
+                    self._chosen_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_1').toggle()
-            elif len(self.chosen_bindings) == 1:
+            elif len(self._chosen_bindings) == 1:
                 binding = find_first(bindings, check_binding_funcs[0])
                 if binding:
-                    self.chosen_bindings.append(binding)
+                    self._chosen_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_2').toggle()
 
         elif cmd == ControllerCmd.SUBMIT:
-            if len(self.chosen_bindings) != 2:
+            if len(self._chosen_bindings) != 2:
                 raise RuntimeError
-            b1, b2 = self.chosen_bindings
+            b1, b2 = self._chosen_bindings
             f1_name = b1.get_object_names()[0]
             f2_name = b2.get_object_names()[0]
             restr = get_restr_fun(b1, b2)
@@ -617,16 +605,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
             except CannotSolveSystemError:
                 pass
 
-            self.controller_work_st = ControllerWorkSt.NOTHING
-            self.chosen_bindings = []
+            self.controller_st = ControllerSt.NOTHING
+            self._chosen_bindings = []
             self.reset()
 
         elif cmd == ControllerCmd.SHOW:
             self._reset_behind_statuses()
-            status = getattr(ControllerWorkSt, f'restr_{name}'.upper())
+            status = getattr(ControllerSt, f'restr_{name}'.upper())
             widget = getattr(self, f'widget_restr_{name}')
             widget.show()
-            self.controller_work_st = status
+            self.controller_st = status
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
@@ -634,10 +622,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.update()
 
     # ====================================== Events ========================
-    def animate(self):
-        self._logger.debug('animate')
-        self.update()
-
     def paintEvent(self, event):
         self._logger.debug('paintEvent')
 
@@ -657,11 +641,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if event.button() == Qt.LeftButton:
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-            if self.controller_work_st == ControllerWorkSt.ADD_POINT:
+            if self.controller_st == ControllerSt.ADD_POINT:
                 if self.creation_st == CreationSt.POINT_SET:
                     self.controller_add_point(ControllerCmd.SUBMIT)
 
-            elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
+            elif self.controller_st == ControllerSt.ADD_SEGMENT:
                 if self.creation_st == CreationSt.SEGMENT_START_SET:
                     self._created_figure.set_param('x1', x).set_param('y1', y)
                     self.creation_st = CreationSt.SEGMENT_END_SET
@@ -671,14 +655,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.controller_add_segment(ControllerCmd.SUBMIT)
                     self._created_figure = None
 
-            elif self.controller_work_st == ControllerWorkSt.NOTHING and self.creation_st == CreationSt.NOTHING:
+            elif self.controller_st == ControllerSt.NOTHING and self.creation_st == CreationSt.NOTHING:
                 bindings = choose_best_bindings(self._project.bindings, x, y)
                 if len(bindings) > 0:
                     if self.action_st == ActionSt.NOTHING:
-                        self._selected_binding = bindings[0]
+                        self._moved_binding = bindings[0]
                         self.action_st = ActionSt.BINDING_PRESSED
                     if self.action_st == ActionSt.SELECTED:
-                        self._selected_binding = bindings[0]
+                        self._moved_binding = bindings[0]
                         self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
         self.update()
 
@@ -688,31 +672,26 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         if self.action_st == ActionSt.BINDING_PRESSED:
             self.action_st = ActionSt.MOVE
-            print(f'BINDING_PRESSED -> MOVE, selected_binding: {self._selected_binding}')
 
         elif self.action_st == ActionSt.BINDING_PRESSED_WHILE_SELECTED:
             self.action_st = ActionSt.MOVE_WHILE_SELECTED
-            print(f'BINDING_PRESSED_WHILE_SELECTED -> MOVE_WHILE_SELECTED, selected_binding: {self._selected_binding}')
 
         if self.action_st == ActionSt.MOVE or \
                 self.action_st == ActionSt.MOVE_WHILE_SELECTED and \
-                self._selected_binding.get_object_names()[0] == self._selected_figure_name:
+                self._moved_binding.get_object_names()[0] == self._selected_figure_name:
 
             try:
-                print(f'MOVE or MOVE_WHILE_SELECTED, action_st = {self.action_st}')
-                self._project.move_figure(self._selected_binding, x, y)
-                print('moved')
+                self._project.move_figure(self._moved_binding, x, y)
                 self.update_fields()
-                print('fields updated')
             except CannotSolveSystemError:
                 self._project.rollback()
 
-        if self.controller_work_st == ControllerWorkSt.ADD_POINT:
+        if self.controller_st == ControllerSt.ADD_POINT:
             if self.creation_st == CreationSt.POINT_SET:
                 self._created_figure.set_param('x', x).set_param('y', y)
                 self.update_fields()
 
-        elif self.controller_work_st == ControllerWorkSt.ADD_SEGMENT:
+        elif self.controller_st == ControllerSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
                 self._created_figure.set_param('x1', x).set_param('y1', y)
                 self.update_fields()
@@ -720,9 +699,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._created_figure.set_param('x2', x).set_param('y2', y)
                 self.update_fields()
 
-
         # Work with bindings
-        if self.controller_work_st == ControllerWorkSt.RESTR_JOINT:
+        if self.controller_st == ControllerSt.RESTR_JOINT:
             allowed_bindings_types = (PointBinding, SegmentSpotBinding)
             # TODO: check all variants
         else:
@@ -743,34 +721,28 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if event.button() == Qt.LeftButton:
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-            if self.controller_work_st != ControllerWorkSt.NOTHING:
+            if self.controller_st != ControllerSt.NOTHING:
                 # Make restriction step
                 bindings = choose_best_bindings(self._project.bindings, x, y)
-                for name in dir(ControllerWorkSt):
-                    if re.match(r'^RESTR_', name):
-                        status = getattr(ControllerWorkSt, name)
-                        if self.controller_work_st == status:
-                            controller = getattr(
-                                self,
-                                f'controller_{name.lower()}'
-                            )
-                            controller(ControllerCmd.STEP, bindings)
+                for name in dir(ControllerSt):
+                    if re.match(r'^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
+                        controller = getattr(
+                            self, f'controller_{name.lower()}')
+                        controller(ControllerCmd.STEP, bindings)
 
             if self.action_st == ActionSt.MOVE:
                 self._project.commit()
-                print('777')
                 self.action_st = ActionSt.NOTHING
             if self.action_st == ActionSt.MOVE_WHILE_SELECTED:
                 self._project.commit()
                 self.action_st = ActionSt.SELECTED
 
             elif self.action_st == ActionSt.BINDING_PRESSED:
-                selected_figures = self._selected_binding.get_object_names()
-                self._selected_binding = None
+                selected_figures = self._moved_binding.get_object_names()
+                self._moved_binding = None
                 if len(selected_figures) == 1:
                     self._selected_figure_name = selected_figures[0]
                     self.select_figure_on_list_view()  # Also start changing and set action_st = SELECTED
-                print('789')
                 self.action_st = ActionSt.SELECTED
 
         self.update()
@@ -820,14 +792,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _reset_behind_statuses(self):
         self._created_figure = None
         self._selected_figure_name = None
-        self.chosen_bindings = []
-        self._selected_binding = None
+        self._chosen_bindings = []
+        self._moved_binding = None
 
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
 
     def _reset_statuses(self):
-        self.controller_work_st = ControllerWorkSt.NOTHING
+        self.controller_st = ControllerSt.NOTHING
         self.creation_st = CreationSt.NOTHING
         self.action_st = ActionSt.NOTHING
 

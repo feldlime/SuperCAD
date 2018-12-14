@@ -47,6 +47,9 @@ class GLWindowProcessor:
 
         self._glwindow.setSizePolicy(sizePolicy)
 
+        # Set focus on window for keyPressEvent
+        self._glwindow.setFocusPolicy(Qt.StrongFocus)
+
     @property
     def center(self) -> tuple:
         return self._glwindow.width() // 2, self._glwindow.height() // 2
