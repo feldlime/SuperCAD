@@ -124,8 +124,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.widget_elements_table.hide()
         self._hide_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
-            lambda ev: self._interface_proc.trigger_widget(
-                self.widget_elements_table, ev))
+            lambda ev: self.widget_elements_table.show() if ev
+            else self.widget_elements_table.hide())
 
         # Setting tab order. Can do it into designer and remove from here
 
@@ -780,7 +780,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             if box.checkState() == Qt.Checked:
                 box.toggle()
         for w_name, widget in self._footer_widgets.items():
-            self._interface_proc.trigger_widget(widget, False)
+            widget.hide()
         # self._logger('_hide_footer_widgets')
         self.field_x_add_point.setValue(0)
         self.field_y_add_point.setValue(0)
@@ -792,8 +792,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._selected_figure_name = None
 
     def _uncheck_left_buttons(self):
-        for b_name, button in self._left_buttons.items():
-            self._interface_proc.trigger_button(button, False)
+        for _, button in self._left_buttons.items():
+            button.setChecked(False)
 
     def delete(self, _=None):
         self._logger.debug('delete: start')
