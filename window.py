@@ -10,7 +10,6 @@ import re
 from numpy import pi
 
 from glwindow_processing import GLWindowProcessor
-from interface import InterfaceProcessor
 from design import Ui_window
 from states import ControllerWorkSt, ControllerCmd, CreationSt, ActionSt
 
@@ -65,7 +64,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._window = window
         self._project = CADProject()
         self._glwindow_proc = GLWindowProcessor(self)
-        self._interface_proc = InterfaceProcessor()
 
         # Setup basic UI - from design.py
         self.setupUi(self._window)
