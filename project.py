@@ -23,6 +23,7 @@ from utils import (
     EmptyStackError
 )
 
+from diagnostic_context import measured
 
 CIRCLE_BINDING_RADIUS = 12
 SEGMENT_BINDING_MARGIN = 6
@@ -181,6 +182,7 @@ class CADProject:
         else:
             self._commit()
 
+    @measured
     @contract(cursor_x='number', cursor_y='number')
     def move_figure(self, binding: PointBinding,
                     cursor_x: float, cursor_y: float):

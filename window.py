@@ -10,7 +10,6 @@ import re
 from numpy import pi
 
 from glwindow_processing import GLWindowProcessor
-from interface import InterfaceProcessor
 from design import Ui_window
 from states import ControllerWorkSt, ControllerCmd, CreationSt, ActionSt
 
@@ -65,7 +64,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._window = window
         self._project = CADProject()
         self._glwindow_proc = GLWindowProcessor(self)
-        self._interface_proc = InterfaceProcessor()
 
         # Setup basic UI - from design.py
         self.setupUi(self._window)
@@ -282,7 +280,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif ControllerWorkSt.is_restr(self.controller_work_st):
                 name = None
                 for name in dir(ControllerWorkSt):
-                    if re.match('^RESTR_', name):
+                    if re.match('^RESTR_', name) and getattr(ControllerWorkSt, name) == self.controller_work_st:
                         break
                 if name:
                     controller_name = f'controller_{name.lower()}'
@@ -317,6 +315,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._created_figure.set_param(field, value)
         elif self._selected_figure_name is not None:
             self._project.change_figure(self._selected_figure_name, field, value)
+
+        self.update()
         # TODO: Move mouse
 
     def begin_figure_selection(self):
@@ -364,6 +364,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif cmd == ControllerCmd.HIDE:
             self.reset()
 
+        self.update()
+
     def controller_add_segment(self, cmd):
         self._logger.debug(f'controller_add_segment start with status {cmd}')
 
@@ -404,6 +406,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         elif cmd == ControllerCmd.HIDE:
             self.reset()
+
+        self.update()
 
     def controller_restr_joint(self, cmd, bindings: list = None):
         def get_restr_fun(b1, b2):
@@ -585,6 +589,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif cmd == ControllerCmd.HIDE:
             self.reset()
 
+        self.update()
+
     def _controller_restr_two_objects(self, name, cmd, bindings,
                                       get_restr_fun, check_binding_funcs):
         if cmd == ControllerCmd.STEP:
@@ -625,12 +631,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif cmd == ControllerCmd.HIDE:
             self.reset()
 
+        self.update()
+
     # ====================================== Events ========================
     def animate(self):
+        self._logger.debug('animate')
         self.update()
 
     def paintEvent(self, event):
-        # self._logger.debug('paintEvent')
+        self._logger.debug('paintEvent')
 
         selected_figure = None
         if self._selected_figure_name is not None:
@@ -671,7 +680,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     if self.action_st == ActionSt.SELECTED:
                         self._selected_binding = bindings[0]
                         self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
-
+        self.update()
 
     def mouseMoveEvent(self, event):
         self._logger.debug('mouseMoveEvent: start')
@@ -727,6 +736,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             allowed_bindings_types
         )
 
+        self.update()
+
     def mouseReleaseEvent(self, event):
         self._logger.debug('mouseReleaseEvent: start')
         if event.button() == Qt.LeftButton:
@@ -762,6 +773,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 print('789')
                 self.action_st = ActionSt.SELECTED
 
+        self.update()
+
     def _hide_footer_widgets(self):
         for box in self._footer_checkboxes.values():
             if box.checkState() == Qt.Checked:
@@ -787,11 +800,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if self._selected_figure_name is not None:
             self._project.remove_figure(self._selected_figure_name)
             self._selected_figure_name = None
+        self.update()
 
     def new(self, _=None):
         self.reset()
         self._project = CADProject()
         self._filename = None
+        self.update()
 
     def exit(self, _=None):
         self._window.close()
@@ -800,6 +815,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug('reset: start')
         self._reset_behind_statuses()
         self._reset_statuses()
+        self.update()
 
     def _reset_behind_statuses(self):
         self._created_figure = None
@@ -814,7 +830,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.controller_work_st = ControllerWorkSt.NOTHING
         self.creation_st = CreationSt.NOTHING
         self.action_st = ActionSt.NOTHING
-
 
     def save(self, _=None):
         if self._filename is None:
@@ -835,6 +850,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if filename:
             self._filename = filename
             self._project.load(self._filename)
+        self.update()
 
     def undo(self, ev):
         self._logger.debug(f'Undo: ev = {ev}')
@@ -843,6 +859,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         except ActionImpossible:
             # TODO: Status bar / inactive
             pass
+        self.update()
 
     def redo(self, ev):
         self._logger.debug(f'Redo: ev = {ev}')
@@ -851,6 +868,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         except ActionImpossible:
             # TODO: Status bar / inactive
             pass
+        self.update()
 
     def _update_figures_list_view(self):
         figures_model = QStringListModel()
