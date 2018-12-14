@@ -46,12 +46,7 @@ class TestBindings:
 
         correct_bindings_types = \
             [PointBinding] * 2 \
-            + [
-                SegmentStartBinding,
-                SegmentEndBinding,
-                SegmentCenterBinding,
-                FullSegmentBinding
-            ] * 3 \
+            + ([SegmentSpotBinding] * 3 + [FullSegmentBinding]) * 3 \
             + [SegmentsIntersectionBinding] * 3
 
         assert is_sequences_equal(
@@ -60,12 +55,13 @@ class TestBindings:
             sort=False
         )
 
-        def get_binding(figure_names, binding_type):
+        def get_binding(figure_names, binding_type, spot_type=None):
             for binding in bindings:
                 objects_names = binding.get_object_names()
                 if is_sequences_equal(figure_names, objects_names) \
                         and isinstance(binding, binding_type):
-                    return binding
+                    if binding_type != SegmentSpotBinding or binding.spot_type == spot_type:
+                        return binding
 
         # Point1
         point1_b = get_binding(['point1'], PointBinding)
@@ -78,7 +74,7 @@ class TestBindings:
         assert all(isclose(point1_b.bind(), (1, 3)))
 
         # Segment1
-        segment1_center_b = get_binding(['segment1'], SegmentCenterBinding)
+        segment1_center_b = get_binding(['segment1'], SegmentSpotBinding, 'center')
         assert isclose(segment1_center_b.check(3.5, 0.1), 0.1)
         assert all(isclose(segment1_center_b.bind(), (3.5, 0)))
 
@@ -116,12 +112,13 @@ class TestBindings:
             segment_bindings_margin=0.2
         )
 
-        def get_binding(figure_names, binding_type):
+        def get_binding(figure_names, binding_type, spot_type=None):
             for binding in bindings:
                 objects_names = binding.get_object_names()
                 if is_sequences_equal(figure_names, objects_names) \
                         and isinstance(binding, binding_type):
-                    return binding
+                    if binding_type != SegmentSpotBinding or binding.spot_type == spot_type:
+                        return binding
 
         figures['point2'].set_param('x', 3).set_param('y', 8)
 
@@ -141,13 +138,13 @@ class TestBindings:
 
         # Segment center beat full segment
         bb = choose_best_bindings(bindings, 3.5, 0.15)
-        segment1_center_b = get_binding(['segment1'], SegmentCenterBinding)
+        segment1_center_b = get_binding(['segment1'], SegmentSpotBinding, 'center')
         # No full binding!
         assert is_sequences_equal(bb, [segment1_center_b], use='is')
 
         # To points with same coordinates
         bb = choose_best_bindings(bindings, 2.9, 7.9)
-        s2_start_b = get_binding(['segment2'], SegmentStartBinding)
+        s2_start_b = get_binding(['segment2'], SegmentSpotBinding, 'start')
         point2_b = get_binding(['point2'], PointBinding)
         answer_v1 = [s2_start_b, point2_b]
         answer_v2 = [point2_b, s2_start_b]
