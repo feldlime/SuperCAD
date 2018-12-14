@@ -95,7 +95,7 @@ class GLWindowProcessor:
         painter.end()
 
     def to_real_xy(self, x, y) -> tuple:
-        return x - self.center[0], y - self.center[1]
+        return x - self.center[0], -(y - self.center[1])
 
     def handle_mouse_move_event(
             self, event, bindings: List[Binding], figures: Dict[str, Figure],

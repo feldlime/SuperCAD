@@ -21,7 +21,7 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
     # Write coordinates near the mouse
     painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
     painter.drawText(
-        QPointF(mouse_xy[0] + 15, mouse_xy[1] + 10),
+        QPointF(mouse_xy[0] + 15, -mouse_xy[1] - 10),
         f'{mouse_xy[0]}, {mouse_xy[1] * (-1)}'
     )
 
@@ -56,8 +56,11 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
 
 
 def paint_point(painter: QPainter, xy: Tuple[int, int], size: int, color):
+    xy = to_display_xy(xy)
     painter.setPen(QPen(color, size // 2 + 1, Qt.SolidLine))
-    painter.drawEllipse(xy[0] - size // 2, xy[1] - size // 2, size, size)
+    painter.drawEllipse(xy[0] - size // 2,
+                        xy[1] - size // 2,
+                        size, size)
 
 
 def paint_segment(
@@ -66,6 +69,14 @@ def paint_segment(
         width: int,
         color
 ):
+    coordinates = to_display_xy(coordinates)
     painter.setPen(QPen(color, width, Qt.SolidLine))
     painter.drawLine(*coordinates)
+
+
+def to_display_xy(xy: tuple):
+    if len(xy) == 2:
+        return xy[0], -xy[1]
+    elif len(xy) == 4:
+        return xy[0], -xy[1], xy[2], -xy[3]
 

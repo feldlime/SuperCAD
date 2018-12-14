@@ -663,16 +663,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self._created_figure = None
 
             elif self.controller_work_st == ControllerWorkSt.NOTHING and self.creation_st == CreationSt.NOTHING:
-                print('680')
                 bindings = choose_best_bindings(self._project.bindings, x, y)
                 if len(bindings) > 0:
-                    print(683)
                     if self.action_st == ActionSt.NOTHING:
-                        print('NOTHING')
                         self._selected_binding = bindings[0]
                         self.action_st = ActionSt.BINDING_PRESSED
                     if self.action_st == ActionSt.SELECTED:
-                        print('SELECTED')
                         self._selected_binding = bindings[0]
                         self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
 
