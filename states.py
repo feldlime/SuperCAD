@@ -24,7 +24,10 @@ class CreationSt:
 class ActionSt:
     NOTHING = 0
     BINDING_PRESSED = 1
-    MOVE = 2
+    SELECTED = 2
+    MOVE = 3
+    MOVE_WHILE_SELECTED = 4
+    BINDING_PRESSED_WHILE_SELECTED = 5
 
 
 class ControllerCmd:
@@ -32,7 +35,6 @@ class ControllerCmd:
     SHOW = 1
     STEP = 2
     SUBMIT = 3
-    MOVE = 4
 
 
 
