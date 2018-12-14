@@ -23,6 +23,7 @@ from utils import (
     EmptyStackError
 )
 
+from diagnostic_context import measured, DEFAULT_CONTEXT_TIMER as timer_context
 
 CIRCLE_BINDING_RADIUS = 12
 SEGMENT_BINDING_MARGIN = 6
@@ -181,6 +182,7 @@ class CADProject:
         else:
             self._commit()
 
+    @measured
     @contract(cursor_x='number', cursor_y='number')
     def move_figure(self, binding: PointBinding,
                     cursor_x: float, cursor_y: float):
@@ -233,6 +235,7 @@ class CADProject:
             raise e
 
         self._set_values(new_values)
+        print(timer_context.get_times())
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):

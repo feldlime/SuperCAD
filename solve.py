@@ -20,6 +20,9 @@ import re
 
 from utils import IncorrectParamValue
 
+from diagnostic_context import measure, measured, measured_total
+
+
 DELIMITER = '___'
 SPECIAL_NAME = 'special_name'
 GROWTH_NODE_NAME = 'growth_node'
@@ -82,7 +85,7 @@ def unroll_values_dict(hierarchical_dict: dict) -> dict:
             result[full_name] = value
     return result
 
-
+@measured_total
 @contract(symbols_names='list(str)')
 def get_equation_symbols_names(equation: Eq, symbols_names: list) -> set:
     return set([w for w in symbols_names if w in str(equation)])
@@ -555,6 +558,7 @@ class EquationsSystem:
 
         return roll_up_values_dict(result)
 
+    @measured
     @contract(optimizing_values='figures_values',
               current_values='figures_values', returns='figures_values')
     def solve_optimization_task(self, optimizing_values: dict,
@@ -623,127 +627,155 @@ class EquationsSystem:
 
         return self._solve_optimization_task(system, symbols, desired_values)
 
+    @measured
     @contract(system='list[N]', symbols='dict[M], M >= N',
               desired_values='dict[M]', returns='dict[M]')
     def _solve_optimization_task(self, system: list, symbols: dict,
                                  desired_values: dict) -> dict:
-        assert set(symbols.keys()) == set(desired_values.keys()), \
-            'symbols.keys() must be equal to best_values.keys()'
+        with measure('check keys'):
+            assert set(symbols.keys()) == set(desired_values.keys()), \
+                'symbols.keys() must be equal to best_values.keys()'
 
-        if len(system) == len(symbols):  # Optimization
-            result = self._solve_square_system(system, symbols, desired_values)
-            result = {name: value for name, value in result.items()}
-            return result
+        with measure('if len == len'):
+            if len(system) == len(symbols):  # Optimization
+                result = self._solve_square_system(system, symbols, desired_values)
+                result = {name: value for name, value in result.items()}
+                return result
 
-        lambdas_names = [compose_full_name('lambda', str(i))
-                         for i in range(len(system))]
-        lambdas_dict = {name: Symbol(name)  # TODO: real=True
-                        for name in lambdas_names}
-        lambdas = lambdas_dict.values()
+        with measure('get lambdas'):
+            lambdas_names = [compose_full_name('lambda', str(i))
+                             for i in range(len(system))]
+            lambdas_dict = {name: Symbol(name)  # TODO: real=True
+                            for name in lambdas_names}
+            lambdas = lambdas_dict.values()
 
         # Loss function: F = 1/2 * sum((xi - xi0) ** 2) + sum(lambda_j * eqj)
         # Derivatives by xi: dF/dxi = (xi - xi0) + d(sum(lambda_j * eqj)) / dxi
         # Derivatives by lambda_j: dF/d lambda_j = eqj (source system)
 
-        canonical = self._system_to_canonical(system)
-        loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
-        if loss_part2 == 0:  # System is empty -> no lambdas
-            loss_part2 = sympy_Integer(0)  # To be possible to diff
-        equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
-                     for name, x in symbols.items()]
+        with measure('to_canonical + loss_part2'):
+            canonical = self._system_to_canonical(system)
+            loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
+            if loss_part2 == 0:  # System is empty -> no lambdas
+                loss_part2 = sympy_Integer(0)  # To be possible to diff
 
-        equations.extend(system)
-        lambdas_dict.update(symbols)
-        result = self._solve_square_system(equations, lambdas_dict,
-                                           desired_values)
+        with measure('get equations with diff'):
+            equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
+                         for name, x in symbols.items()]
 
-        result = {name: value for name, value in result.items()
-                  if split_full_name(name)[0] != 'lambda'}
+        with measure('extend and solve square'):
+            equations.extend(system)
+            lambdas_dict.update(symbols)
+            result = self._solve_square_system(equations, lambdas_dict,
+                                               desired_values, n_last_for_sub=len(system))
+
+        with measure('combine result'):
+            result = {name: value for name, value in result.items()
+                      if split_full_name(name)[0] != 'lambda'}
         return result
 
     @classmethod
+    @measured
     @contract(system='list[N]', symbols_dict='dict[N]',
               desired_values='dict | None', returns='dict[N]')
     def _solve_square_system(cls, system: list, symbols_dict: dict,
-                             desired_values: dict = None):
+                             desired_values: dict = None, n_last_for_sub=None):
         """Desired values only for setting initial conditions."""
-        symbols_names = list(symbols_dict.keys())
 
-        # Simplify by substitutions
-        substitutor = Substitutor()
+        with measure('symbol_names'):
+            symbols_names = list(symbols_dict.keys())
 
-        try:
-            substitutor.fit(system, symbols_names)
-        except SubstitutionError as e:
-            raise CannotSolveSystemError(f'{type(e)}: {e.args}')
+        with measure('sub'):
+            # Simplify by substitutions
+            substitutor = Substitutor()
+            if n_last_for_sub is None or n_last_for_sub == 0:
+                n_last_for_sub = len(system)
 
-        simplified_system = substitutor.sub(system)
+            try:
+                substitutor.fit(system[-n_last_for_sub:], symbols_names)
+            except SubstitutionError as e:
+                raise CannotSolveSystemError(f'{type(e)}: {e.args}')
 
-        # Check easy inconsistency
-        if sympy_false in simplified_system:
-            raise SystemIncompatibleError('Get BooleanFalse in system.')
+            simplified_system = system[:-n_last_for_sub] + substitutor.sub(system[-n_last_for_sub:])
 
-        # Check easy inconsistency
-        if sympy_true in simplified_system:
-            raise SystemOverfittedError('Get BooleanTrue in system.')
+            # Check easy inconsistency
+            if sympy_false in simplified_system:
+                raise SystemIncompatibleError('Get BooleanFalse in system.')
+
+            # Check easy inconsistency
+            if sympy_true in simplified_system:
+                raise SystemOverfittedError('Get BooleanTrue in system.')
 
         # Define symbols that are used
-        used_symbols_names = set()
-        for eq in simplified_system:
-            used_symbols_names |= get_equation_symbols_names(eq, symbols_names)
-        used_symbols_names = list(used_symbols_names)
-        used_symbols = [symbols_dict[name] for name in used_symbols_names]
+        with measure('used symbols'):
+            with measure('create empty set'):
+                used_symbols_names = set()
+            with measure('get all symbols names'):
+                for eq in simplified_system:
+                    used_symbols_names |= get_equation_symbols_names(eq, symbols_names)
+            with measure('list from set'):
+                used_symbols_names = list(used_symbols_names)
+            with measure('values from names'):
+                used_symbols = [symbols_dict[name] for name in used_symbols_names]
 
-        if len(used_symbols) != len(simplified_system):
-            raise RuntimeError(
-                f'len(used_symbols) = {len(used_symbols)},'
-                f'len(simplified_system) = {len(simplified_system)}'
-            )
+            if len(used_symbols) != len(simplified_system):
+                raise RuntimeError(
+                    f'len(used_symbols) = {len(used_symbols)},'
+                    f'len(simplified_system) = {len(simplified_system)}'
+                )
 
-        if simplified_system:
-            # Prepare
-            canonical_system = cls._system_to_canonical(simplified_system)
-            system_function = \
-                cls._system_to_function(canonical_system, used_symbols)
+        with measure('before if'):
+            if simplified_system:
+                # Prepare
+                canonical_system = cls._system_to_canonical(simplified_system)
+                system_function = \
+                    cls._system_to_function(canonical_system, used_symbols)
 
-            # Prepare ini values
-            ini_values = list(random.random(len(used_symbols)))
-            if desired_values is not None:
-                for i, symbol_name in enumerate(used_symbols_names):
-                    if symbol_name in desired_values:
-                        ini_values[i] = desired_values[symbol_name]
+                # Prepare ini values
+                ini_values = list(random.random(len(used_symbols)))
+                if desired_values is not None:
+                    for i, symbol_name in enumerate(used_symbols_names):
+                        if symbol_name in desired_values:
+                            ini_values[i] = desired_values[symbol_name]
 
-            # Solve
-            solution = cls._solve_numeric(
-                system_function, np_array(ini_values))
-        else:
-            solution = []
+                # Solve
+                with measure('solve numeric'):
+                    solution = cls._solve_numeric(
+                        system_function, np_array(ini_values))
+            else:
+                solution = []
 
-        # Add values for symbols that were substituted
-        solution_dict = dict(zip(used_symbols_names, solution))
-        full_solution_dict = substitutor.restore(solution_dict)
+        with measure('solution dict and restore sub'):
+            # Add values for symbols that were substituted
+            solution_dict = dict(zip(used_symbols_names, solution))
+            full_solution_dict = substitutor.restore(solution_dict)
 
         return full_solution_dict
 
     @staticmethod
+    @measured
     @contract(system='list[N,>0]', symbols='list[N]')
     def _system_to_function(system: list, symbols: list):
-        functions = [lambdify(symbols, f) for f in system]
+        with measure('lambdify'):
+            functions = [lambdify(symbols, f) for f in system]
 
-        def fun(x):
-            if len(x) != len(symbols):
-                raise ValueError
-            res = np_array([f(*x) for f in functions])
-            return res
+        with measure('form fun'):
+            def fun(x):
+                if len(x) != len(symbols):
+                    raise ValueError
+                res = np_array([f(*x) for f in functions])
+                return res
 
         return fun
 
     @staticmethod
+    @measured
     @contract(system='list')
     def _system_to_canonical(system: list):
         return [eq.lhs - eq.rhs for eq in system]
 
     @staticmethod
+    @measured
     def _solve_numeric(fun: callable, init: np_ndarray) -> np_ndarray:
         result = sp_optimize.fsolve(fun, init, full_output=True, maxfev=1000)
         if result[2] != 1:
