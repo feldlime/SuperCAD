@@ -9,13 +9,21 @@ from logging import getLogger
 import re
 from numpy import pi
 
-from glwindow_processing import GLWindowProcessor
+from typing import Dict, Tuple, List, Optional, Type
+
+import paint
+
+
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPaintEvent
+
 from design import Ui_window
 from states import ControllerSt, ControllerCmd, CreationSt, ActionSt
 
 from project import CADProject, ActionImpossible
 from solve import CannotSolveSystemError
-from figures import Point, Segment
+from figures import Figure, Point, Segment
 from restrictions import (
     PointFixed,
     PointsJoint,
@@ -64,7 +72,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # Set key private attributes
         self._window = window
         self._project = CADProject()
-        self._glwindow_proc = GLWindowProcessor(self)
 
         # Setup basic UI - from design.py
         self.setupUi(self._window)
@@ -78,10 +85,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # Setup special UI - method _setup_ui
         self._setup_ui()
-
-        # Setup special parameters for glwindow (i.e. for self)
-        self._glwindow_proc.setup(
-            self.work_plane.width(), self.work_plane.height())
 
         # Setup handlers (only for ui, because handlers for glwindow are
         # default methods)
@@ -138,6 +141,26 @@ class WindowContent(QOpenGLWidget, Ui_window):
                          self.field_length_add_segment)
         self.setTabOrder(self.field_length_add_segment,
                          self.field_angle_add_segment)
+
+        # GLWidget settings
+        self.elapsed = 0
+
+        self.setAutoFillBackground(True)
+        self.setMouseTracking(True)
+
+        # Располагаем виджет в области work_plane и присваеваем ему те же
+        # параметры как в design
+        self.setGeometry(QtCore.QRect(0, 0, self.work_plane.width(), self.work_plane.height()))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
+                                           QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+
+        self.setSizePolicy(sizePolicy)
+
+        # Set focus on window for keyPressEvent
+        self.setFocusPolicy(Qt.StrongFocus)
 
     def _setup_handlers(self):
 
@@ -228,6 +251,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self.widget_elements_table.addTopLevelItems([self.widget_elements_table_figures,
                                                      self.widget_elements_table_restrictions])
+
+    @property
+    def center(self) -> tuple:
+        return self.width() // 2, self.height() // 2
+
+    def to_real_xy(self, x, y) -> tuple:
+        return x - self.center[0], -(y - self.center[1])
 
     def update_fields(self):
         self._logger.debug('update fields')
@@ -654,7 +684,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self._selected_figure_name])
         selected_figures.extend(self._highlighted_figures)
 
-        self._glwindow_proc.paint_all(
+        self.paint_all(
             event,
             self._mouse_xy,
             self._current_bindings,
@@ -668,7 +698,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def mousePressEvent(self, event):
         self._logger.debug('mousePressEvent: start')
         if event.button() == Qt.LeftButton:
-            x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
+            x, y = self.to_real_xy(event.x(), event.y())
 
             if self.controller_st == ControllerSt.ADD_POINT:
                 if self.creation_st == CreationSt.POINT_SET:
@@ -704,7 +734,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def mouseMoveEvent(self, event):
         # self._logger.debug('mouseMoveEvent: start')
-        x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
+        x, y = self.to_real_xy(event.x(), event.y())
         self._mouse_xy = (x, y)
 
         if self.action_st == ActionSt.BINDING_PRESSED:
@@ -741,7 +771,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def mouseReleaseEvent(self, event):
         self._logger.debug('mouseReleaseEvent: start')
         if event.button() == Qt.LeftButton:
-            x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
+            x, y = self.to_real_xy(event.x(), event.y())
 
             if self.action_st == ActionSt.MOVE:
                 self._project.commit()
@@ -919,3 +949,49 @@ class WindowContent(QOpenGLWidget, Ui_window):
             if allowed_bindings_types is None \
                     or isinstance(binding, allowed_bindings_types):
                 self._current_bindings.append(binding)
+
+    def paint_all(self, event: QPaintEvent,
+                  mouse_xy,
+                  bindings,
+                  figures: Dict[str, Figure],
+                  selected_figures: list,
+                  painted_figure: Optional[Figure] = None,
+                  ):
+        # self._logger.debug('paint_all start')
+        painter = QPainter()
+        painter.begin(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255)))
+        painter.save()
+        painter.translate(*self.center)
+
+        # self._logger.debug(f'current_bindings: {self._current_bindings}')
+        paint.paint_all(
+            painter, figures, bindings, mouse_xy
+        )
+
+        # Paint painted figure
+        if painted_figure is not None:
+            coo = painted_figure.get_base_representation()
+            if isinstance(painted_figure, Point):
+                paint.paint_point(painter, coo, 6, Qt.green)
+            elif isinstance(painted_figure, Segment):
+                paint.paint_segment(painter, coo, 3, Qt.green)
+            else:
+                raise RuntimeError(
+                    f'Unexpected figure type {type(painted_figure)}')
+
+        # Paint selected figure
+        for selected_figure in selected_figures:
+            coo = selected_figure.get_base_representation()
+            if isinstance(selected_figure, Point):
+                paint.paint_point(painter, coo, 6, Qt.cyan)
+            elif isinstance(selected_figure, Segment):
+                paint.paint_segment(painter, coo, 3, Qt.blue)
+            else:
+                raise RuntimeError(
+                    f'Unexpected figure type {type(selected_figure)}')
+
+        # Finish painting
+        painter.restore()
+        painter.end()
