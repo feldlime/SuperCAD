@@ -22,7 +22,7 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
     painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
     painter.drawText(
         QPointF(mouse_xy[0] + 15, -mouse_xy[1] - 10),
-        f'{mouse_xy[0]}, {mouse_xy[1] * (-1)}'
+        f'{mouse_xy[0]}, {mouse_xy[1]}'
     )
 
     # Draw figures

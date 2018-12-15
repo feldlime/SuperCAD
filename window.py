@@ -4,11 +4,7 @@ from PyQt5.QtWidgets import (QOpenGLWidget,
                              QMainWindow,
                              QFileDialog,
                              QTreeWidgetItem)
-from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
-# from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import (QWidget, QPushButton,
-    QHBoxLayout, QVBoxLayout, QApplication)
+from PyQt5.QtCore import Qt
 from logging import getLogger
 import re
 from numpy import pi
@@ -214,17 +210,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_save.triggered['bool'].connect(self.save)
         self.action_save_as.triggered['bool'].connect(self.save_as)
         self.action_open.triggered['bool'].connect(self.open)
-        # self.action_reset.triggered['bool'].connect(self.reset)
         self.action_new.triggered['bool'].connect(self.new)
         self.action_exit.triggered['bool'].connect(self.exit)
-        # self.action_delete.triggered['bool'].connect(self.delete)
-
-        # self.action_delete = QAction(self._window)
-        # self.action_delete.setObjectName("action_delete")
-        # _translate = QtCore.QCoreApplication.translate
-        # self.action_delete.setShortcut(_translate("window", "Ctrl+D"))
-        # self.action_delete.triggered['bool'].connect(self.delete)
-
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
@@ -810,7 +797,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.reset()
         elif modifiers & Qt.ControlModifier:
             if event.key() == Qt.Key_Y:
-                print('Delete')
+                self.delete()
 
     def _reset_footer_widgets(self):
         for w_name, widget in self._footer_widgets.items():
@@ -835,8 +822,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def delete(self, _=None):
         self._logger.debug('delete: start')
-        if self._selected_figure_name is not None:
-            self._project.remove_figure(self._selected_figure_name)
+        if self._selected_restriction_name is not None:
+            if self._selected_restriction_name in self._project.restrictions:
+                self._project.remove_restriction(self._selected_restriction_name)
+                self._selected_restriction_name = None
+                self._selected_figure_name = None
+                self.reset()
+                self._update_list_view()
+
+        elif self._selected_figure_name is not None:
+            if self._selected_figure_name in self._project.figures:
+                self._project.remove_figure(self._selected_figure_name)
             self._selected_figure_name = None
             self.reset()
             self._update_list_view()
