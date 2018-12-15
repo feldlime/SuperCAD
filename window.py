@@ -276,8 +276,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.field_y1_add_segment.setValue(params['y1'])
             self.field_x2_add_segment.setValue(params['x2'])
             self.field_y2_add_segment.setValue(params['y2'])
-            # self.field_length_add_segment.setValue(params['length'])
-            # self.field_angle_add_segment.setValue(params['angle'])
+            self.field_length_add_segment.blockSignals(True)
+            self.field_length_add_segment.setValue(params['length'])
+            self.field_length_add_segment.blockSignals(False)
+            self.field_angle_add_segment.blockSignals(True)
+            self.field_angle_add_segment.setValue(params['angle'])
+            self.field_angle_add_segment.blockSignals(False)
 
             # Select field with focus
             if self.field_x1_add_segment.hasFocus():
