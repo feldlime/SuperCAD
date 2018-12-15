@@ -7,12 +7,8 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QTreeWidget
-
 
 class Ui_window(object):
-    widget_elements_table: QTreeWidget
-
     def setupUi(self, window):
         window.setObjectName("window")
         window.resize(1280, 650)
@@ -328,11 +324,6 @@ class Ui_window(object):
         self.widget_restr_segment_horizontal.setGeometry(QtCore.QRect(50, 571, 171, 31))
         self.widget_restr_segment_horizontal.setAutoFillBackground(True)
         self.widget_restr_segment_horizontal.setObjectName("widget_restr_segment_horizontal")
-        self.submit_restr_segment_horizontal = QtWidgets.QPushButton(self.widget_restr_segment_horizontal)
-        self.submit_restr_segment_horizontal.setGeometry(QtCore.QRect(90, 2, 61, 25))
-        self.submit_restr_segment_horizontal.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.submit_restr_segment_horizontal.setAutoDefault(True)
-        self.submit_restr_segment_horizontal.setObjectName("submit_restr_segment_horizontal")
         self.checkbox_restr_segment_horizontal = QtWidgets.QCheckBox(self.widget_restr_segment_horizontal)
         self.checkbox_restr_segment_horizontal.setGeometry(QtCore.QRect(10, 0, 92, 23))
         self.checkbox_restr_segment_horizontal.setCheckable(True)
@@ -351,11 +342,6 @@ class Ui_window(object):
         self.widget_restr_segment_length_fixed.setGeometry(QtCore.QRect(50, 571, 171, 31))
         self.widget_restr_segment_length_fixed.setAutoFillBackground(True)
         self.widget_restr_segment_length_fixed.setObjectName("widget_restr_segment_length_fixed")
-        self.submit_restr_segment_length_fixed = QtWidgets.QPushButton(self.widget_restr_segment_length_fixed)
-        self.submit_restr_segment_length_fixed.setGeometry(QtCore.QRect(100, 2, 61, 25))
-        self.submit_restr_segment_length_fixed.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.submit_restr_segment_length_fixed.setAutoDefault(True)
-        self.submit_restr_segment_length_fixed.setObjectName("submit_restr_segment_length_fixed")
         self.checkbox_restr_segment_length_fixed = QtWidgets.QCheckBox(self.widget_restr_segment_length_fixed)
         self.checkbox_restr_segment_length_fixed.setGeometry(QtCore.QRect(10, 0, 81, 23))
         self.checkbox_restr_segment_length_fixed.setCheckable(True)
@@ -365,11 +351,6 @@ class Ui_window(object):
         self.widget_restr_segment_angle_fixed.setGeometry(QtCore.QRect(50, 571, 171, 31))
         self.widget_restr_segment_angle_fixed.setAutoFillBackground(True)
         self.widget_restr_segment_angle_fixed.setObjectName("widget_restr_segment_angle_fixed")
-        self.submit_restr_segment_angle_fixed = QtWidgets.QPushButton(self.widget_restr_segment_angle_fixed)
-        self.submit_restr_segment_angle_fixed.setGeometry(QtCore.QRect(100, 0, 61, 25))
-        self.submit_restr_segment_angle_fixed.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.submit_restr_segment_angle_fixed.setAutoDefault(True)
-        self.submit_restr_segment_angle_fixed.setObjectName("submit_restr_segment_angle_fixed")
         self.checkbox_restr_segment_angle_fixed = QtWidgets.QCheckBox(self.widget_restr_segment_angle_fixed)
         self.checkbox_restr_segment_angle_fixed.setGeometry(QtCore.QRect(10, 0, 92, 23))
         self.checkbox_restr_segment_angle_fixed.setCheckable(True)
@@ -381,11 +362,6 @@ class Ui_window(object):
         self.widget_restr_segment_vertical.setGeometry(QtCore.QRect(50, 571, 171, 31))
         self.widget_restr_segment_vertical.setAutoFillBackground(True)
         self.widget_restr_segment_vertical.setObjectName("widget_restr_segment_vertical")
-        self.submit_restr_segment_vertical = QtWidgets.QPushButton(self.widget_restr_segment_vertical)
-        self.submit_restr_segment_vertical.setGeometry(QtCore.QRect(90, 2, 61, 25))
-        self.submit_restr_segment_vertical.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.submit_restr_segment_vertical.setAutoDefault(True)
-        self.submit_restr_segment_vertical.setObjectName("submit_restr_segment_vertical")
         self.checkbox_restr_segment_vertical = QtWidgets.QCheckBox(self.widget_restr_segment_vertical)
         self.checkbox_restr_segment_vertical.setGeometry(QtCore.QRect(10, 0, 92, 23))
         self.checkbox_restr_segment_vertical.setCheckable(True)
@@ -509,13 +485,10 @@ class Ui_window(object):
         window.setTabOrder(self.checkbox_restr_segments_parallel_1, self.checkbox_restr_segments_parallel_2)
         window.setTabOrder(self.checkbox_restr_segments_parallel_2, self.checkbox_restr_segments_normal_1)
         window.setTabOrder(self.checkbox_restr_segments_normal_1, self.checkbox_restr_segments_normal_2)
-        window.setTabOrder(self.checkbox_restr_segments_normal_2, self.submit_restr_segment_horizontal)
-        window.setTabOrder(self.submit_restr_segment_horizontal, self.checkbox_restr_segment_horizontal)
+        window.setTabOrder(self.checkbox_restr_segments_normal_2, self.checkbox_restr_segment_horizontal)
         window.setTabOrder(self.checkbox_restr_segment_horizontal, self.checkbox_restr_fixed)
-        window.setTabOrder(self.checkbox_restr_fixed, self.submit_restr_segment_length_fixed)
-        window.setTabOrder(self.submit_restr_segment_length_fixed, self.checkbox_restr_segment_length_fixed)
-        window.setTabOrder(self.checkbox_restr_segment_length_fixed, self.submit_restr_segment_angle_fixed)
-        window.setTabOrder(self.submit_restr_segment_angle_fixed, self.checkbox_restr_segment_angle_fixed)
+        window.setTabOrder(self.checkbox_restr_fixed, self.checkbox_restr_segment_length_fixed)
+        window.setTabOrder(self.checkbox_restr_segment_length_fixed, self.checkbox_restr_segment_angle_fixed)
 
     def retranslateUi(self, window):
         _translate = QtCore.QCoreApplication.translate
@@ -537,14 +510,10 @@ class Ui_window(object):
         self.checkbox_restr_segments_parallel_2.setText(_translate("window", "Segment 2"))
         self.checkbox_restr_segments_normal_1.setText(_translate("window", "Segment 1"))
         self.checkbox_restr_segments_normal_2.setText(_translate("window", "Segment 2"))
-        self.submit_restr_segment_horizontal.setText(_translate("window", "Submit"))
         self.checkbox_restr_segment_horizontal.setText(_translate("window", "Segment"))
         self.checkbox_restr_fixed.setText(_translate("window", "Element"))
-        self.submit_restr_segment_length_fixed.setText(_translate("window", "Submit"))
         self.checkbox_restr_segment_length_fixed.setText(_translate("window", "Segment"))
-        self.submit_restr_segment_angle_fixed.setText(_translate("window", "Submit"))
         self.checkbox_restr_segment_angle_fixed.setText(_translate("window", "Segment"))
-        self.submit_restr_segment_vertical.setText(_translate("window", "Submit"))
         self.checkbox_restr_segment_vertical.setText(_translate("window", "Segment"))
         self.checkbox_restr_segments_angle_between_fixed_1.setText(_translate("window", "Segment 1"))
         self.checkbox_restr_segments_angle_between_fixed_2.setText(_translate("window", "Segment 2"))
@@ -573,5 +542,5 @@ class Ui_window(object):
         self.action_reset.setShortcut(_translate("window", "Esc"))
         self.action_delete.setText(_translate("window", "Delete"))
         self.action_delete.setToolTip(_translate("window", "Delete object"))
-        self.action_delete.setShortcut(_translate("window", "Del"))
+        self.action_delete.setShortcut(_translate("window", "Ctrl+D"))
 

@@ -811,6 +811,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if self._selected_figure_name is not None:
             self._project.remove_figure(self._selected_figure_name)
             self._selected_figure_name = None
+            self.reset()
+            self._update_list_view()
         self.update()
 
     def new(self, _=None):
