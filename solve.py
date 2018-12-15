@@ -687,7 +687,7 @@ class EquationsSystem:
         # TODO: do more correct
         for sub_sym in substitutor._subs.keys():
             symbols.pop(sub_sym)
-            
+
         with measure('get equations with diff'):
             equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
                          for name, x in symbols.items()]
@@ -695,7 +695,7 @@ class EquationsSystem:
         equations.extend(system)
         lambdas_dict.update(symbols)
         result = self._solve_square_system(equations, lambdas_dict,
-                                           desired_values, n_last_for_sub=len(system))
+                                           desired_values)
 
         result = {name: value for name, value in result.items()
                   if split_full_name(name)[0] != 'lambda'}
@@ -707,61 +707,28 @@ class EquationsSystem:
     @contract(system='list[N]', symbols_dict='dict[N]',
               desired_values='dict | None', returns='dict[N]')
     def _solve_square_system(cls, system: list, symbols_dict: dict,
-                             desired_values: dict = None, n_last_for_sub=None):
+                             desired_values: dict = None):
         """Desired values only for setting initial conditions."""
 
-        symbols_names = list(symbols_dict.keys())
-
-        simplified_system = system
-
-        # # Simplify by substitutions
-        # substitutor = Substitutor()
-        # if n_last_for_sub is None or n_last_for_sub == 0:
-        #     n_last_for_sub = len(system)
-        #
-        # try:
-        #     with measure('substitutor fit'):
-        #         substitutor.fit(system[-n_last_for_sub:], symbols_names)
-        # except SubstitutionError as e:
-        #     raise CannotSolveSystemError(f'{type(e)}: {e.args}')
-        #
-        # with measure('substitutor sub'):
-        #     simplified_system = substitutor.sub(system)
-        # print(context_total.get_times())
-        #
-        # # Check easy inconsistency
-        # if sympy_false in simplified_system:
-        #     raise SystemIncompatibleError('Get BooleanFalse in system.')
-        #
-        # # Check easy inconsistency
-        # if sympy_true in simplified_system:
-        #     raise SystemOverfittedError('Get BooleanTrue in system.')
-        #
-        # simplified_system = system  # TODO: Remove
-
-        # Define symbols that are used
-        used_symbols_names = set()
-        for eq in simplified_system:
-            used_symbols_names |= get_equation_symbols_names(eq, symbols_names)
-        used_symbols_names = list(used_symbols_names)
-        used_symbols = [symbols_dict[name] for name in used_symbols_names]
-
-        if len(used_symbols) != len(simplified_system):
+        if len(symbols_dict) != len(system):
             raise RuntimeError(
-                f'len(used_symbols) = {len(used_symbols)},'
-                f'len(simplified_system) = {len(simplified_system)}'
+                f'len(symbols_dict) = {len(symbols_dict)},'
+                f'len(simplified_system) = {len(system)}'
             )
 
-        if simplified_system:
+        symbols_names = list(symbols_dict.keys())
+        symbols_list = [symbols_dict[name] for name in symbols_names]
+
+        if system:
             # Prepare
-            canonical_system = cls._system_to_canonical(simplified_system)
+            canonical_system = cls._system_to_canonical(system)
             system_function = \
-                cls._system_to_function(canonical_system, used_symbols)
+                cls._system_to_function(canonical_system, symbols_list)
 
             # Prepare ini values
-            ini_values = list(random.random(len(used_symbols)))
+            ini_values = list(random.random(len(symbols_list)))
             if desired_values is not None:
-                for i, symbol_name in enumerate(used_symbols_names):
+                for i, symbol_name in enumerate(symbols_names):
                     if symbol_name in desired_values:
                         ini_values[i] = desired_values[symbol_name]
 
@@ -772,11 +739,9 @@ class EquationsSystem:
             solution = []
 
         # Add values for symbols that were substituted
-        solution_dict = dict(zip(used_symbols_names, solution))
-        full_solution_dict = solution_dict
-        # full_solution_dict = substitutor.restore(solution_dict)
+        solution_dict = dict(zip(symbols_names, solution))
 
-        return full_solution_dict
+        return solution_dict
 
     @staticmethod
     @measured
