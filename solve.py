@@ -132,25 +132,29 @@ class Substitutor:
     """
 
     def __init__(self):
-        self._subs = dict()
-        self._symbols_names = None
+        self._subs = dict()  # str -> Union[Symbol, float]
+        self._symbols_dict = None  # str -> Symbol
 
-    @contract(system='list', symbols_names='list(str)')
-    def fit(self, system: list, symbols_names: list):
+    @property
+    def subs(self):
+        return dict(self._subs)
+
+    @contract(system='list', symbols_dict='dict(str: *)')
+    def fit(self, system: list, symbols_dict: dict):
         """Fit substitutor: save symbols and substitutions.
 
         Parameters
         ----------
         system: list[sympy.Eq]
             List of equations.
-        symbols_names: list[str]
-            List of names of all symbols that can be used in equations.
+        symbols_dict: list[str]
+            Dict (sym_name -> sym) of all symbols that can be used in equations.
 
         Returns
         -------
         self
         """
-        self._symbols_names = symbols_names
+        self._symbols_dict = symbols_dict
 
         # ### Define and save simple equations
 
@@ -158,7 +162,7 @@ class Substitutor:
         # swap if, e.g. 5 = 'x',
         # if value is number, save it to self._subs
         # else save to symbols dict
-        symbols_dict = dict()
+        sym2sym_dict = dict()
         for eq in system:
             if self._is_simple_equation(eq):
                 key = str(eq.lhs)
@@ -173,11 +177,11 @@ class Substitutor:
                         raise SubstitutionError('Two same keys.')
                     self._subs[key] = float(value)
                 else:
-                    if key in symbols_dict and symbols_dict[key] == value:
+                    if key in sym2sym_dict and sym2sym_dict[key] == value:
                         # Case when value in keys() and key in values() will
                         # be treated later
                         raise SubstitutionError('Two same equations.')
-                    symbols_dict[key] = value
+                    sym2sym_dict[key] = value
 
         # Then treat cases with 2 values
         # So much code to treat different cases
@@ -185,7 +189,7 @@ class Substitutor:
 
         # Graph to find connected_components and cycles
         graph = nx.Graph()
-        for key, value in symbols_dict.items():
+        for key, value in sym2sym_dict.items():
             if (key, value) in graph.edges:  # order is not important
                 raise SubstitutionError('Two same equations.')
             if key not in graph.nodes:
@@ -222,7 +226,7 @@ class Substitutor:
                 key_node = next(iter_)
                 for node in iter_:
                     if node != key_node:
-                        self._subs[node] = key_node
+                        self._subs[node] = self._symbols_dict[key_node]
 
         return self
 
@@ -244,10 +248,7 @@ class Substitutor:
 
         for eq in system:
             if not self._is_simple_equation(eq):
-                new_eq = eq
-                for k, v in self._subs.items():
-                    with measure_total('subs'):
-                        new_eq = new_eq.subs(k, v)
+                new_eq = eq.subs([(sym_name, value) for sym_name, value in self._subs.items()])
                 new_system.append(new_eq)
 
         return new_system
@@ -271,8 +272,8 @@ class Substitutor:
 
         try:
             for k, v in self._subs.items():
-                if isinstance(v, str):
-                    self._subs[k] = solution[v]  # v must be in solution
+                if not isinstance(v, float):
+                    self._subs[k] = solution[str(v)]  # v must be in solution
         except KeyError:
             raise RuntimeError(f'Symbol {v} not in solution')
 
@@ -284,14 +285,14 @@ class Substitutor:
         """Check if equation is simple (looks like x = y or x = 5)."""
         l_str, r_str = str(eq.lhs), str(eq.rhs)
 
-        if l_str in self._symbols_names:
+        if l_str in self._symbols_dict:
             ltype = 'sym'
         elif re.fullmatch(number_pattern, l_str):
             ltype = 'num'
         else:
             return False
 
-        if r_str in self._symbols_names:
+        if r_str in self._symbols_dict:
             return True
         elif re.fullmatch(number_pattern, r_str) and ltype == 'sym':
             return True
@@ -644,7 +645,7 @@ class EquationsSystem:
         substitutor = Substitutor()
         try:
             with measure('substitutor fit'):
-                substitutor.fit(system, list(symbols.keys()))
+                substitutor.fit(system, symbols)
         except SubstitutionError as e:
             raise CannotSolveSystemError(f'{type(e)}: {e.args}')
 
@@ -662,7 +663,7 @@ class EquationsSystem:
 
         system = simplified_system
 
-        # ############################################################3
+        # ############################################################
         if len(system) == len(symbols):  # Optimization
             result = self._solve_square_system(system, symbols, desired_values)
             result = {name: value for name, value in result.items()}
@@ -685,7 +686,7 @@ class EquationsSystem:
             loss_part2 = sympy_Integer(0)  # To be possible to diff
 
         # TODO: do more correct
-        for sub_sym in substitutor._subs.keys():
+        for sub_sym in substitutor.subs.keys():
             symbols.pop(sub_sym)
 
         with measure('get equations with diff'):
