@@ -661,7 +661,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._created_figure,
         )
 
-        self._update_list_view()
+        # self._update_list_view()
 
     def mousePressEvent(self, event):
         self._logger.debug('mousePressEvent: start')
