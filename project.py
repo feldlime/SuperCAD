@@ -264,9 +264,10 @@ class CADProject:
                 self._restrictions.pop(restriction_name)
 
             # Remove from system
-            self._system.remove_figure_symbols(figure_name)
             for restriction_name in restrictions_to_remove:
                 self._system.remove_restriction_equations(restriction_name)
+            self._system.remove_figure_symbols(figure_name)
+
         except:
             self._rollback()
             raise
