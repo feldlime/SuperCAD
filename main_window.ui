@@ -1228,7 +1228,6 @@
     <addaction name="separator"/>
     <addaction name="action_undo"/>
     <addaction name="action_redo"/>
-    <addaction name="action_reset"/>
     <addaction name="action_delete"/>
     <addaction name="separator"/>
     <addaction name="action_show_elements_table"/>
@@ -1313,17 +1312,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
-   </property>
-  </action>
-  <action name="action_reset">
-   <property name="text">
-    <string>Reset</string>
-   </property>
-   <property name="toolTip">
-    <string>Reset current action</string>
-   </property>
-   <property name="shortcut">
-    <string>Esc</string>
    </property>
   </action>
   <action name="action_delete">
