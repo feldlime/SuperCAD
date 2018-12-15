@@ -337,6 +337,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_add_point(ControllerCmd.SHOW)
         elif isinstance(figure, Segment):
             self.controller_add_segment(ControllerCmd.SHOW)
+        self.update()
 
     # ======================== Controllers ==================
 
