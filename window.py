@@ -125,7 +125,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # Add point
         self.setTabOrder(self.field_x_add_point, self.field_y_add_point)
-        self.setTabOrder(self.field_y_add_point, self.submit_add_point)
 
         # Add segment
         self.setTabOrder(self.field_x1_add_segment, self.field_y1_add_segment)
@@ -135,7 +134,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                          self.field_length_add_segment)
         self.setTabOrder(self.field_length_add_segment,
                          self.field_angle_add_segment)
-        self.setTabOrder(self.field_angle_add_segment, self.submit_add_segment)
 
     def _setup_handlers(self):
 
@@ -347,7 +345,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 )
 
             self.widget_add_point.show()
-            self.submit_add_point.show()
             self.field_x_add_point.setFocus()
             self.field_x_add_point.selectAll()
 
@@ -391,7 +388,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     )
 
             self.widget_add_segment.show()
-            self.submit_add_segment.show()
             self.field_x1_add_segment.setFocus()
             self.field_x1_add_segment.selectAll()
 
