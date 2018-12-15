@@ -334,6 +334,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
             self._update_figures_list_view()
+            self.controller_add_point(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
@@ -364,6 +365,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._project.add_figure(s)
             self.reset()
             self._update_figures_list_view()
+            self.controller_add_segment(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
@@ -563,10 +565,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._project.add_restriction(restr, (figure_name,))
             except CannotSolveSystemError:
                 pass
-
-            self.controller_st = ControllerSt.NOTHING
-            self._chosen_bindings = []
             self.reset()
+
+            controller_name = f'controller_restr_{name}'
+            getattr(self, controller_name)(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
             self._reset_behind_statuses()
@@ -605,10 +607,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._project.add_restriction(restr, (f1_name, f2_name))
             except CannotSolveSystemError:
                 pass
-
-            self.controller_st = ControllerSt.NOTHING
-            self._chosen_bindings = []
             self.reset()
+
+            controller_name = f'controller_restr_{name}'
+            getattr(self, controller_name)(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
             self._reset_behind_statuses()
