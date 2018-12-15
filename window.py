@@ -269,7 +269,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.field_length_add_segment.setValue(params['length'])
             self.field_length_add_segment.blockSignals(False)
             self.field_angle_add_segment.blockSignals(True)
-            self.field_angle_add_segment.setValue(params['angle'])
+            self.field_angle_add_segment.setValue(params['angle']*180/pi)
             self.field_angle_add_segment.blockSignals(False)
 
             # Select field with focus
