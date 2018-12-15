@@ -2,6 +2,7 @@ from contracts import contract
 import numpy as np
 
 BIG_DISTANCE = 10000
+BIG_NUMBER = 10000000
 
 
 class IncorrectParamError(Exception):
