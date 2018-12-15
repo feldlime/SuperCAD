@@ -17,8 +17,9 @@ from contracts import contract, new_contract
 from itertools import combinations
 from collections import defaultdict
 import re
+import types
 
-from utils import IncorrectParamValue
+from utils import IncorrectParamValue, BIG_NUMBER
 
 from diagnostic_context import measure, measured, measured_total, measure_total, DEFAULT_CONTEXT_TOTAL as context_total
 
@@ -31,6 +32,8 @@ figures_values_contract = new_contract('figures_values',
                                        'dict(str: dict(str: float))')
 
 number_pattern = re.compile(r'-?[ ]?\d+\.?\d*')
+
+empty_dict = types.MappingProxyType({})
 
 
 @contract(base_name='str', object_name='str', returns='str')
@@ -605,14 +608,14 @@ class EquationsSystem:
                     symbol_name: current_values[symbol_name]
                     for symbol_name in symbols
                 }
-                desired_values.update(optimizing_values_in_subgraph)
+                # desired_values.update(optimizing_values_in_subgraph)
 
                 equations_names = set([edge[2]['equation_name']
                                        for edge in subgraph.edges(data=True)])
                 equations = [self._equations[name] for name in equations_names]
 
                 res = self._solve_optimization_task(equations, symbols,
-                                                    desired_values)
+                                                    desired_values, optimizing_values_in_subgraph)
                 result.update(res)
 
         return roll_up_values_dict(result)
@@ -637,37 +640,37 @@ class EquationsSystem:
     @contract(system='list[N]', symbols='dict[M], M >= N',
               desired_values='dict[M]', returns='dict[M]')
     def _solve_optimization_task(self, system: list, symbols: dict,
-                                 desired_values: dict) -> dict:
+                                 desired_values: dict, high_priority_desired_values: dict = empty_dict) -> dict:
         assert set(symbols.keys()) == set(desired_values.keys()), \
             'symbols.keys() must be equal to best_values.keys()'
 
-        # Simplify by substitutions
-        substitutor = Substitutor()
-        try:
-            with measure('substitutor fit'):
-                substitutor.fit(system, symbols)
-        except SubstitutionError as e:
-            raise CannotSolveSystemError(f'{type(e)}: {e.args}')
-
-        with measure('substitutor sub'):
-            simplified_system = substitutor.sub(system)
-        print(context_total.get_times())
-
-        # Check easy inconsistency
-        if sympy_false in simplified_system:
-            raise SystemIncompatibleError('Get BooleanFalse in system.')
-
-        # Check easy inconsistency
-        if sympy_true in simplified_system:
-            raise SystemOverfittedError('Get BooleanTrue in system.')
-
-        system = simplified_system
+        # # Simplify by substitutions
+        # substitutor = Substitutor()
+        # try:
+        #     with measure('substitutor fit'):
+        #         substitutor.fit(system, symbols)
+        # except SubstitutionError as e:
+        #     raise CannotSolveSystemError(f'{type(e)}: {e.args}')
+        #
+        # with measure('substitutor sub'):
+        #     simplified_system = substitutor.sub(system)
+        # print(context_total.get_times())
+        #
+        # # Check easy inconsistency
+        # if sympy_false in simplified_system:
+        #     raise SystemIncompatibleError('Get BooleanFalse in system.')
+        #
+        # # Check easy inconsistency
+        # if sympy_true in simplified_system:
+        #     raise SystemOverfittedError('Get BooleanTrue in system.')
+        #
+        # system = simplified_system
 
         # ############################################################
         if len(system) == len(symbols):  # Optimization
             result = self._solve_square_system(system, symbols, desired_values)
             result = {name: value for name, value in result.items()}
-            result = substitutor.restore(result)
+            # result = substitutor.restore(result)
             return result
 
         lambdas_names = [compose_full_name('lambda', str(i))
@@ -685,13 +688,17 @@ class EquationsSystem:
         if loss_part2 == 0:  # System is empty -> no lambdas
             loss_part2 = sympy_Integer(0)  # To be possible to diff
 
-        # TODO: do more correct
-        for sub_sym in substitutor.subs.keys():
-            symbols.pop(sub_sym)
+        # for sub_sym in substitutor.subs.keys():
+        #     symbols.pop(sub_sym)
 
         with measure('get equations with diff'):
-            equations = [Eq(x - desired_values[name] + loss_part2.diff(x), 0)
-                         for name, x in symbols.items()]
+            equations = [0] * len(symbols)
+            for i, (name, sym) in enumerate(symbols.items()):
+                if name in high_priority_desired_values:
+                    eq = Eq(BIG_NUMBER * (sym - high_priority_desired_values[name]) + loss_part2.diff(sym), 0)
+                else:
+                    eq = Eq(sym - desired_values[name] + loss_part2.diff(sym), 0)
+                equations[i] = eq
 
         equations.extend(system)
         lambdas_dict.update(symbols)
@@ -700,7 +707,7 @@ class EquationsSystem:
 
         result = {name: value for name, value in result.items()
                   if split_full_name(name)[0] != 'lambda'}
-        result = substitutor.restore(result)
+        # result = substitutor.restore(result)
         return result
 
     @classmethod
