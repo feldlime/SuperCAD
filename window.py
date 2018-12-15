@@ -505,7 +505,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 elif binding_spot_type == 'end':
                     coo = coo[2:]
                 else:  # center
-                    coo = coo[0] + coo[2] / 2, coo[1] + coo[3] / 2
+                    coo = (coo[0] + coo[2]) / 2, (coo[1] + coo[3]) / 2
                 restr = SegmentSpotFixed(*coo, binding_spot_type)
             else:
                 raise RuntimeError(f'Unexpected binding type {type(binding)}')
