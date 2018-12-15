@@ -47,6 +47,9 @@ class GLWindowProcessor:
 
         self._glwindow.setSizePolicy(sizePolicy)
 
+        # Set focus on window for keyPressEvent
+        self._glwindow.setFocusPolicy(Qt.StrongFocus)
+
     @property
     def center(self) -> tuple:
         return self._glwindow.width() // 2, self._glwindow.height() // 2
@@ -116,11 +119,4 @@ class GLWindowProcessor:
                     or isinstance(binding, allowed_bindings_types):
                 self._current_bindings.append(binding)
                 # self._current_bindings.append(binding)
-
-    def handle_mouse_release_event(self,
-                                   bindings,
-                                   event,
-                                   choose,
-                                   controller_work_st):
-        pass
 
