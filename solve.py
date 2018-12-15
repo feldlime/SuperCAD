@@ -644,33 +644,45 @@ class EquationsSystem:
         assert set(symbols.keys()) == set(desired_values.keys()), \
             'symbols.keys() must be equal to best_values.keys()'
 
-        # # Simplify by substitutions
-        # substitutor = Substitutor()
-        # try:
-        #     with measure('substitutor fit'):
-        #         substitutor.fit(system, symbols)
-        # except SubstitutionError as e:
-        #     raise CannotSolveSystemError(f'{type(e)}: {e.args}')
-        #
-        # with measure('substitutor sub'):
-        #     simplified_system = substitutor.sub(system)
-        # print(context_total.get_times())
-        #
-        # # Check easy inconsistency
-        # if sympy_false in simplified_system:
-        #     raise SystemIncompatibleError('Get BooleanFalse in system.')
-        #
-        # # Check easy inconsistency
-        # if sympy_true in simplified_system:
-        #     raise SystemOverfittedError('Get BooleanTrue in system.')
-        #
-        # system = simplified_system
+        # Simplify by substitutions
+        substitutor = Substitutor()
+        try:
+            with measure('substitutor fit'):
+                substitutor.fit(system, symbols)
+        except SubstitutionError as e:
+            raise CannotSolveSystemError(f'{type(e)}: {e.args}')
+
+        with measure('substitutor sub'):
+            simplified_system = substitutor.sub(system)
+        print(context_total.get_times())
+
+        # Check easy inconsistency
+        if sympy_false in simplified_system:
+            raise SystemIncompatibleError('Get BooleanFalse in system.')
+
+        # Check easy inconsistency
+        if sympy_true in simplified_system:
+            raise SystemOverfittedError('Get BooleanTrue in system.')
+
+        system = simplified_system
+
+        # If high priority values are keys in subs they will never be used.
+        # So use values from subs as high priority values.
+        # ###  E.g desired_values = {'x1': 1, 'x2': 1}, hpdv = {'x1': 5},
+        # system = [Eq(x1, x2)].
+        # Subs will be {x1: x2}.
+        # If not change we will optimize x2 -> 1, x1 = x2 = 1.
+        # So we change hpdv to {'x2': 5}.
+        for k, v in substitutor.subs.items():
+            if str(k) in high_priority_desired_values:
+                cur_v = high_priority_desired_values.pop(str(k))
+                high_priority_desired_values[str(v)] = cur_v
 
         # ############################################################
         if len(system) == len(symbols):  # Optimization
             result = self._solve_square_system(system, symbols, desired_values)
             result = {name: value for name, value in result.items()}
-            # result = substitutor.restore(result)
+            result = substitutor.restore(result)
             return result
 
         lambdas_names = [compose_full_name('lambda', str(i))
@@ -688,8 +700,8 @@ class EquationsSystem:
         if loss_part2 == 0:  # System is empty -> no lambdas
             loss_part2 = sympy_Integer(0)  # To be possible to diff
 
-        # for sub_sym in substitutor.subs.keys():
-        #     symbols.pop(sub_sym)
+        for sub_sym in substitutor.subs.keys():
+            symbols.pop(sub_sym)
 
         with measure('get equations with diff'):
             equations = [0] * len(symbols)
@@ -707,7 +719,7 @@ class EquationsSystem:
 
         result = {name: value for name, value in result.items()
                   if split_full_name(name)[0] != 'lambda'}
-        # result = substitutor.restore(result)
+        result = substitutor.restore(result)
         return result
 
     @classmethod
