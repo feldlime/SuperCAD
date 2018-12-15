@@ -23,7 +23,9 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    # logfile_name = f'log.log'
+
+    logfile_name = f'log.log'
+
     logfile_format = '[%(asctime)s] %(name)-20s %(levelname)-8s %(message)s'
     # logfile_format = '%(name)-20s %(levelname)-8s %(message)s'
     logging.basicConfig(

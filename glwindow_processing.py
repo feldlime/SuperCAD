@@ -56,8 +56,9 @@ class GLWindowProcessor:
 
     def paint_all(self, event: QPaintEvent,
                   figures: Dict[str, Figure],
+                  selected_figures: list,
                   painted_figure: Optional[Figure] = None,
-                  selected_figure: Optional[Figure] = None):
+                  ):
         # self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self._glwindow)
@@ -83,7 +84,7 @@ class GLWindowProcessor:
                     f'Unexpected figure type {type(painted_figure)}')
 
         # Paint selected figure
-        if selected_figure is not None:
+        for selected_figure in selected_figures:
             coo = selected_figure.get_base_representation()
             if isinstance(selected_figure, Point):
                 paint.paint_point(painter, coo, 6, Qt.cyan)
