@@ -731,10 +731,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
                         controller(ControllerCmd.STEP, bindings)
 
             if self.action_st == ActionSt.MOVE:
-                self._project.commit()
+                try:
+                    self._project.move_figure(self._moved_binding, x, y)
+                    self.update_fields()
+                except CannotSolveSystemError:
+                    self._project.rollback()
+                else:
+                    self._project.commit()
                 self.action_st = ActionSt.NOTHING
             if self.action_st == ActionSt.MOVE_WHILE_SELECTED:
-                self._project.commit()
+                try:
+                    self._project.move_figure(self._moved_binding, x, y)
+                    self.update_fields()
+                except CannotSolveSystemError:
+                    self._project.rollback()
+                else:
+                    self._project.commit()
                 self.action_st = ActionSt.SELECTED
 
             elif self.action_st == ActionSt.BINDING_PRESSED:
