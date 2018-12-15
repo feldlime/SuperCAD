@@ -239,23 +239,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.widget_elements_table.addTopLevelItems([self.widget_elements_table_figures,
                                                      self.widget_elements_table_restrictions])
 
-
-
-
-    # def widget_elements_table.
-
-
     def update_fields(self):
         self._logger.debug('update fields')
         if self._created_figure is not None:
             print('created figure')
             figure = self._created_figure
-        elif str(self._selected_figure_name) not in ('None',
-                                                     'Elements',
-                                                     'Restrictions'):
+        elif self._selected_figure_name is not None:
+            if str(self._selected_figure_name) not in ('Elements',
+                                                       'Restrictions'):
 
-            print('selected figure ', self._selected_figure_name)
-            figure = self._project.figures[self._selected_figure_name]
+                print('selected figure ', self._selected_figure_name)
+                figure = self._project.figures[self._selected_figure_name]
         else:
             return
 
@@ -324,10 +318,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # TODO: Move mouse
 
     def begin_figure_selection(self):
-        if str(self._selected_figure_name) in ('None',
-                                               'Elements',
-                                               'Restrictions'):
-            return
+        if self._selected_figure_name is not None:
+            if str(self._selected_figure_name) in ('Elements',
+                                                   'Restrictions'):
+                return
         print('begin figure selection', self._selected_figure_name)
 
         selected_figure_name = self._selected_figure_name
@@ -641,10 +635,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # self._logger.debug('paintEvent')
 
         selected_figure = None
-        if str(self._selected_figure_name) not in ('None',
-                                                   'Elements',
-                                                   'Restrictions'):
-            selected_figure = self._project.figures[self._selected_figure_name]
+        if self._selected_figure_name is not None:
+            if str(self._selected_figure_name) not in ('Elements',
+                                                       'Restrictions'):
+                selected_figure = self._project.figures[self._selected_figure_name]
 
         self._glwindow_proc.paint_all(
             event,
