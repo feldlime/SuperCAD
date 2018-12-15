@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import (QOpenGLWidget,
                              QFileDialog,
                              QTreeWidgetItem)
 from PyQt5.QtCore import Qt, QStringListModel, QItemSelectionModel
-from PyQt5 import QtCore, QtGui
+# from PyQt5 import QtCore, QtGui
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import (QWidget, QPushButton,
     QHBoxLayout, QVBoxLayout, QApplication)
 from logging import getLogger
@@ -213,10 +214,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_save.triggered['bool'].connect(self.save)
         self.action_save_as.triggered['bool'].connect(self.save_as)
         self.action_open.triggered['bool'].connect(self.open)
-        self.action_reset.triggered['bool'].connect(self.reset)
+        # self.action_reset.triggered['bool'].connect(self.reset)
         self.action_new.triggered['bool'].connect(self.new)
         self.action_exit.triggered['bool'].connect(self.exit)
-        self.action_delete.triggered['bool'].connect(self.delete)
+        # self.action_delete.triggered['bool'].connect(self.delete)
+
+        # self.action_delete = QAction(self._window)
+        # self.action_delete.setObjectName("action_delete")
+        # _translate = QtCore.QCoreApplication.translate
+        # self.action_delete.setShortcut(_translate("window", "Ctrl+D"))
+        # self.action_delete.triggered['bool'].connect(self.delete)
+
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
@@ -783,6 +791,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def keyPressEvent(self, event):
         key = event.key()
+        modifiers = event.modifiers()
         if key == Qt.Key_Enter or key == Qt.Key_Return:
             if self.controller_st == ControllerSt.ADD_POINT:
                 self.controller_add_point(ControllerCmd.SUBMIT)
@@ -796,6 +805,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if name:
                     controller_name = f'controller_{name.lower()}'
                     getattr(self, controller_name)(ControllerCmd.SUBMIT)
+        elif key == Qt.Key_Escape:
+            self.reset()
+        elif modifiers & Qt.ControlModifier:
+            if event.key() == Qt.Key_Y:
+                print('Delete')
 
     def _reset_footer_widgets(self):
         for w_name, widget in self._footer_widgets.items():
