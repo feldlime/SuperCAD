@@ -806,19 +806,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def delete(self, _=None):
         self._logger.debug('delete: start')
         if self._selected_restriction_name is not None:
-            if self._selected_restriction_name in self._project.restrictions:
                 self._project.remove_restriction(self._selected_restriction_name)
-                self._selected_restriction_name = None
-                self._selected_figure_name = None
                 self.reset()
-                self._update_list_view()
 
         elif self._selected_figure_name is not None:
-            if self._selected_figure_name in self._project.figures:
                 self._project.remove_figure(self._selected_figure_name)
-            self._selected_figure_name = None
-            self.reset()
-            self._update_list_view()
+                self.reset()
+
         self.update()
 
     def new(self, _=None):
