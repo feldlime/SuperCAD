@@ -147,34 +147,34 @@ class WindowContent(QOpenGLWidget, Ui_window):
             lambda ev: self.controller_add_segment(ControllerCmd.SHOW)
         )
         self.button_restr_joint.clicked['bool'].connect(
-            self.controller_restr_joint
+            lambda ev: self.controller_restr_joint(ControllerCmd.SHOW)
         )
         self.button_restr_point_on_segment_line.clicked['bool'].connect(
-            self.controller_restr_point_on_segment_line
+            lambda ev: self.controller_restr_point_on_segment_line(ControllerCmd.SHOW)
         )
         self.button_restr_segments_parallel.clicked['bool'].connect(
-            self.controller_restr_segments_parallel
+            lambda ev: self.controller_restr_segments_parallel(ControllerCmd.SHOW)
         )
         self.button_restr_segments_normal.clicked['bool'].connect(
-            self.controller_restr_segments_normal
+            lambda ev: self.controller_restr_segments_normal(ControllerCmd.SHOW)
         )
         self.button_restr_segment_vertical.clicked['bool'].connect(
-            self.controller_restr_segment_vertical
+            lambda ev: self.controller_restr_segment_vertical(ControllerCmd.SHOW)
         )
         self.button_restr_segment_horizontal.clicked['bool'].connect(
-            self.controller_restr_segment_horizontal
+            lambda ev: self.controller_restr_segment_horizontal(ControllerCmd.SHOW)
         )
         self.button_restr_fixed.clicked['bool'].connect(
-            self.controller_restr_fixed
+            lambda ev: self.controller_restr_fixed(ControllerCmd.SHOW)
         )
         self.button_restr_segment_length_fixed.clicked['bool'].connect(
-            self.controller_restr_segment_length_fixed
+            lambda ev: self.controller_restr_segment_length_fixed(ControllerCmd.SHOW)
         )
         self.button_restr_segment_angle_fixed.clicked['bool'].connect(
-            self.controller_restr_segment_angle_fixed
+            lambda ev: self.controller_restr_segment_angle_fixed(ControllerCmd.SHOW)
         )
         self.button_restr_segments_angle_between_fixed.clicked['bool'].connect(
-            self.controller_restr_segment_angle_between_fixed
+            lambda ev: self.controller_restr_segment_angle_between_fixed(ControllerCmd.SHOW)
         )
 
         # Fields
