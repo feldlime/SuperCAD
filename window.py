@@ -689,7 +689,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                         controller = getattr(self, f'controller_{name.lower()}')
                         controller(ControllerCmd.STEP, bindings)
 
-            elif self.controller_st == ControllerSt.NOTHING and self.creation_st == CreationSt.NOTHING:
+            else:  # self.controller_st == ControllerSt.NOTHING:
                 bindings = choose_best_bindings(self._project.bindings, x, y)
                 if len(bindings) > 0:
                     if self.action_st == ActionSt.NOTHING:
@@ -749,7 +749,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._project.commit()
                 self.action_st = ActionSt.SELECTED
 
-            elif self.action_st == ActionSt.BINDING_PRESSED:
+            elif self.action_st == ActionSt.BINDING_PRESSED or self.action_st == ActionSt.BINDING_PRESSED_WHILE_SELECTED:
                 selected_figures = self._moved_binding.get_object_names()
                 self._moved_binding = None
                 if len(selected_figures) == 1:
