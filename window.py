@@ -301,6 +301,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._highlighted_figures = [
                 self._project.figures[f_name]
                 for f_name in restr.get_object_names()]
+            self.update()
 
     def select_figure_on_list_view(self):
         self.widget_elements_table.clearSelection()
