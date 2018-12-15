@@ -214,6 +214,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_open.triggered['bool'].connect(self.open)
         self.action_new.triggered['bool'].connect(self.new)
         self.action_exit.triggered['bool'].connect(self.exit)
+        self.action_delete.triggered['bool'].connect(self.delete)
 
         # List views
         self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
