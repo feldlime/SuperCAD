@@ -242,8 +242,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         if isinstance(figure, Point):
             params = figure.get_params()
+            self.field_x_add_point.blockSignals(True)
             self.field_x_add_point.setValue(params['x'])
+            self.field_x_add_point.blockSignals(False)
+            self.field_y_add_point.blockSignals(True)
             self.field_y_add_point.setValue(params['y'])
+            self.field_y_add_point.blockSignals(False)
             # Select field with focus
             if self.field_x_add_point.hasFocus():
                 self.field_x_add_point.selectAll()
@@ -252,10 +256,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         elif isinstance(figure, Segment):
             params = figure.get_params()
+            self.field_x1_add_segment.blockSignals(True)
             self.field_x1_add_segment.setValue(params['x1'])
+            self.field_x1_add_segment.blockSignals(False)
+            self.field_y1_add_segment.blockSignals(True)
             self.field_y1_add_segment.setValue(params['y1'])
+            self.field_y1_add_segment.blockSignals(False)
+            self.field_x2_add_segment.blockSignals(True)
             self.field_x2_add_segment.setValue(params['x2'])
+            self.field_x2_add_segment.blockSignals(False)
+            self.field_y2_add_segment.blockSignals(True)
             self.field_y2_add_segment.setValue(params['y2'])
+            self.field_y2_add_segment.blockSignals(False)
             self.field_length_add_segment.blockSignals(True)
             self.field_length_add_segment.setValue(params['length'])
             self.field_length_add_segment.blockSignals(False)
