@@ -110,6 +110,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._selected_figure_name = None
 
+        self._bold_figures = []
+
+        self._selected_restriction_name = None
+
     def _setup_useful_aliases(self):
         self._footer_widgets = dict()
         self._left_buttons = dict()
@@ -293,9 +297,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
-        figure_name = self.widget_elements_table.model().itemData(item_idx)[0]
-        self._selected_figure_name = figure_name
-        self.begin_figure_selection()
+        object_name = self.widget_elements_table.model().itemData(item_idx)[0]
+        if object_name in self._project.figures:
+            self._selected_figure_name = object_name
+            self.begin_figure_selection()
+        elif object_name in self._project.restrictions:
+            self._selected_restriction_name = object_name
+            restr = self._project.restrictions[object_name]
+            self._bold_figures = [
+                self._project.figures[f_name]
+                for f_name in restr.get_object_names()]
 
     def select_figure_on_list_view(self):
         self.widget_elements_table.clearSelection()
@@ -318,8 +329,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # TODO: Move mouse
 
     def begin_figure_selection(self):
-        if self._selected_figure_name is not None:
-            if str(self._selected_figure_name) in ('Elements',
+        if self._selected_figure_name is None or str(
+                self._selected_figure_name) in ('Elements',
                                                    'Restrictions'):
                 return
         print('begin figure selection', self._selected_figure_name)
@@ -634,17 +645,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def paintEvent(self, event):
         # self._logger.debug('paintEvent')
 
-        selected_figure = None
+        selected_figures = []
         if self._selected_figure_name is not None:
-            if str(self._selected_figure_name) not in ('Elements',
-                                                       'Restrictions'):
-                selected_figure = self._project.figures[self._selected_figure_name]
+                selected_figures.append(self._project.figures[
+                    self._selected_figure_name])
+        selected_figures.extend(self._bold_figures)
+
 
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
+            selected_figures,
             self._created_figure,
-            selected_figure
         )
 
     def mousePressEvent(self, event):
@@ -775,7 +787,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif ControllerWorkSt.is_restr(self.controller_work_st):
                 name = None
                 for name in dir(ControllerWorkSt):
-                    if re.match('^RESTR_', name):
+                    if re.match('^RESTR_', name) and getattr(ControllerWorkSt,
+                                                             name) == \
+                            self.controller_work_st:
                         break
                 if name:
                     controller_name = f'controller_{name.lower()}'
@@ -826,6 +840,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._selected_figure_name = None
         self.chosen_bindings = []
         self._selected_binding = None
+        self._selected_restriction_name = None
+        self._bold_figures = []
 
         self._hide_footer_widgets()
         self._uncheck_left_buttons()
