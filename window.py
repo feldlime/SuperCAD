@@ -96,19 +96,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_st = ActionSt.NOTHING  # Moving and changing figures
 
         # Special attributes
-        self._moved_binding = None  # Binding used to move figure
         self._selected_figure_name = None  # Name of figure that selected now
-        self._chosen_bindings = []  # Selected bindings for restriction
-        self._created_figure_xxx = None  # Figure that is created at this moment
-        self._filename = None
-
-        self._selected_binding = None
-
-        self._selected_figure_name = None
-
-        self._bold_figures = []
-
         self._selected_restriction_name = None
+        self._created_figure = None  # Figure that is created at this moment
+        self._highlighted_figures = []
+        self._moved_binding = None  # Binding used to move figure
+        self._restriction_bindings = []  # Selected bindings for restriction
+        self._filename = None
 
     def _setup_useful_aliases(self):
         self._footer_widgets = dict()
@@ -127,7 +121,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug('setup_ui start')
 
         self.widget_elements_table.hide()
-        self._hide_footer_widgets()
+        self._reset_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
             lambda ev: self.widget_elements_table.show() if ev
             else self.widget_elements_table.hide())
@@ -239,8 +233,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def update_fields(self):
         self._logger.debug('update fields')
-        if self._created_figure_xxx is not None:
-            figure = self._created_figure_xxx
+        if self._created_figure is not None:
+            figure = self._created_figure
         elif self._selected_figure_name is not None:
             figure = self._project.figures[self._selected_figure_name]
         else:
@@ -292,7 +286,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif object_name in self._project.restrictions:
             self._selected_restriction_name = object_name
             restr = self._project.restrictions[object_name]
-            self._bold_figures = [
+            self._highlighted_figures = [
                 self._project.figures[f_name]
                 for f_name in restr.get_object_names()]
 
@@ -310,8 +304,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def change_created_or_selected_figure(self, field: str, value: float):
         # For angle value in radians
-        if self._created_figure_xxx is not None:
-            self._created_figure_xxx.set_param(field, value)
+        if self._created_figure is not None:
+            self._created_figure.set_param(field, value)
         elif self._selected_figure_name is not None:
             self._project.change_figure(self._selected_figure_name, field, value)
 
@@ -338,7 +332,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug(f'controller_add_point start with status {cmd}')
 
         if cmd == ControllerCmd.SUBMIT:
-            figure_coo = self._created_figure_xxx.get_base_representation()
+            figure_coo = self._created_figure.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
             self._update_list_view()
@@ -350,7 +344,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._reset_behind_statuses()
                 self.controller_st = ControllerSt.ADD_POINT
                 self.creation_st = CreationSt.POINT_SET
-                self._created_figure_xxx = Point.from_coordinates(
+                self._created_figure = Point.from_coordinates(
                     self.field_x_add_point.value(),
                     self.field_y_add_point.value()
                 )
@@ -368,7 +362,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug(f'controller_add_segment start with status {cmd}')
 
         if cmd == ControllerCmd.SUBMIT:
-            figure_coo = self._created_figure_xxx.get_base_representation()
+            figure_coo = self._created_figure.get_base_representation()
             s = Segment.from_coordinates(*figure_coo)
             self._project.add_figure(s)
             self.reset()
@@ -384,7 +378,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.creation_st = CreationSt.SEGMENT_START_SET
 
                 # if self.field_length_add_segment.value() != 0:
-                self._created_figure_xxx = Segment.from_coordinates(
+                self._created_figure = Segment.from_coordinates(
                     self.field_x1_add_segment.value(),
                     self.field_y1_add_segment.value(),
                     self.field_x2_add_segment.value(),
@@ -561,14 +555,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if cmd == ControllerCmd.STEP:
             binding = find_first(bindings, check_binding_func)
             if binding:
-                if len(self._chosen_bindings) == 0:
-                    self._chosen_bindings.append(binding)
+                if len(self._restriction_bindings) == 0:
+                    self._restriction_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}').toggle()
 
         elif cmd == ControllerCmd.SUBMIT:
-            if len(self._chosen_bindings) != 1:
+            if len(self._restriction_bindings) != 1:
                 raise RuntimeError
-            binding = self._chosen_bindings[0]
+            binding = self._restriction_bindings[0]
             figure_name = binding.get_object_names()[0]
             restr = get_restr_fun(binding)
             try:
@@ -596,21 +590,21 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _controller_restr_two_objects(self, name, cmd, bindings,
                                       get_restr_fun, check_binding_funcs):
         if cmd == ControllerCmd.STEP:
-            if len(self._chosen_bindings) == 0:
+            if len(self._restriction_bindings) == 0:
                 binding = find_first(bindings, check_binding_funcs[0])
                 if binding:
-                    self._chosen_bindings.append(binding)
+                    self._restriction_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_1').toggle()
-            elif len(self._chosen_bindings) == 1:
+            elif len(self._restriction_bindings) == 1:
                 binding = find_first(bindings, check_binding_funcs[0])
                 if binding:
-                    self._chosen_bindings.append(binding)
+                    self._restriction_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_2').toggle()
 
         elif cmd == ControllerCmd.SUBMIT:
-            if len(self._chosen_bindings) != 2:
+            if len(self._restriction_bindings) != 2:
                 raise RuntimeError
-            b1, b2 = self._chosen_bindings
+            b1, b2 = self._restriction_bindings
             f1_name = b1.get_object_names()[0]
             f2_name = b2.get_object_names()[0]
             restr = get_restr_fun(b1, b2)
@@ -644,14 +638,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if self._selected_figure_name is not None:
                 selected_figures.append(self._project.figures[
                     self._selected_figure_name])
-        selected_figures.extend(self._bold_figures)
+        selected_figures.extend(self._highlighted_figures)
 
 
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
             selected_figures,
-            self._created_figure_xxx,
+            self._created_figure,
         )
 
     def mousePressEvent(self, event):
@@ -665,7 +659,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
             elif self.controller_st == ControllerSt.ADD_SEGMENT:
                 if self.creation_st == CreationSt.SEGMENT_START_SET:
-                    self._created_figure_xxx.set_param('x1', x).set_param('y1', y)
+                    self._created_figure.set_param('x1', x).set_param('y1', y)
                     self.creation_st = CreationSt.SEGMENT_END_SET
                     self.field_x2_add_segment.setFocus()
                     self.field_x2_add_segment.selectAll()
@@ -713,15 +707,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         if self.controller_st == ControllerSt.ADD_POINT:
             if self.creation_st == CreationSt.POINT_SET:
-                self._created_figure_xxx.set_param('x', x).set_param('y', y)
+                self._created_figure.set_param('x', x).set_param('y', y)
                 self.update_fields()
 
         elif self.controller_st == ControllerSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
-                self._created_figure_xxx.set_param('x1', x).set_param('y1', y)
+                self._created_figure.set_param('x1', x).set_param('y1', y)
                 self.update_fields()
             elif self.creation_st == CreationSt.SEGMENT_END_SET:
-                self._created_figure_xxx.set_param('x2', x).set_param('y2', y)
+                self._created_figure.set_param('x2', x).set_param('y2', y)
                 self.update_fields()
 
         # Work with bindings
@@ -791,21 +785,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     controller_name = f'controller_{name.lower()}'
                     getattr(self, controller_name)(ControllerCmd.SUBMIT)
 
-    def _hide_footer_widgets(self):
+    def _reset_footer_widgets(self):
+        for w_name, widget in self._footer_widgets.items():
+            widget.hide()
+
         for box in self._footer_checkboxes.values():
             if box.checkState() == Qt.Checked:
                 box.toggle()
-        for w_name, widget in self._footer_widgets.items():
-            widget.hide()
-        # self._logger('_hide_footer_widgets')
+
         self.field_x_add_point.setValue(0)
         self.field_y_add_point.setValue(0)
         self.field_x1_add_segment.setValue(0)
         self.field_y1_add_segment.setValue(0)
         self.field_x2_add_segment.setValue(0)
         self.field_y2_add_segment.setValue(0)
-
-        self._selected_figure_name = None
+        self.field_length_add_segment.setValue(0)
+        self.field_angle_add_segment.setValue(0)
 
     def _uncheck_left_buttons(self):
         for _, button in self._left_buttons.items():
@@ -834,14 +829,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.update()
 
     def _reset_behind_statuses(self):
-        self._created_figure_xxx = None
-        self._selected_figure_name = None
-        self.chosen_bindings = []
-        self._moved_binding = None
+        self._selected_figure_name = None  # Name of figure that selected now
         self._selected_restriction_name = None
-        self._bold_figures = []
+        self._created_figure = None  # Figure that is created at this moment
+        self._highlighted_figures = []
+        self._moved_binding = None  # Binding used to move figure
+        self._restriction_bindings = []  # Selected bindings for restriction
+        self._filename = None
 
-        self._hide_footer_widgets()
+        self._reset_footer_widgets()
         self._uncheck_left_buttons()
 
     def _reset_statuses(self):
