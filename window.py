@@ -99,7 +99,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._moved_binding = None  # Binding used to move figure
         self._selected_figure_name = None  # Name of figure that selected now
         self._chosen_bindings = []  # Selected bindings for restriction
-        self._created_figure = None  # Figure that is created at this moment
+        self._created_figure_xxx = None  # Figure that is created at this moment
         self._filename = None
 
         self._selected_binding = None
@@ -239,16 +239,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def update_fields(self):
         self._logger.debug('update fields')
-        if self._created_figure is not None:
-            figure = self._created_figure
+        if self._created_figure_xxx is not None:
+            figure = self._created_figure_xxx
         elif self._selected_figure_name is not None:
-            if str(self._selected_figure_name) not in ('Elements',
-                                                       'Restrictions'):
-
-                print('selected figure ', self._selected_figure_name)
-                figure = self._project.figures[self._selected_figure_name]
-
-
+            figure = self._project.figures[self._selected_figure_name]
         else:
             return
 
@@ -289,22 +283,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             # elif self.field_angle_add_segment.hasFocus():
             #     self.field_angle_add_segment.selectAll()
 
-    def keyPressEvent(self, event):
-        key = event.key()
-        if key == Qt.Key_Enter or key == Qt.Key_Return:
-            if self.controller_st == ControllerSt.ADD_POINT:
-                self.controller_add_point(ControllerCmd.SUBMIT)
-            elif self.controller_st == ControllerSt.ADD_SEGMENT:
-                self.controller_add_segment(ControllerCmd.SUBMIT)
-            elif ControllerSt.is_restr(self.controller_st):
-                name = None
-                for name in dir(ControllerSt):
-                    if re.match('^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
-                        break
-                if name:
-                    controller_name = f'controller_{name.lower()}'
-                    getattr(self, controller_name)(ControllerCmd.SUBMIT)
-
     def select_figure_on_plane(self, item_idx):
         # I don't know why [0]
         object_name = self.widget_elements_table.model().itemData(item_idx)[0]
@@ -332,8 +310,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def change_created_or_selected_figure(self, field: str, value: float):
         # For angle value in radians
-        if self._created_figure is not None:
-            self._created_figure.set_param(field, value)
+        if self._created_figure_xxx is not None:
+            self._created_figure_xxx.set_param(field, value)
         elif self._selected_figure_name is not None:
             self._project.change_figure(self._selected_figure_name, field, value)
 
@@ -360,7 +338,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug(f'controller_add_point start with status {cmd}')
 
         if cmd == ControllerCmd.SUBMIT:
-            figure_coo = self._created_figure.get_base_representation()
+            figure_coo = self._created_figure_xxx.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
             self._update_list_view()
@@ -372,7 +350,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._reset_behind_statuses()
                 self.controller_st = ControllerSt.ADD_POINT
                 self.creation_st = CreationSt.POINT_SET
-                self._created_figure = Point.from_coordinates(
+                self._created_figure_xxx = Point.from_coordinates(
                     self.field_x_add_point.value(),
                     self.field_y_add_point.value()
                 )
@@ -390,7 +368,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug(f'controller_add_segment start with status {cmd}')
 
         if cmd == ControllerCmd.SUBMIT:
-            figure_coo = self._created_figure.get_base_representation()
+            figure_coo = self._created_figure_xxx.get_base_representation()
             s = Segment.from_coordinates(*figure_coo)
             self._project.add_figure(s)
             self.reset()
@@ -399,27 +377,28 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_add_segment(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
+            print('action st', self.action_st)
             if self.action_st == ActionSt.NOTHING:
                 self._reset_behind_statuses()
                 self.controller_st = ControllerSt.ADD_SEGMENT
                 self.creation_st = CreationSt.SEGMENT_START_SET
 
-                if self.field_length_add_segment.value() != 0:
-                    self._created_figure = Segment.from_coordinates(
-                        self.field_x1_add_segment.value(),
-                        self.field_y1_add_segment.value(),
-                        self.field_x2_add_segment.value(),
-                        self.field_y2_add_segment.value(),
-                    )
-                else:
-                    self._created_figure = Segment(
-                        start=(
-                            self.field_x1_add_segment.value(),
-                            self.field_y1_add_segment.value()
-                        ),
-                        angle=self.field_length_add_segment.value(),
-                        length=self.field_angle_add_segment.value()
-                    )
+                # if self.field_length_add_segment.value() != 0:
+                self._created_figure_xxx = Segment.from_coordinates(
+                    self.field_x1_add_segment.value(),
+                    self.field_y1_add_segment.value(),
+                    self.field_x2_add_segment.value(),
+                    self.field_y2_add_segment.value(),
+                )
+                # else:
+                #     self._created_figure = Segment(
+                #         start=(
+                #             self.field_x1_add_segment.value(),
+                #             self.field_y1_add_segment.value()
+                #         ),
+                #         angle=self.field_length_add_segment.value(),
+                #         length=self.field_angle_add_segment.value()
+                #     )
 
             self.widget_add_segment.show()
             self.field_x1_add_segment.setFocus()
@@ -514,6 +493,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_fixed(self, cmd, bindings: list = None):
+        print(f'fixed: cmd: {cmd}')
         def get_restr_fun(binding):
             figure_name = binding.get_object_names()[0]
             coo = self._project.figures[figure_name].get_base_representation()
@@ -658,7 +638,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     # ====================================== Events ========================
     def paintEvent(self, event):
-        self._logger.info('paintEvent')
+        # self._logger.info('paintEvent')
 
         selected_figures = []
         if self._selected_figure_name is not None:
@@ -671,7 +651,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             event,
             self._project.figures,
             selected_figures,
-            self._created_figure,
+            self._created_figure_xxx,
         )
 
     def mousePressEvent(self, event):
@@ -685,13 +665,20 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
             elif self.controller_st == ControllerSt.ADD_SEGMENT:
                 if self.creation_st == CreationSt.SEGMENT_START_SET:
-                    self._created_figure.set_param('x1', x).set_param('y1', y)
+                    self._created_figure_xxx.set_param('x1', x).set_param('y1', y)
                     self.creation_st = CreationSt.SEGMENT_END_SET
                     self.field_x2_add_segment.setFocus()
                     self.field_x2_add_segment.selectAll()
                 elif self.creation_st == CreationSt.SEGMENT_END_SET:
                     self.controller_add_segment(ControllerCmd.SUBMIT)
-                    self._created_figure = None
+
+            elif ControllerSt.is_restr(self.controller_st):
+                # Make restriction step
+                bindings = choose_best_bindings(self._project.bindings, x, y)
+                for name in dir(ControllerSt):
+                    if re.match(r'^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
+                        controller = getattr(self, f'controller_{name.lower()}')
+                        controller(ControllerCmd.STEP, bindings)
 
             elif self.controller_st == ControllerSt.NOTHING and self.creation_st == CreationSt.NOTHING:
                 bindings = choose_best_bindings(self._project.bindings, x, y)
@@ -705,7 +692,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.update()
 
     def mouseMoveEvent(self, event):
-        self._logger.debug('mouseMoveEvent: start')
+        # self._logger.debug('mouseMoveEvent: start')
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
         if self.action_st == ActionSt.BINDING_PRESSED:
@@ -726,15 +713,15 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         if self.controller_st == ControllerSt.ADD_POINT:
             if self.creation_st == CreationSt.POINT_SET:
-                self._created_figure.set_param('x', x).set_param('y', y)
+                self._created_figure_xxx.set_param('x', x).set_param('y', y)
                 self.update_fields()
 
         elif self.controller_st == ControllerSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
-                self._created_figure.set_param('x1', x).set_param('y1', y)
+                self._created_figure_xxx.set_param('x1', x).set_param('y1', y)
                 self.update_fields()
             elif self.creation_st == CreationSt.SEGMENT_END_SET:
-                self._created_figure.set_param('x2', x).set_param('y2', y)
+                self._created_figure_xxx.set_param('x2', x).set_param('y2', y)
                 self.update_fields()
 
         # Work with bindings
@@ -758,15 +745,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if event.button() == Qt.LeftButton:
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
-            if self.controller_st != ControllerSt.NOTHING:
-                # Make restriction step
-                bindings = choose_best_bindings(self._project.bindings, x, y)
-                for name in dir(ControllerSt):
-                    if re.match(r'^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
-                        controller = getattr(
-                            self, f'controller_{name.lower()}')
-                        controller(ControllerCmd.STEP, bindings)
-
             if self.action_st == ActionSt.MOVE:
                 try:
                     self._project.move_figure(self._moved_binding, x, y)
@@ -776,7 +754,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 else:
                     self._project.commit()
                 self.action_st = ActionSt.NOTHING
-            if self.action_st == ActionSt.MOVE_WHILE_SELECTED:
+
+            elif self.action_st == ActionSt.MOVE_WHILE_SELECTED:
                 try:
                     self._project.move_figure(self._moved_binding, x, y)
                     self.update_fields()
@@ -795,6 +774,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.action_st = ActionSt.SELECTED
 
         self.update()
+
+    def keyPressEvent(self, event):
+        key = event.key()
+        if key == Qt.Key_Enter or key == Qt.Key_Return:
+            if self.controller_st == ControllerSt.ADD_POINT:
+                self.controller_add_point(ControllerCmd.SUBMIT)
+            elif self.controller_st == ControllerSt.ADD_SEGMENT:
+                self.controller_add_segment(ControllerCmd.SUBMIT)
+            elif ControllerSt.is_restr(self.controller_st):
+                name = None
+                for name in dir(ControllerSt):
+                    if re.match('^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
+                        break
+                if name:
+                    controller_name = f'controller_{name.lower()}'
+                    getattr(self, controller_name)(ControllerCmd.SUBMIT)
 
     def _hide_footer_widgets(self):
         for box in self._footer_checkboxes.values():
@@ -839,7 +834,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.update()
 
     def _reset_behind_statuses(self):
-        self._created_figure = None
+        self._created_figure_xxx = None
         self._selected_figure_name = None
         self.chosen_bindings = []
         self._moved_binding = None
