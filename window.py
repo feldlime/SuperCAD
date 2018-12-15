@@ -291,11 +291,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # I don't know why [0]
         object_name = self.widget_elements_table.model().itemData(item_idx)[0]
         if object_name in self._project.figures:
-            self._selected_restriction_name = None
+            self._reset_behind_statuses()
             self._selected_figure_name = object_name
             self.begin_figure_selection()
         elif object_name in self._project.restrictions:
-            self._selected_figure_name = None
+            self._reset_behind_statuses()
             self._selected_restriction_name = object_name
             restr = self._project.restrictions[object_name]
             self._highlighted_figures = [
