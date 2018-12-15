@@ -640,13 +640,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self._selected_figure_name])
         selected_figures.extend(self._highlighted_figures)
 
-
         self._glwindow_proc.paint_all(
             event,
             self._project.figures,
             selected_figures,
             self._created_figure,
         )
+
+        self._update_list_view()
 
     def mousePressEvent(self, event):
         self._logger.debug('mousePressEvent: start')
