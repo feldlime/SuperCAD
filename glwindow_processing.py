@@ -55,6 +55,8 @@ class GLWindowProcessor:
         return self._glwindow.width() // 2, self._glwindow.height() // 2
 
     def paint_all(self, event: QPaintEvent,
+                  mouse_xy,
+                  bindings,
                   figures: Dict[str, Figure],
                   selected_figures: list,
                   painted_figure: Optional[Figure] = None,
@@ -69,7 +71,7 @@ class GLWindowProcessor:
 
         # self._logger.debug(f'current_bindings: {self._current_bindings}')
         paint.paint_all(
-            painter, figures, self._current_bindings, self._mouse_xy
+            painter, figures, bindings, mouse_xy
         )
 
         # Paint painted figure
@@ -101,22 +103,5 @@ class GLWindowProcessor:
     def to_real_xy(self, x, y) -> tuple:
         return x - self.center[0], -(y - self.center[1])
 
-    def handle_mouse_move_event(
-            self, event, bindings: List[Binding], figures: Dict[str, Figure],
-            allowed_bindings_types: Optional[Tuple[Type, ...]] = None
-    ):
-        # TODO: Status
-        # self._logger.debug('handle_mouse_move_event start')
 
-        # Convert mouse coordinates to drawing space
-        x, y = self.to_real_xy(event.x(), event.y())
-        self._mouse_xy = (x, y)
-
-        best_bindings = choose_best_bindings(bindings, x, y)
-        self._current_bindings = []
-        for binding in best_bindings:
-            if allowed_bindings_types is None \
-                    or isinstance(binding, allowed_bindings_types):
-                self._current_bindings.append(binding)
-                # self._current_bindings.append(binding)
 

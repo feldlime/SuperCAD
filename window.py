@@ -96,12 +96,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_st = ActionSt.NOTHING  # Moving and changing figures
 
         # Special attributes
+        self._mouse_xy = (0, 0)
         self._selected_figure_name = None  # Name of figure that selected now
         self._selected_restriction_name = None
         self._created_figure = None  # Figure that is created at this moment
         self._highlighted_figures = []
         self._moved_binding = None  # Binding used to move figure
         self._restriction_bindings = []  # Selected bindings for restriction
+        self._current_bindings = []
         self._filename = None
 
     def _setup_useful_aliases(self):
@@ -293,9 +295,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # I don't know why [0]
         object_name = self.widget_elements_table.model().itemData(item_idx)[0]
         if object_name in self._project.figures:
+            self._selected_restriction_name = None
             self._selected_figure_name = object_name
             self.begin_figure_selection()
         elif object_name in self._project.restrictions:
+            self._selected_figure_name = None
             self._selected_restriction_name = object_name
             restr = self._project.restrictions[object_name]
             self._highlighted_figures = [
@@ -383,7 +387,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.controller_add_segment(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
-            print('action st', self.action_st)
             if self.action_st == ActionSt.NOTHING:
                 self._reset_behind_statuses()
                 self.controller_st = ControllerSt.ADD_SEGMENT
@@ -646,6 +649,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def paintEvent(self, event):
         # self._logger.info('paintEvent')
 
+        self._update_current_bindings()
+
         selected_figures = []
         if self._selected_figure_name is not None:
                 selected_figures.append(self._project.figures[
@@ -654,6 +659,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self._glwindow_proc.paint_all(
             event,
+            self._mouse_xy,
+            self._current_bindings,
             self._project.figures,
             selected_figures,
             self._created_figure,
@@ -701,6 +708,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def mouseMoveEvent(self, event):
         # self._logger.debug('mouseMoveEvent: start')
         x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
+        self._mouse_xy = (x, y)
 
         if self.action_st == ActionSt.BINDING_PRESSED:
             self.action_st = ActionSt.MOVE
@@ -730,20 +738,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif self.creation_st == CreationSt.SEGMENT_END_SET:
                 self._created_figure.set_param('x2', x).set_param('y2', y)
                 self.update_fields()
-
-        # Work with bindings
-        if self.controller_st == ControllerSt.RESTR_JOINT:
-            allowed_bindings_types = (PointBinding, SegmentSpotBinding)
-            # TODO: check all variants
-        else:
-            allowed_bindings_types = None
-
-        self._glwindow_proc.handle_mouse_move_event(
-            event,
-            self._project.bindings,
-            self._project.figures,
-            allowed_bindings_types
-        )
 
         self.update()
 
@@ -823,7 +817,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._logger.debug('delete: start')
         if self._selected_figure_name is not None:
             self._project.remove_figure(self._selected_figure_name)
-            self._selected_figure_name = None
+            self._update_current_bindings()
             self.reset()
             self._update_list_view()
         self.update()
@@ -914,3 +908,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
             for name in updateble_type.keys():
                 element = QTreeWidgetItem([name])
                 updateble_type_tree.addChild(element)
+
+    def _update_current_bindings(self):
+        # Work with bindings
+        if self.controller_st == ControllerSt.RESTR_JOINT:
+            allowed_bindings_types = (PointBinding, SegmentSpotBinding)
+            # TODO: check all variants
+        else:
+            allowed_bindings_types = None
+
+        x, y = self._mouse_xy
+        best_bindings = choose_best_bindings(self._project.bindings, x, y)
+        self._current_bindings = []
+        for binding in best_bindings:
+            if allowed_bindings_types is None \
+                    or isinstance(binding, allowed_bindings_types):
+                self._current_bindings.append(binding)
