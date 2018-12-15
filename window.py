@@ -742,23 +742,11 @@ class WindowContent(QOpenGLWidget, Ui_window):
             x, y = self._glwindow_proc.to_real_xy(event.x(), event.y())
 
             if self.action_st == ActionSt.MOVE:
-                try:
-                    self._project.move_figure(self._moved_binding, x, y)
-                    self.update_fields()
-                except CannotSolveSystemError:
-                    self._project.rollback()
-                else:
-                    self._project.commit()
+                self._project.commit()
                 self.action_st = ActionSt.NOTHING
 
             elif self.action_st == ActionSt.MOVE_WHILE_SELECTED:
-                try:
-                    self._project.move_figure(self._moved_binding, x, y)
-                    self.update_fields()
-                except CannotSolveSystemError:
-                    self._project.rollback()
-                else:
-                    self._project.commit()
+                self._project.commit()
                 self.action_st = ActionSt.SELECTED
 
             elif self.action_st == ActionSt.BINDING_PRESSED:
@@ -773,6 +761,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def keyPressEvent(self, event):
         key = event.key()
+        print(key)
         modifiers = event.modifiers()
         if key == Qt.Key_Enter or key == Qt.Key_Return:
             if self.controller_st == ControllerSt.ADD_POINT:
