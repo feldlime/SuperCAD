@@ -121,7 +121,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
 
-        self.widget_elements_table.hide()  # TODO
+        self.widget_elements_table.show()
         self._reset_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
             lambda ev: self.widget_elements_table.show()
