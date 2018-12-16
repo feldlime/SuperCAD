@@ -666,7 +666,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self._restriction_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_1').toggle()
             elif len(self._restriction_bindings) == 1:
-                binding = find_first(bindings, check_binding_funcs[0])
+                binding = find_first(bindings, check_binding_funcs[1])
                 if binding:
                     self._restriction_bindings.append(binding)
                     getattr(self, f'checkbox_restr_{name}_2').toggle()
