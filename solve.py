@@ -7,7 +7,7 @@ from sympy import (
     lambdify,
     true as sympy_true,
     false as sympy_false,
-    Integer as sympy_Integer
+    Integer as sympy_Integer,
 )
 
 import networkx as nx
@@ -21,15 +21,22 @@ import types
 
 from utils import IncorrectParamValue, BIG_NUMBER
 
-from diagnostic_context import measure, measured, measured_total, measure_total, DEFAULT_CONTEXT_TOTAL as context_total
+from diagnostic_context import (
+    measure,
+    measured,
+    measured_total,
+    measure_total,
+    DEFAULT_CONTEXT_TOTAL as context_total,
+)
 
 
 DELIMITER = '___'
 SPECIAL_NAME = 'special_name'
 GROWTH_NODE_NAME = 'growth_node'
 
-figures_values_contract = new_contract('figures_values',
-                                       'dict(str: dict(str: float))')
+figures_values_contract = new_contract(
+    'figures_values', 'dict(str: dict(str: float))'
+)
 
 number_pattern = re.compile(r'-?[ ]?\d+\.?\d*')
 
@@ -106,6 +113,7 @@ class MoreEquationsThanSymbolsError(CannotSolveSystemError):
     We don't now, can be system solved or not,
     but we cannot try to solve it.
     """
+
     pass
 
 
@@ -114,6 +122,7 @@ class SystemOverfittedError(CannotSolveSystemError):
     System contains similar equations
     e.g. [x = 5, x = 5] or [x = 5, x = 10]
     """
+
     pass
 
 
@@ -122,6 +131,7 @@ class SystemIncompatibleError(SystemOverfittedError):
     System contains conflicting equations,
     e.g. [x = y, x = 5, y = 10].
     """
+
     pass
 
 
@@ -209,11 +219,13 @@ class Substitutor:
         else:
             raise SubstitutionError('Cycle in equations graph.')
 
-        subgraphs = [graph.subgraph(c).copy()
-                     for c in nx.connected_components(graph)]
+        subgraphs = [
+            graph.subgraph(c).copy() for c in nx.connected_components(graph)
+        ]
         for subgraph in subgraphs:
-            nodes_in_subs = [node for node in subgraph.nodes
-                             if node in self._subs]
+            nodes_in_subs = [
+                node for node in subgraph.nodes if node in self._subs
+            ]
 
             if len(nodes_in_subs) > 1:  # overfitted
                 raise SubstitutionError('Substitutor get two same keys.')
@@ -251,7 +263,12 @@ class Substitutor:
 
         for eq in system:
             if not self._is_simple_equation(eq):
-                new_eq = eq.subs([(sym_name, value) for sym_name, value in self._subs.items()])
+                new_eq = eq.subs(
+                    [
+                        (sym_name, value)
+                        for sym_name, value in self._subs.items()
+                    ]
+                )
                 new_system.append(new_eq)
 
         return new_system
@@ -336,12 +353,15 @@ class EquationsSystem:
         """
         if figure_name in self._figures_names:
             raise IncorrectParamValue(
-                f'Figure {figure_name} has already exist.')
+                f'Figure {figure_name} has already exist.'
+            )
 
-        symbols_names = [compose_full_name(figure_name, sym)
-                         for sym in symbols_names]
-        new_symbols = {name: Symbol(name)  # TODO: real=True
-                       for name in symbols_names}
+        symbols_names = [
+            compose_full_name(figure_name, sym) for sym in symbols_names
+        ]
+        new_symbols = {
+            name: Symbol(name) for name in symbols_names  # TODO: real=True
+        }
         self._symbols.update(new_symbols)
         self._update_graph()
 
@@ -401,7 +421,8 @@ class EquationsSystem:
             raise IncorrectParamValue(f'Figure {figure_name} does not exist.')
 
         symbols_to_delete = [
-            name for name in self._symbols.keys()
+            name
+            for name in self._symbols.keys()
             if split_full_name(name)[0] == figure_name
         ]
 
@@ -410,8 +431,9 @@ class EquationsSystem:
         self._update_graph()
 
     @contract(restriction_name='str', equations='list')
-    def add_restriction_equations(self, restriction_name: str,
-                                  equations: list):
+    def add_restriction_equations(
+        self, restriction_name: str, equations: list
+    ):
         """
         Add equations for one restriction.
 
@@ -428,12 +450,16 @@ class EquationsSystem:
         """
         if restriction_name in self._restrictions_names:
             raise IncorrectParamValue(
-                f'Restriction {restriction_name} has already exist.')
+                f'Restriction {restriction_name} has already exist.'
+            )
 
-        equations_names = [compose_full_name(restriction_name, str(i))
-                           for i in range(len(equations))]
-        new_equations = {name: eq
-                         for name, eq in zip(equations_names, equations)}
+        equations_names = [
+            compose_full_name(restriction_name, str(i))
+            for i in range(len(equations))
+        ]
+        new_equations = {
+            name: eq for name, eq in zip(equations_names, equations)
+        }
         self._equations.update(new_equations)
         self._update_graph()
 
@@ -454,10 +480,12 @@ class EquationsSystem:
 
         if restriction_name not in self._restrictions_names:
             raise IncorrectParamValue(
-                f'Restriction {restriction_name} does not exists.')
+                f'Restriction {restriction_name} does not exists.'
+            )
 
         equations_to_delete = [
-            name for name in self._equations.keys()
+            name
+            for name in self._equations.keys()
             if split_full_name(name)[0] == restriction_name
         ]
 
@@ -483,15 +511,24 @@ class EquationsSystem:
         current_values = unroll_values_dict(current_values)
 
         result = {}
-        subgraphs = [self._graph.subgraph(c).copy()
-                     for c in nx.connected_components(self._graph)]
+        subgraphs = [
+            self._graph.subgraph(c).copy()
+            for c in nx.connected_components(self._graph)
+        ]
         for subgraph in subgraphs:
-            equations_names = set([edge[2]['equation_name']
-                                   for edge in subgraph.edges(data=True)])
+            equations_names = set(
+                [
+                    edge[2]['equation_name']
+                    for edge in subgraph.edges(data=True)
+                ]
+            )
             equations = [self._equations[name] for name in equations_names]
 
-            symbols = {name: sym for name, sym in self._symbols.items()
-                       if name in subgraph.nodes()}
+            symbols = {
+                name: sym
+                for name, sym in self._symbols.items()
+                if name in subgraph.nodes()
+            }
 
             desired_values = {
                 symbol_name: current_values[symbol_name]
@@ -503,8 +540,11 @@ class EquationsSystem:
 
         return roll_up_values_dict(result)
 
-    @contract(new_equations='list[>0]', current_values='figures_values',
-              returns='figures_values')
+    @contract(
+        new_equations='list[>0]',
+        current_values='figures_values',
+        returns='figures_values',
+    )
     def solve_new(self, new_equations: list, current_values: dict) -> dict:
         """Solve subsystem with new equation.
 
@@ -529,11 +569,13 @@ class EquationsSystem:
             self._add_equation_to_graph(graph, equation, equation_name=name)
 
         result = {}
-        subgraphs = [graph.subgraph(c).copy()
-                     for c in nx.connected_components(graph)]
+        subgraphs = [
+            graph.subgraph(c).copy() for c in nx.connected_components(graph)
+        ]
         for subgraph in subgraphs:
-            equations_in_subgraph_names = \
-                set([e[2]['equation_name'] for e in subgraph.edges(data=True)])
+            equations_in_subgraph_names = set(
+                [e[2]['equation_name'] for e in subgraph.edges(data=True)]
+            )
 
             # Find equations in subgraph from new_equations
             new_equations_in_subgraph_names = []
@@ -554,24 +596,32 @@ class EquationsSystem:
                 [self._equations[name] for name in equations_in_subgraph_names]
             )
 
-            symbols = {name: sym for name, sym in self._symbols.items()
-                       if name in subgraph.nodes()}
+            symbols = {
+                name: sym
+                for name, sym in self._symbols.items()
+                if name in subgraph.nodes()
+            }
 
             desired_values = {
                 symbol_name: current_values[symbol_name]
                 for symbol_name in symbols
             }
 
-            result.update(self._solve_system(
-                subgraph_equations, symbols, desired_values))
+            result.update(
+                self._solve_system(subgraph_equations, symbols, desired_values)
+            )
 
         return roll_up_values_dict(result)
 
     @measured
-    @contract(optimizing_values='figures_values',
-              current_values='figures_values', returns='figures_values')
-    def solve_optimization_task(self, optimizing_values: dict,
-                                current_values: dict) -> dict:
+    @contract(
+        optimizing_values='figures_values',
+        current_values='figures_values',
+        returns='figures_values',
+    )
+    def solve_optimization_task(
+        self, optimizing_values: dict, current_values: dict
+    ) -> dict:
         """Solve subsystem with new equation.
 
         Parameters
@@ -592,8 +642,10 @@ class EquationsSystem:
         current_values = unroll_values_dict(current_values)
 
         result = dict()
-        subgraphs = [self._graph.subgraph(c).copy()
-                     for c in nx.connected_components(self._graph)]
+        subgraphs = [
+            self._graph.subgraph(c).copy()
+            for c in nx.connected_components(self._graph)
+        ]
         for subgraph in subgraphs:
             optimizing_values_in_subgraph = {
                 symbol_name: value
@@ -602,28 +654,44 @@ class EquationsSystem:
             }
 
             if optimizing_values_in_subgraph:
-                symbols = {name: sym for name, sym in self._symbols.items()
-                           if name in subgraph.nodes()}
+                symbols = {
+                    name: sym
+                    for name, sym in self._symbols.items()
+                    if name in subgraph.nodes()
+                }
                 desired_values = {
                     symbol_name: current_values[symbol_name]
                     for symbol_name in symbols
                 }
                 # desired_values.update(optimizing_values_in_subgraph)
 
-                equations_names = set([edge[2]['equation_name']
-                                       for edge in subgraph.edges(data=True)])
+                equations_names = set(
+                    [
+                        edge[2]['equation_name']
+                        for edge in subgraph.edges(data=True)
+                    ]
+                )
                 equations = [self._equations[name] for name in equations_names]
 
-                res = self._solve_optimization_task(equations, symbols,
-                                                    desired_values, optimizing_values_in_subgraph)
+                res = self._solve_optimization_task(
+                    equations,
+                    symbols,
+                    desired_values,
+                    optimizing_values_in_subgraph,
+                )
                 result.update(res)
 
         return roll_up_values_dict(result)
 
-    @contract(system='list', symbols='dict(str: *)',
-              desired_values='dict(str: float)', returns='dict(str: float)')
-    def _solve_system(self, system: list, symbols: dict,
-                      desired_values: dict) -> dict:
+    @contract(
+        system='list',
+        symbols='dict(str: *)',
+        desired_values='dict(str: float)',
+        returns='dict(str: float)',
+    )
+    def _solve_system(
+        self, system: list, symbols: dict, desired_values: dict
+    ) -> dict:
 
         if not system:  # no equations
             return {}
@@ -637,12 +705,22 @@ class EquationsSystem:
         return self._solve_optimization_task(system, symbols, desired_values)
 
     @measured
-    @contract(system='list[N]', symbols='dict[M], M >= N',
-              desired_values='dict[M]', returns='dict[M]')
-    def _solve_optimization_task(self, system: list, symbols: dict,
-                                 desired_values: dict, high_priority_desired_values: dict = empty_dict) -> dict:
-        assert set(symbols.keys()) == set(desired_values.keys()), \
-            'symbols.keys() must be equal to best_values.keys()'
+    @contract(
+        system='list[N]',
+        symbols='dict[M], M >= N',
+        desired_values='dict[M]',
+        returns='dict[M]',
+    )
+    def _solve_optimization_task(
+        self,
+        system: list,
+        symbols: dict,
+        desired_values: dict,
+        high_priority_desired_values: dict = empty_dict,
+    ) -> dict:
+        assert set(symbols.keys()) == set(
+            desired_values.keys()
+        ), 'symbols.keys() must be equal to best_values.keys()'
 
         # Simplify by substitutions
         substitutor = Substitutor()
@@ -685,10 +763,12 @@ class EquationsSystem:
             result = substitutor.restore(result)
             return result
 
-        lambdas_names = [compose_full_name('lambda', str(i))
-                         for i in range(len(system))]
-        lambdas_dict = {name: Symbol(name)  # TODO: real=True
-                        for name in lambdas_names}
+        lambdas_names = [
+            compose_full_name('lambda', str(i)) for i in range(len(system))
+        ]
+        lambdas_dict = {
+            name: Symbol(name) for name in lambdas_names  # TODO: real=True
+        }
         lambdas = lambdas_dict.values()
 
         # Loss function: F = 1/2 * sum((xi - xi0) ** 2) + sum(lambda_j * eqj)
@@ -707,27 +787,42 @@ class EquationsSystem:
             equations = [0] * len(symbols)
             for i, (name, sym) in enumerate(symbols.items()):
                 if name in high_priority_desired_values:
-                    eq = Eq(1000 * (sym - high_priority_desired_values[name]) + loss_part2.diff(sym), 0)
+                    eq = Eq(
+                        1000 * (sym - high_priority_desired_values[name])
+                        + loss_part2.diff(sym),
+                        0,
+                    )
                 else:
-                    eq = Eq(sym - desired_values[name] + loss_part2.diff(sym), 0)
+                    eq = Eq(
+                        sym - desired_values[name] + loss_part2.diff(sym), 0
+                    )
                 equations[i] = eq
 
         equations.extend(system)
         lambdas_dict.update(symbols)
-        result = self._solve_square_system(equations, lambdas_dict,
-                                           desired_values)
+        result = self._solve_square_system(
+            equations, lambdas_dict, desired_values
+        )
 
-        result = {name: value for name, value in result.items()
-                  if split_full_name(name)[0] != 'lambda'}
+        result = {
+            name: value
+            for name, value in result.items()
+            if split_full_name(name)[0] != 'lambda'
+        }
         result = substitutor.restore(result)
         return result
 
     @classmethod
     @measured
-    @contract(system='list[N]', symbols_dict='dict[N]',
-              desired_values='dict | None', returns='dict[N]')
-    def _solve_square_system(cls, system: list, symbols_dict: dict,
-                             desired_values: dict = None):
+    @contract(
+        system='list[N]',
+        symbols_dict='dict[N]',
+        desired_values='dict | None',
+        returns='dict[N]',
+    )
+    def _solve_square_system(
+        cls, system: list, symbols_dict: dict, desired_values: dict = None
+    ):
         """Desired values only for setting initial conditions."""
 
         if len(symbols_dict) != len(system):
@@ -742,8 +837,9 @@ class EquationsSystem:
         if system:
             # Prepare
             canonical_system = cls._system_to_canonical(system)
-            system_function = \
-                cls._system_to_function(canonical_system, symbols_list)
+            system_function = cls._system_to_function(
+                canonical_system, symbols_list
+            )
 
             # Prepare ini values
             ini_values = list(random.random(len(symbols_list)))
@@ -754,7 +850,8 @@ class EquationsSystem:
 
             # Solve
             solution = cls._solve_numeric(
-                system_function, np_array(ini_values))
+                system_function, np_array(ini_values)
+            )
         else:
             solution = []
 
@@ -816,8 +913,9 @@ class EquationsSystem:
         elif len(eq_symbols) == 1:  # Equation like `Eq(figure1_x1, 5)`
             new_node_name = compose_full_name(GROWTH_NODE_NAME, equation_name)
             graph.add_node(new_node_name)
-            graph.add_edge(new_node_name, eq_symbols.pop(),
-                           equation_name=equation_name)
+            graph.add_edge(
+                new_node_name, eq_symbols.pop(), equation_name=equation_name
+            )
         else:
             for u, v in combinations(eq_symbols, 2):
                 graph.add_edge(u, v, equation_name=equation_name)

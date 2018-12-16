@@ -2,16 +2,14 @@ from restrictions import (
     PointFixed,
     SegmentLengthFixed,
     SegmentSpotFixed,
-    PointAndSegmentSpotJoint
+    PointAndSegmentSpotJoint,
 )
 from project import CADProject, ActionImpossible
 from figures import Point, Segment
 from bindings import choose_best_bindings
 import pytest
 import numpy as np
-from utils import (
-    IncorrectParamValue,
-)
+from utils import IncorrectParamValue
 import os
 
 
@@ -83,7 +81,7 @@ class TestProject:
             if not is_sequences_equal(
                 f.get_base_representation(),
                 correct_values[name],
-                equal_type='close'
+                equal_type='close',
             ):
                 return False
         return True
@@ -94,17 +92,12 @@ class TestProject:
         # Add figures
         point1 = Point((1, 2))
         point1_name = project.add_figure(point1)
-        correct_types = {
-            point1_name: Point,
-        }
+        correct_types = {point1_name: Point}
         assert check_objects_types(project.figures, correct_types)
 
         point2 = Point((5, 6))
         point2_name = project.add_figure(point2)
-        correct_types = {
-            point1_name: Point,
-            point2_name: Point,
-        }
+        correct_types = {point1_name: Point, point2_name: Point}
         assert check_objects_types(project.figures, correct_types)
 
         segment1 = Segment((0, 0), 0, 10)
@@ -112,30 +105,24 @@ class TestProject:
         correct_types = {
             point1_name: Point,
             point2_name: Point,
-            segment1_name: Segment
+            segment1_name: Segment,
         }
         assert check_objects_types(project.figures, correct_types)
 
         # Remove figures
         project.remove_figure(point2_name)
-        correct_types = {
-            point1_name: Point,
-            segment1_name: Segment
-        }
+        correct_types = {point1_name: Point, segment1_name: Segment}
         assert check_objects_types(project.figures, correct_types)
 
         with pytest.raises(IncorrectParamValue):
             project.remove_figure(point2_name)
 
         project.remove_figure(segment1_name)
-        correct_types = {
-            point1_name: Point,
-        }
+        correct_types = {point1_name: Point}
         assert check_objects_types(project.figures, correct_types)
 
         project.remove_figure(point1_name)
-        correct_types = {
-        }
+        correct_types = {}
         assert check_objects_types(project.figures, correct_types)
 
     def test_changing_parameters(self):
@@ -153,7 +140,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (0, 0, 10, 0)
+            segment1_name: (0, 0, 10, 0),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -162,21 +149,23 @@ class TestProject:
         answer_1 = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: ((10-new_len) / 2, 0, 10 - (10-new_len) / 2, 0)
+            segment1_name: ((10 - new_len) / 2, 0, 10 - (10 - new_len) / 2, 0),
         }
         answer_2 = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (0, 0, new_len, 0)
+            segment1_name: (0, 0, new_len, 0),
         }
         answer_3 = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (10 - new_len, 0, 10, 0)
+            segment1_name: (10 - new_len, 0, 10, 0),
         }
-        assert self._is_figures_correct(project.figures, answer_1) \
-            or self._is_figures_correct(project.figures, answer_2) \
+        assert (
+            self._is_figures_correct(project.figures, answer_1)
+            or self._is_figures_correct(project.figures, answer_2)
             or self._is_figures_correct(project.figures, answer_3)
+        )
 
     def test_moving(self):
         project = CADProject()
@@ -195,7 +184,7 @@ class TestProject:
         correct_figures = {
             point1_name: (3, 4),
             point2_name: (5, 6),
-            segment1_name: (0, 0, 10, 0)
+            segment1_name: (0, 0, 10, 0),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
         project.commit()
@@ -206,7 +195,7 @@ class TestProject:
         correct_figures = {
             point1_name: (3, 4),
             point2_name: (5, 6),
-            segment1_name: (0, 0, 7, 7)
+            segment1_name: (0, 0, 7, 7),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
         project.commit()
@@ -225,30 +214,29 @@ class TestProject:
         # Fix point1
         r = PointFixed(1, 2)
         p1_fixed_name = project.add_restriction(r, (point1_name,))
-        correct_types = {
-            p1_fixed_name: PointFixed,
-        }
+        correct_types = {p1_fixed_name: PointFixed}
         assert check_objects_types(project.restrictions, correct_types)
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (0, 0, 10, 0)
+            segment1_name: (0, 0, 10, 0),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
         # Join point1 and start of segment1
         r = PointAndSegmentSpotJoint(spot_type='start')
         p1_s1s_joint_name = project.add_restriction(
-            r, (point1_name, segment1_name))
+            r, (point1_name, segment1_name)
+        )
         correct_types = {
             p1_fixed_name: PointFixed,
-            p1_s1s_joint_name: PointAndSegmentSpotJoint
+            p1_s1s_joint_name: PointAndSegmentSpotJoint,
         }
         assert check_objects_types(project.restrictions, correct_types)
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 10, 0)  # Segment set. save length and angle
+            segment1_name: (1, 2, 10, 0),  # Segment set. save length and angle
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -258,13 +246,13 @@ class TestProject:
         correct_types = {
             p1_fixed_name: PointFixed,
             p1_s1s_joint_name: PointAndSegmentSpotJoint,
-            s1e_fixed_name: SegmentSpotFixed
+            s1e_fixed_name: SegmentSpotFixed,
         }
         assert check_objects_types(project.restrictions, correct_types)
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 1, 7)
+            segment1_name: (1, 2, 1, 7),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -272,13 +260,13 @@ class TestProject:
         project.remove_restriction(s1e_fixed_name)
         correct_types = {
             p1_fixed_name: PointFixed,
-            p1_s1s_joint_name: PointAndSegmentSpotJoint
+            p1_s1s_joint_name: PointAndSegmentSpotJoint,
         }
         assert check_objects_types(project.restrictions, correct_types)
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 1, 7)
+            segment1_name: (1, 2, 1, 7),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -288,13 +276,13 @@ class TestProject:
         correct_types = {
             p1_fixed_name: PointFixed,
             p1_s1s_joint_name: PointAndSegmentSpotJoint,
-            s1_fixed_length_name: SegmentLengthFixed
+            s1_fixed_length_name: SegmentLengthFixed,
         }
         assert check_objects_types(project.restrictions, correct_types)
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 1, 5)
+            segment1_name: (1, 2, 1, 5),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -315,18 +303,17 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (0, 0, 10, 1)
+            segment1_name: (0, 0, 10, 1),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
         # Join point1 and start of segment1
         r = PointAndSegmentSpotJoint(spot_type='start')
-        _ = project.add_restriction(
-            r, (point1_name, segment1_name))
+        _ = project.add_restriction(r, (point1_name, segment1_name))
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 10, 1)
+            segment1_name: (1, 2, 10, 1),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -336,7 +323,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 12, 2)  # Segment set. save length and angle
+            segment1_name: (1, 2, 12, 2),  # Segment set. save length and angle
         }
         assert self._is_figures_correct(project.figures, correct_figures)
         project.commit()
@@ -346,7 +333,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 12, 2)
+            segment1_name: (1, 2, 12, 2),
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -432,4 +419,3 @@ class TestProject:
         assert point1_name in project3.figures
 
         os.remove(filename)
-

@@ -4,11 +4,7 @@ import numpy as np
 from itertools import combinations
 from contracts import contract
 
-from utils import (
-    segment_length,
-    ReferencedToObjects,
-    BIG_DISTANCE,
-)
+from utils import segment_length, ReferencedToObjects, BIG_DISTANCE
 from figures import Point, Segment
 
 
@@ -21,7 +17,9 @@ def is_normal_point_binding(binding):
 
 
 def is_any_normal_binding(binding):
-    return isinstance(binding, (SegmentSpotBinding, FullSegmentBinding, PointBinding))
+    return isinstance(
+        binding, (SegmentSpotBinding, FullSegmentBinding, PointBinding)
+    )
 
 
 class Binding:
@@ -176,6 +174,7 @@ class SegmentSpotBinding(CircleBinding, ReferencedToObjects):
         Segment for binding.
     spot_type: {'start', 'end', 'center'}
     """
+
     _n_objects = 1
 
     @contract(radius='number, >0', segment='$Segment', spot_type='str')
@@ -184,7 +183,8 @@ class SegmentSpotBinding(CircleBinding, ReferencedToObjects):
 
         if not isinstance(segment, Segment):
             raise TypeError(
-                f'Given object has type {type(segment)}, not Segment')
+                f'Given object has type {type(segment)}, not Segment'
+            )
         self._segment = segment
 
         if spot_type not in ('start', 'end', 'center'):
@@ -218,6 +218,7 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
     segment2: Segment
         Second segment of intersection for binding.
     """
+
     _n_objects = 2
 
     @contract(radius='number, >0', segment1='$Segment', segment2='$Segment')
@@ -225,10 +226,12 @@ class SegmentsIntersectionBinding(CircleBinding, ReferencedToObjects):
         super().__init__(radius)
         if not isinstance(segment1, Segment):
             raise TypeError(
-                f'Given segment1 has type {type(segment1)}, not Segment')
+                f'Given segment1 has type {type(segment1)}, not Segment'
+            )
         if not isinstance(segment2, Segment):
             raise TypeError(
-                f'Given segment1 has type {type(segment2)}, not Segment')
+                f'Given segment1 has type {type(segment2)}, not Segment'
+            )
         self._segment1 = segment1
         self._segment2 = segment2
 
@@ -293,6 +296,7 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
     segment: Segment
         Segment for binding.
     """
+
     _n_objects = 1
 
     @contract(margin='number, >0', segment='$Segment')
@@ -301,7 +305,8 @@ class FullSegmentBinding(Binding, ReferencedToObjects):
         self._margin = margin
         if not isinstance(segment, Segment):
             raise TypeError(
-                f'Given object has type {type(segment)}, not Segment')
+                f'Given object has type {type(segment)}, not Segment'
+            )
         self._segment = segment
 
     @contract(x='number', y='number', returns='float|None')
@@ -417,10 +422,15 @@ def choose_best_bindings(bindings: list, x, y) -> list:
     return best_bindings
 
 
-@contract(figures='dict[N]', circle_bindings_radius='number, >0',
-          segment_bindings_margin='number, >0', returns='list[>=N]')
-def create_bindings(figures: dict, circle_bindings_radius=8,
-                    segment_bindings_margin=2) -> list:
+@contract(
+    figures='dict[N]',
+    circle_bindings_radius='number, >0',
+    segment_bindings_margin='number, >0',
+    returns='list[>=N]',
+)
+def create_bindings(
+    figures: dict, circle_bindings_radius=8, segment_bindings_margin=2
+) -> list:
     """Create all bindings for all figures.
 
     Parameters
@@ -448,18 +458,21 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
             bindings.append(binding)
 
         elif isinstance(figure, Segment):
-            binding = SegmentSpotBinding(circle_bindings_radius, figure,
-                                         spot_type='start')
+            binding = SegmentSpotBinding(
+                circle_bindings_radius, figure, spot_type='start'
+            )
             binding.set_object_names([name])
             bindings.append(binding)
 
-            binding = SegmentSpotBinding(circle_bindings_radius, figure,
-                                         spot_type='end')
+            binding = SegmentSpotBinding(
+                circle_bindings_radius, figure, spot_type='end'
+            )
             binding.set_object_names([name])
             bindings.append(binding)
 
-            binding = SegmentSpotBinding(circle_bindings_radius, figure,
-                                         spot_type='center')
+            binding = SegmentSpotBinding(
+                circle_bindings_radius, figure, spot_type='center'
+            )
             binding.set_object_names([name])
             bindings.append(binding)
 
@@ -475,10 +488,12 @@ def create_bindings(figures: dict, circle_bindings_radius=8,
             TypeError(f'Incorrect type of figure: {type(figure)}')
 
     # Intersection bindings
-    for (name1, segment1), (name2, segment2) \
-            in combinations(segments.items(), 2):
+    for (name1, segment1), (name2, segment2) in combinations(
+        segments.items(), 2
+    ):
         binding = SegmentsIntersectionBinding(
-            circle_bindings_radius, segment1, segment2)
+            circle_bindings_radius, segment1, segment2
+        )
         binding.set_object_names([name1, name2])
         bindings.append(binding)
 

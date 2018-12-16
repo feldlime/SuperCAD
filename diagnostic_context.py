@@ -15,7 +15,11 @@ class DiagnosticContext:
         self._file = file or sys.stderr
 
     def _log(self, message: str):
-        print(f'{" | ".join(self._level_names)} | {message}', file=self._file, flush=False)
+        print(
+            f'{" | ".join(self._level_names)} | {message}',
+            file=self._file,
+            flush=False,
+        )
 
     def __enter__(self):
         self._log(f'Diagnostic context started')
@@ -24,12 +28,12 @@ class DiagnosticContext:
     def __exit__(self, exc_type, exc_value, traceback):
         self._log(f'Diagnostic context stopped')
 
-    def _start_step(self, step_name: str, step_identity: UUID):
+    def start_step(self, step_name: str, step_identity: UUID):
         self._levels.append(step_identity)
         self._level_names.append(step_name)
         self._log('started')
 
-    def _stop_step(
+    def stop_step(
         self, step_name: str, step_identity: UUID, elapsed_seconds: float
     ):
         self._log(f'stopped | {elapsed_seconds}')
@@ -56,10 +60,10 @@ class DiagnosticContextTotal(DiagnosticContext):
     def _log(self, message: str):
         pass
 
-    def _stop_step(
+    def stop_step(
         self, step_name: str, step_identity: UUID, elapsed_seconds: float
     ):
-        super()._stop_step(step_name, step_identity, elapsed_seconds)
+        super().stop_step(step_name, step_identity, elapsed_seconds)
         current_full_name = ' | '.join(self._level_names + [step_name])
         self._times[current_full_name] += elapsed_seconds
         self._counts[current_full_name] += 1
@@ -76,11 +80,11 @@ class _Measurer:
     def __enter__(self):
         self._start_time = timer()
         self._uuid = uuid4()
-        self._context._start_step(self._name, self._uuid)
+        self._context.start_step(self._name, self._uuid)
 
     def __exit__(self, exc_type, exc_value, traceback):
         end_time = timer()
-        self._context._stop_step(
+        self._context.stop_step(
             self._name, self._uuid, end_time - self._start_time
         )
 
@@ -137,12 +141,20 @@ if __name__ == '__main__':
         # segment3_name = project.add_figure(segment3)
 
     with measure('choose binding'):
-        bb = choose_best_bindings(project.bindings, 10, 0)[0]  # end of segment 1
+        bb = choose_best_bindings(project.bindings, 10, 0)[
+            0
+        ]  # end of segment 1
 
     with measure('add restrictions'):
-        project.add_restriction(SegmentsNormal(), (segment1_name, segment2_name))
-        project.add_restriction(SegmentsSpotsJoint('start', 'start'), (segment1_name, segment2_name))
-        # project.add_restriction(SegmentsNormal(), (segment2_name, segment3_name))
+        project.add_restriction(
+            SegmentsNormal(), (segment1_name, segment2_name)
+        )
+        project.add_restriction(
+            SegmentsSpotsJoint('start', 'start'),
+            (segment1_name, segment2_name),
+        )
+        # project.add_restriction(
+        # SegmentsNormal(), (segment2_name, segment3_name))
 
     with measure('move segment 1 end'):
         project.move_figure(bb, 10 + 1, 0)

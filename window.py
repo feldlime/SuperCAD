@@ -1,9 +1,11 @@
 """Module with main class of application that manage system and picture."""
 
-from PyQt5.QtWidgets import (QOpenGLWidget,
-                             QMainWindow,
-                             QFileDialog,
-                             QTreeWidgetItem)
+from PyQt5.QtWidgets import (
+    QOpenGLWidget,
+    QMainWindow,
+    QFileDialog,
+    QTreeWidgetItem,
+)
 from PyQt5.QtCore import Qt
 from logging import getLogger
 import re
@@ -40,7 +42,7 @@ from restrictions import (
     # PointOnSegmentFixed,
     PointOnSegmentLine,
     PointAndSegmentSpotJoint,
-    SegmentSpotAndPointJoint
+    SegmentSpotAndPointJoint,
 )
 from bindings import (
     PointBinding,
@@ -50,11 +52,12 @@ from bindings import (
     choose_best_bindings,
     is_any_segment_binding,
     is_normal_point_binding,
-    is_any_normal_binding
+    is_any_normal_binding,
 )
 from diagnostic_context import measure, measured
 
 import sys
+
 sys.stdout = sys.stderr
 
 
@@ -125,8 +128,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.widget_elements_table.hide()
         self._reset_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
-            lambda ev: self.widget_elements_table.show() if ev
-            else self.widget_elements_table.hide())
+            lambda ev: self.widget_elements_table.show()
+            if ev
+            else self.widget_elements_table.hide()
+        )
 
         # Setting tab order. Can do it into designer and remove from here
 
@@ -137,10 +142,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.setTabOrder(self.field_x1_add_segment, self.field_y1_add_segment)
         self.setTabOrder(self.field_y1_add_segment, self.field_x2_add_segment)
         self.setTabOrder(self.field_x2_add_segment, self.field_y2_add_segment)
-        self.setTabOrder(self.field_y2_add_segment,
-                         self.field_length_add_segment)
-        self.setTabOrder(self.field_length_add_segment,
-                         self.field_angle_add_segment)
+        self.setTabOrder(
+            self.field_y2_add_segment, self.field_length_add_segment
+        )
+        self.setTabOrder(
+            self.field_length_add_segment, self.field_angle_add_segment
+        )
 
         # GLWidget settings
         self.elapsed = 0
@@ -150,9 +157,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # Располагаем виджет в области work_plane и присваеваем ему те же
         # параметры как в design
-        self.setGeometry(QtCore.QRect(0, 0, self.work_plane.width(), self.work_plane.height()))
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                           QtWidgets.QSizePolicy.Preferred)
+        self.setGeometry(
+            QtCore.QRect(
+                0, 0, self.work_plane.width(), self.work_plane.height()
+            )
+        )
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
@@ -175,58 +187,89 @@ class WindowContent(QOpenGLWidget, Ui_window):
             lambda ev: self.controller_restr_joint(ControllerCmd.SHOW)
         )
         self.button_restr_point_on_segment_line.clicked['bool'].connect(
-            lambda ev: self.controller_restr_point_on_segment_line(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_point_on_segment_line(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_segments_parallel.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segments_parallel(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segments_parallel(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_segments_normal.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segments_normal(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segments_normal(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_segment_vertical.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_vertical(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segment_vertical(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_segment_horizontal.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_horizontal(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segment_horizontal(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_fixed.clicked['bool'].connect(
             lambda ev: self.controller_restr_fixed(ControllerCmd.SHOW)
         )
         self.button_restr_segment_length_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_length_fixed(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segment_length_fixed(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_segment_angle_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_angle_fixed(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segment_angle_fixed(
+                ControllerCmd.SHOW
+            )
         )
         self.button_restr_segments_angle_between_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_angle_between_fixed(ControllerCmd.SHOW)
+            lambda ev: self.controller_restr_segment_angle_between_fixed(
+                ControllerCmd.SHOW
+            )
         )
 
         # Fields
         self.field_x_add_point.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('x', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'x', new_value
+            )
         )
         self.field_y_add_point.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('y', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'y', new_value
+            )
         )
         self.field_x1_add_segment.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('x1', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'x1', new_value
+            )
         )
         self.field_y1_add_segment.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('y1', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'y1', new_value
+            )
         )
         self.field_x2_add_segment.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('x2', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'x2', new_value
+            )
         )
         self.field_y2_add_segment.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('y2', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'y2', new_value
+            )
         )
         self.field_length_add_segment.valueChanged.connect(
-            lambda new_value: self.change_created_or_selected_figure('length', new_value)
+            lambda new_value: self.change_created_or_selected_figure(
+                'length', new_value
+            )
         )
         self.field_angle_add_segment.valueChanged.connect(
             lambda new_value: self.change_created_or_selected_figure(
-                'angle', new_value*pi/180)
+                'angle', new_value * pi / 180
+            )
         )
 
         # Actions
@@ -244,13 +287,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.widget_elements_table.setHeaderHidden(True)
 
         self.widget_elements_table_figures = QTreeWidgetItem(['Elements'])
-        self.widget_elements_table_restrictions = QTreeWidgetItem([
-            'Restrictions'])
+        self.widget_elements_table_restrictions = QTreeWidgetItem(
+            ['Restrictions']
+        )
         # self.figures_list_view = {}
         # self.restrictions_list_view = {}
 
-        self.widget_elements_table.addTopLevelItems([self.widget_elements_table_figures,
-                                                     self.widget_elements_table_restrictions])
+        self.widget_elements_table.addTopLevelItems(
+            [
+                self.widget_elements_table_figures,
+                self.widget_elements_table_restrictions,
+            ]
+        )
 
     @property
     def center(self) -> tuple:
@@ -300,7 +348,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.field_length_add_segment.setValue(params['length'])
             self.field_length_add_segment.blockSignals(False)
             self.field_angle_add_segment.blockSignals(True)
-            self.field_angle_add_segment.setValue(params['angle']*180/pi)
+            self.field_angle_add_segment.setValue(params['angle'] * 180 / pi)
             self.field_angle_add_segment.blockSignals(False)
 
             # Select field with focus
@@ -330,7 +378,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             restr = self._project.restrictions[object_name]
             self._highlighted_figures = [
                 self._project.figures[f_name]
-                for f_name in restr.get_object_names()]
+                for f_name in restr.get_object_names()
+            ]
             self.update()
 
     def select_figure_on_list_view(self):
@@ -339,8 +388,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             figure_to_select = self.widget_elements_table.findItems(
                 str(self._selected_figure_name),
                 # Qt.MatchExactly,
-                Qt.MatchRecursive
-                )
+                Qt.MatchRecursive,
+            )
             self.widget_elements_table.setCurrentItem(figure_to_select[0])
             # if self._project.bindings.key()
         self.begin_figure_selection()
@@ -350,7 +399,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if self._created_figure is not None:
             self._created_figure.set_param(field, value)
         elif self._selected_figure_name is not None:
-            self._project.change_figure(self._selected_figure_name, field, value)
+            self._project.change_figure(
+                self._selected_figure_name, field, value
+            )
 
         self.update()
         # TODO: Move mouse
@@ -380,9 +431,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
             self._update_list_view()
-            
+
             self.controller_add_point(ControllerCmd.SHOW)
-            
+
         elif cmd == ControllerCmd.SHOW:
             if self.action_st == ActionSt.NOTHING:
                 self._reset_behind_statuses()
@@ -390,7 +441,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.creation_st = CreationSt.POINT_SET
                 self._created_figure = Point.from_coordinates(
                     self.field_x_add_point.value(),
-                    self.field_y_add_point.value()
+                    self.field_y_add_point.value(),
                 )
 
             self.widget_add_point.show()
@@ -411,7 +462,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._project.add_figure(s)
             self.reset()
             self._update_list_view()
-            
+
             self.controller_add_segment(ControllerCmd.SHOW)
 
         elif cmd == ControllerCmd.SHOW:
@@ -465,11 +516,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            (is_normal_point_binding, is_normal_point_binding)
+            (is_normal_point_binding, is_normal_point_binding),
         )
 
     def controller_restr_point_on_segment_line(
-            self, cmd, bindings: list = None):
+        self, cmd, bindings: list = None
+    ):
         def get_restr_fun(_b1, _b2):
             return PointOnSegmentLine()
 
@@ -478,7 +530,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            (lambda b: isinstance(b, PointBinding), is_any_segment_binding)
+            (lambda b: isinstance(b, PointBinding), is_any_segment_binding),
         )
 
     def controller_restr_segments_parallel(self, cmd, bindings: list = None):
@@ -490,7 +542,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            (is_any_segment_binding, is_any_segment_binding)
+            (is_any_segment_binding, is_any_segment_binding),
         )
 
     def controller_restr_segments_normal(self, cmd, bindings: list = None):
@@ -502,7 +554,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            (is_any_segment_binding, is_any_segment_binding)
+            (is_any_segment_binding, is_any_segment_binding),
         )
 
     def controller_restr_segment_vertical(self, cmd, bindings: list = None):
@@ -514,7 +566,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            is_any_segment_binding
+            is_any_segment_binding,
         )
 
     def controller_restr_segment_horizontal(self, cmd, bindings: list = None):
@@ -526,11 +578,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            is_any_segment_binding
+            is_any_segment_binding,
         )
 
     def controller_restr_fixed(self, cmd, bindings: list = None):
         print(f'fixed: cmd: {cmd}')
+
         def get_restr_fun(binding):
             figure_name = binding.get_object_names()[0]
             coo = self._project.figures[figure_name].get_base_representation()
@@ -552,15 +605,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
             return restr
 
         self._controller_restr_single_object(
-            'fixed',
-            cmd,
-            bindings,
-            get_restr_fun,
-            is_any_normal_binding
+            'fixed', cmd, bindings, get_restr_fun, is_any_normal_binding
         )
 
     def controller_restr_segment_length_fixed(
-            self, cmd, bindings: list = None):
+        self, cmd, bindings: list = None
+    ):
         def get_restr_fun(binding):
             segment_name = binding.get_object_names()[0]
             length = self._project.figures[segment_name].get_params()['length']
@@ -571,7 +621,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            is_any_segment_binding
+            is_any_segment_binding,
         )
 
     def controller_restr_segment_angle_fixed(self, cmd, bindings: list = None):
@@ -585,16 +635,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
             cmd,
             bindings,
             get_restr_fun,
-            is_any_segment_binding
+            is_any_segment_binding,
         )
 
     def controller_restr_segment_angle_between_fixed(
-            self, cmd, bindings: list = None):
+        self, cmd, bindings: list = None
+    ):
         # TODO
         pass
 
-    def _controller_restr_single_object(self, name, cmd, bindings,
-                                        get_restr_fun, check_binding_func):
+    def _controller_restr_single_object(
+        self, name, cmd, bindings, get_restr_fun, check_binding_func
+    ):
         if cmd == ControllerCmd.STEP:
             binding = find_first(bindings, check_binding_func)
             if binding:
@@ -630,8 +682,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self.update()
 
-    def _controller_restr_two_objects(self, name, cmd, bindings,
-                                      get_restr_fun, check_binding_funcs):
+    def _controller_restr_two_objects(
+        self, name, cmd, bindings, get_restr_fun, check_binding_funcs
+    ):
         if cmd == ControllerCmd.STEP:
             if len(self._restriction_bindings) == 0:
                 binding = find_first(bindings, check_binding_funcs[0])
@@ -681,8 +734,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         selected_figures = []
         if self._selected_figure_name is not None:
-                selected_figures.append(self._project.figures[
-                    self._selected_figure_name])
+            selected_figures.append(
+                self._project.figures[self._selected_figure_name]
+            )
         selected_figures.extend(self._highlighted_figures)
 
         self.paint_all(
@@ -717,8 +771,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 # Make restriction step
                 bindings = choose_best_bindings(self._project.bindings, x, y)
                 for name in dir(ControllerSt):
-                    if re.match(r'^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
-                        controller = getattr(self, f'controller_{name.lower()}')
+                    if (
+                        re.match(r'^RESTR_', name)
+                        and getattr(ControllerSt, name) == self.controller_st
+                    ):
+                        controller = getattr(
+                            self, f'controller_{name.lower()}'
+                        )
                         controller(ControllerCmd.STEP, bindings)
 
             else:  # self.controller_st == ControllerSt.NOTHING:
@@ -729,7 +788,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
                         self.action_st = ActionSt.BINDING_PRESSED
                     if self.action_st == ActionSt.SELECTED:
                         self._moved_binding = bindings[0]
-                        self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
+                        self.action_st = (
+                            ActionSt.BINDING_PRESSED_WHILE_SELECTED
+                        )
                 else:
                     self.reset()
 
@@ -746,9 +807,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         elif self.action_st == ActionSt.BINDING_PRESSED_WHILE_SELECTED:
             self.action_st = ActionSt.MOVE_WHILE_SELECTED
 
-        if self.action_st == ActionSt.MOVE or \
-                self.action_st == ActionSt.MOVE_WHILE_SELECTED and \
-                self._moved_binding.get_object_names()[0] == self._selected_figure_name:
+        if (
+            self.action_st == ActionSt.MOVE
+            or self.action_st == ActionSt.MOVE_WHILE_SELECTED
+            and self._moved_binding.get_object_names()[0]
+            == self._selected_figure_name
+        ):
 
             try:
                 self._project.move_figure(self._moved_binding, x, y)
@@ -784,7 +848,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._project.commit()
                 self.action_st = ActionSt.SELECTED
 
-            elif self.action_st == ActionSt.BINDING_PRESSED or self.action_st == ActionSt.BINDING_PRESSED_WHILE_SELECTED:
+            elif (
+                self.action_st == ActionSt.BINDING_PRESSED
+                or self.action_st == ActionSt.BINDING_PRESSED_WHILE_SELECTED
+            ):
                 selected_figures = self._moved_binding.get_object_names()
                 self._moved_binding = None
                 if len(selected_figures) == 1:
@@ -806,7 +873,10 @@ class WindowContent(QOpenGLWidget, Ui_window):
             elif ControllerSt.is_restr(self.controller_st):
                 name = None
                 for name in dir(ControllerSt):
-                    if re.match('^RESTR_', name) and getattr(ControllerSt, name) == self.controller_st:
+                    if (
+                        re.match('^RESTR_', name)
+                        and getattr(ControllerSt, name) == self.controller_st
+                    ):
                         break
                 if name:
                     controller_name = f'controller_{name.lower()}'
@@ -841,12 +911,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def delete(self, _=None):
         self._logger.debug('delete: start')
         if self._selected_restriction_name is not None:
-                self._project.remove_restriction(self._selected_restriction_name)
-                self.reset()
+            self._project.remove_restriction(self._selected_restriction_name)
+            self.reset()
 
         elif self._selected_figure_name is not None:
-                self._project.remove_figure(self._selected_figure_name)
-                self.reset()
+            self._project.remove_figure(self._selected_figure_name)
+            self.reset()
 
         self.update()
 
@@ -890,14 +960,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def save_as(self, _=None):
         filename, _ = QFileDialog.getSaveFileName(
-            self, 'Сохранить', '', 'SCAD Files (*.scad)')
+            self, 'Сохранить', '', 'SCAD Files (*.scad)'
+        )
         if filename:
             self._filename = filename
             self.save()
 
     def open(self, _=None):
         filename, _ = QFileDialog.getOpenFileName(
-            self, 'Открыть', '', 'SCAD Files (*.scad)')
+            self, 'Открыть', '', 'SCAD Files (*.scad)'
+        )
         if filename:
             self._filename = filename
             self._project.load(self._filename)
@@ -922,16 +994,17 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.update()
 
     def _update_list_view(self):
-        updateble_types = [[self.widget_elements_table_figures,
-                            self._project.figures],
-                           [self.widget_elements_table_restrictions,
-                            self._project.restrictions]
-                           ]
+        updateble_types = [
+            [self.widget_elements_table_figures, self._project.figures],
+            [
+                self.widget_elements_table_restrictions,
+                self._project.restrictions,
+            ],
+        ]
 
         for updateble_type_tree, updateble_type in updateble_types:
             for i in reversed(range(updateble_type_tree.childCount())):
-                updateble_type_tree.removeChild(
-                    updateble_type_tree.child(i))
+                updateble_type_tree.removeChild(updateble_type_tree.child(i))
 
             for name in updateble_type.keys():
                 element = QTreeWidgetItem([name])
@@ -949,16 +1022,19 @@ class WindowContent(QOpenGLWidget, Ui_window):
         best_bindings = choose_best_bindings(self._project.bindings, x, y)
         self._current_bindings = []
         for binding in best_bindings:
-            if allowed_bindings_types is None \
-                    or isinstance(binding, allowed_bindings_types):
+            if allowed_bindings_types is None or isinstance(
+                binding, allowed_bindings_types
+            ):
                 self._current_bindings.append(binding)
 
-    def paint_all(self, event: QPaintEvent,
-                  bindings,
-                  figures: Dict[str, Figure],
-                  selected_figures: list,
-                  created_figure: Optional[Figure] = None,
-                  ):
+    def paint_all(
+        self,
+        event: QPaintEvent,
+        bindings,
+        figures: Dict[str, Figure],
+        selected_figures: list,
+        created_figure: Optional[Figure] = None,
+    ):
         painter = QPainter()
         painter.begin(self)
         painter.setRenderHint(QPainter.Antialiasing, True)
