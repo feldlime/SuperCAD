@@ -148,7 +148,7 @@ class SegmentAngleFixed(Restriction, ReferencedToObjects):
         sign = np_sign(simplify_angle(self._angle) - np_pi)
         equations = [
             Eq((y2 - y1), (x2 - x1) * np_tan(self._angle)),
-            Eq(sp_sign(y2 - y1), sign),  # TODO: Maybe drop?
+            # Eq(sp_sign(y2 - y1), sign),  # TODO: Maybe drop?
         ]
         return equations
 

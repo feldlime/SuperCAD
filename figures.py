@@ -491,7 +491,7 @@ class Segment(Figure):
             sign = np.sign(simplify_angle(value) - np.pi)
             return [
                 Eq((y2 - y1), (x2 - x1) * np.tan(value)),
-                Eq(sympy_sign(y2 - y1), sign),  # TODO: Maybe drop?
+                # Eq(sympy_sign(y2 - y1), sign),  # TODO: Maybe drop?
             ]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')
