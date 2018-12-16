@@ -359,7 +359,7 @@ class EquationsSystem:
             compose_full_name(figure_name, sym) for sym in symbols_names
         ]
         new_symbols = {
-            name: Symbol(name) for name in symbols_names  # TODO: real=True
+            name: Symbol(name) for name in symbols_names
         }
         self._symbols.update(new_symbols)
         self._update_graph()
@@ -766,7 +766,7 @@ class EquationsSystem:
             compose_full_name('lambda', str(i)) for i in range(len(system))
         ]
         lambdas_dict = {
-            name: Symbol(name) for name in lambdas_names  # TODO: real=True
+            name: Symbol(name) for name in lambdas_names
         }
         lambdas = lambdas_dict.values()
 

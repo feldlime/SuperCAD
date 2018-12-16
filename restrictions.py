@@ -2,10 +2,10 @@
 
 # noinspection PyUnresolvedReferences
 from numpy import pi as np_pi, sign as np_sign, tan as np_tan, cos as np_cos
-from sympy import Eq, sign as sp_sign, sqrt as sp_sqrt
+from sympy import Eq, sqrt as sp_sqrt
 from contracts import contract
 
-from utils import ReferencedToObjects, IncorrectParamValue, simplify_angle
+from utils import ReferencedToObjects, IncorrectParamValue
 from figures import Point, Segment
 
 
@@ -145,10 +145,10 @@ class SegmentAngleFixed(Restriction, ReferencedToObjects):
         x1, y1 = symbols['x1'], symbols['y1']
         x2, y2 = symbols['x2'], symbols['y2']
 
-        sign = np_sign(simplify_angle(self._angle) - np_pi)
+        # sign = np_sign(simplify_angle(self._angle) - np_pi)
         equations = [
             Eq((y2 - y1), (x2 - x1) * np_tan(self._angle)),
-            # Eq(sp_sign(y2 - y1), sign),  # TODO: Maybe drop?
+            # Eq(sp_sign(y2 - y1), sign),
         ]
         return equations
 

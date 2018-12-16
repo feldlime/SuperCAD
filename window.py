@@ -399,7 +399,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             )
 
         self.update()
-        # TODO: Move mouse
 
     def begin_figure_selection(self):
         if self._selected_figure_name is None:
@@ -975,7 +974,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         try:
             self._project.undo()
         except ActionImpossible:
-            # TODO: Status bar / inactive
             pass
         self.update()
 
@@ -984,7 +982,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         try:
             self._project.redo()
         except ActionImpossible:
-            # TODO: Status bar / inactive
             pass
         self.update()
 

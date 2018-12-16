@@ -1,7 +1,7 @@
 """Module with classes of geometry figures."""
 
 import numpy as np
-from sympy import Eq, sign as sympy_sign
+from sympy import Eq
 from contracts import contract
 
 from utils import (
@@ -488,10 +488,10 @@ class Segment(Figure):
         elif param == 'length':
             return [Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
         elif param == 'angle':
-            sign = np.sign(simplify_angle(value) - np.pi)
+            # sign = np.sign(simplify_angle(value) - np.pi)
             return [
                 Eq((y2 - y1), (x2 - x1) * np.tan(value)),
-                # Eq(sympy_sign(y2 - y1), sign),  # TODO: Maybe drop?
+                # Eq(sympy_sign(y2 - y1), sign),
             ]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')
