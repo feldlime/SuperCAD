@@ -299,7 +299,6 @@ class Substitutor:
         full_solution.update(self._subs)
         return full_solution
 
-    @measured_total
     def _is_simple_equation(self, eq):
         """Check if equation is simple (looks like x = y or x = 5)."""
         l_str, r_str = str(eq.lhs), str(eq.rhs)
@@ -612,7 +611,6 @@ class EquationsSystem:
 
         return roll_up_values_dict(result)
 
-    @measured
     @contract(
         optimizing_values='figures_values',
         current_values='figures_values',
@@ -703,7 +701,6 @@ class EquationsSystem:
 
         return self._solve_optimization_task(system, symbols, desired_values)
 
-    @measured
     @contract(
         system='list[N]',
         symbols='dict[M], M >= N',
@@ -724,14 +721,11 @@ class EquationsSystem:
         # Simplify by substitutions
         substitutor = Substitutor()
         try:
-            with measure('substitutor fit'):
-                substitutor.fit(system, symbols)
+            substitutor.fit(system, symbols)
         except SubstitutionError as e:
             raise CannotSolveSystemError(f'{type(e)}: {e.args}')
 
-        with measure('substitutor sub'):
-            simplified_system = substitutor.sub(system)
-        print(context_total.get_times())
+        simplified_system = substitutor.sub(system)
 
         # Check easy inconsistency
         if sympy_false in simplified_system:
@@ -812,7 +806,6 @@ class EquationsSystem:
         return result
 
     @classmethod
-    @measured
     @contract(
         system='list[N]',
         symbols_dict='dict[N]',
@@ -874,7 +867,6 @@ class EquationsSystem:
         return fun
 
     @staticmethod
-    @measured
     @contract(system='list')
     def _system_to_canonical(system: list):
         return [eq.lhs - eq.rhs for eq in system]

@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMainWindow
 
 from window import WindowContent
+import diagnostic_context
 
 
 class MainWindow(QMainWindow):
@@ -21,8 +22,9 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    # logfile_name = f'log.log'
+    diagnostic_context.VERBOSE = False
 
+    # logfile_name = f'log.log'
     logfile_format = '[%(asctime)s] %(name)-20s %(levelname)-8s %(message)s'
     logging.basicConfig(
         format=logfile_format,

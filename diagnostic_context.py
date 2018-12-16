@@ -5,6 +5,8 @@ from uuid import UUID, uuid4
 from functools import wraps
 from collections import defaultdict
 
+VERBOSE = True
+
 
 class DiagnosticContext:
     def __init__(self, title: str = None, file=None):
@@ -15,11 +17,12 @@ class DiagnosticContext:
         self._file = file or sys.stderr
 
     def _log(self, message: str):
-        print(
-            f'{" | ".join(self._level_names)} | {message}',
-            file=self._file,
-            flush=False,
-        )
+        if VERBOSE:
+            print(
+                f'{" | ".join(self._level_names)} | {message}',
+                file=self._file,
+                flush=False,
+            )
 
     def __enter__(self):
         self._log(f'Diagnostic context started')
@@ -68,8 +71,9 @@ class DiagnosticContextTotal(DiagnosticContext):
         self._times[current_full_name] += elapsed_seconds
         self._counts[current_full_name] += 1
 
-    def get_times(self):
-        return self._times, self._counts
+    def print_times(self):
+        if VERBOSE:
+            print(self._times, '\n', self._counts)
 
 
 class _Measurer:
