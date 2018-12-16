@@ -1,6 +1,5 @@
 """Module with main class of application that manage system and picture."""
 
-
 from logging import getLogger
 import re
 from typing import Dict, Optional
@@ -107,6 +106,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self._footer_widgets = dict()
         self._left_buttons = dict()
         self._footer_checkboxes = dict()
+        self._footer_fields = dict()
 
         for name in dir(self):
             if re.match(r'^checkbox_restr_', name):
@@ -115,11 +115,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._left_buttons[name] = getattr(self, name)
             elif re.match(r'^widget_(add|restr)_', name):
                 self._footer_widgets[name] = getattr(self, name)
+            elif re.match(r'^field_.*_add', name):
+                self._footer_fields[name] = getattr(self, name)
 
     def _setup_ui(self):
         self._logger.debug('setup_ui start')
 
-        self.widget_elements_table.hide()
+        self.widget_elements_table.hide()  # TODO
         self._reset_footer_widgets()
         self.action_show_elements_table.triggered['bool'].connect(
             lambda ev: self.widget_elements_table.show()
@@ -127,11 +129,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
             else self.widget_elements_table.hide()
         )
 
+        self.widget_elements_table.setHeaderHidden(True)
+        self.widget_elements_table_figures = QTreeWidgetItem(['Figures'])
+        self.widget_elements_table_restrictions = QTreeWidgetItem(
+            ['Restrictions']
+        )
+        self.widget_elements_table.addTopLevelItems(
+            [
+                self.widget_elements_table_figures,
+                self.widget_elements_table_restrictions,
+            ]
+        )
+
         # Setting tab order. Can do it into designer and remove from here
 
         # Add point
         self.setTabOrder(self.field_x_add_point, self.field_y_add_point)
-
         # Add segment
         self.setTabOrder(self.field_x1_add_segment, self.field_y1_add_segment)
         self.setTabOrder(self.field_y1_add_segment, self.field_x2_add_segment)
@@ -145,31 +158,20 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         # GLWidget settings
         self.elapsed = 0
-
         self.setAutoFillBackground(True)
         self.setMouseTracking(True)
-
-        # Располагаем виджет в области work_plane и присваеваем ему те же
-        # параметры как в design
         self.setGeometry(
-            QRect(
-                0, 0, self.work_plane.width(), self.work_plane.height()
-            )
+            QRect(0, 0, self.work_plane.width(), self.work_plane.height())
         )
-        sizePolicy = QSizePolicy(
-            QSizePolicy.Preferred, QSizePolicy.Preferred
-        )
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-
         self.setSizePolicy(sizePolicy)
-
         # Set focus on window for keyPressEvent
         self.setFocusPolicy(Qt.StrongFocus)
 
     def _setup_handlers(self):
-
         # Left buttons
         self.button_add_point.clicked['bool'].connect(
             lambda ev: self.controller_add_point(ControllerCmd.SHOW)
@@ -277,31 +279,18 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.action_delete.triggered['bool'].connect(self.delete)
 
         # List views
-        self.widget_elements_table.clicked.connect(self.select_figure_on_plane)
-        self.widget_elements_table.setHeaderHidden(True)
-
-        self.widget_elements_table_figures = QTreeWidgetItem(['Elements'])
-        self.widget_elements_table_restrictions = QTreeWidgetItem(
-            ['Restrictions']
-        )
-        # self.figures_list_view = {}
-        # self.restrictions_list_view = {}
-
-        self.widget_elements_table.addTopLevelItems(
-            [
-                self.widget_elements_table_figures,
-                self.widget_elements_table_restrictions,
-            ]
+        self.widget_elements_table.clicked.connect(
+            self.handle_elements_table_click
         )
 
     @property
-    def center(self) -> tuple:
+    def _center(self) -> tuple:
         return self.width() // 2, self.height() // 2
 
-    def to_real_xy(self, x, y) -> tuple:
-        return x - self.center[0], -(y - self.center[1])
+    def _to_real_xy(self, x, y) -> tuple:
+        return x - self._center[0], -(y - self._center[1])
 
-    def update_fields(self):
+    def _update_fields(self):
         self._logger.debug('update fields')
         if self._created_figure is not None:
             figure = self._created_figure
@@ -310,14 +299,16 @@ class WindowContent(QOpenGLWidget, Ui_window):
         else:
             return
 
+        def set_with_block(field, value):
+            field.blockSignals(True)
+            field.setValue(value)
+            field.blockSignals(False)
+
         if isinstance(figure, Point):
             params = figure.get_params()
-            self.field_x_add_point.blockSignals(True)
-            self.field_x_add_point.setValue(params['x'])
-            self.field_x_add_point.blockSignals(False)
-            self.field_y_add_point.blockSignals(True)
-            self.field_y_add_point.setValue(params['y'])
-            self.field_y_add_point.blockSignals(False)
+            set_with_block(self.field_x_add_point, params['x'])
+            set_with_block(self.field_y_add_point, params['y'])
+
             # Select field with focus
             if self.field_x_add_point.hasFocus():
                 self.field_x_add_point.selectAll()
@@ -326,25 +317,14 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         elif isinstance(figure, Segment):
             params = figure.get_params()
-            self.field_x1_add_segment.blockSignals(True)
-            self.field_x1_add_segment.setValue(params['x1'])
-            self.field_x1_add_segment.blockSignals(False)
-            self.field_y1_add_segment.blockSignals(True)
-            self.field_y1_add_segment.setValue(params['y1'])
-            self.field_y1_add_segment.blockSignals(False)
-            self.field_x2_add_segment.blockSignals(True)
-            self.field_x2_add_segment.setValue(params['x2'])
-            self.field_x2_add_segment.blockSignals(False)
-            self.field_y2_add_segment.blockSignals(True)
-            self.field_y2_add_segment.setValue(params['y2'])
-            self.field_y2_add_segment.blockSignals(False)
-            self.field_length_add_segment.blockSignals(True)
-            self.field_length_add_segment.setValue(params['length'])
-            self.field_length_add_segment.blockSignals(False)
-            self.field_angle_add_segment.blockSignals(True)
-            self.field_angle_add_segment.setValue(
-                params['angle'] * 180 / np_pi)
-            self.field_angle_add_segment.blockSignals(False)
+            set_with_block(self.field_x1_add_segment, params['x1'])
+            set_with_block(self.field_y1_add_segment, params['y1'])
+            set_with_block(self.field_x2_add_segment, params['x2'])
+            set_with_block(self.field_y2_add_segment, params['y2'])
+            set_with_block(self.field_length_add_segment, params['length'])
+            set_with_block(
+                self.field_angle_add_segment, params['angle'] * 180 / np_pi
+            )
 
             # Select field with focus
             if self.field_x1_add_segment.hasFocus():
@@ -355,12 +335,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.field_x2_add_segment.selectAll()
             elif self.field_y2_add_segment.hasFocus():
                 self.field_y2_add_segment.selectAll()
-            # elif self.field_length_add_segment.hasFocus():
-            #     self.field_length_add_segment.selectAll()
-            # elif self.field_angle_add_segment.hasFocus():
-            #     self.field_angle_add_segment.selectAll()
+            elif self.field_length_add_segment.hasFocus():
+                self.field_length_add_segment.selectAll()
+            elif self.field_angle_add_segment.hasFocus():
+                self.field_angle_add_segment.selectAll()
 
-    def select_figure_on_plane(self, item_idx):
+    def handle_elements_table_click(self, item_idx):
         # I don't know why [0]
         object_name = self.widget_elements_table.model().itemData(item_idx)[0]
         if object_name in self._project.figures:
@@ -377,7 +357,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             ]
             self.update()
 
-    def select_figure_on_list_view(self):
+    def select_element_on_tree(self):
         self.widget_elements_table.clearSelection()
         if self._selected_figure_name is not None:
             figure_to_select = self.widget_elements_table.findItems(
@@ -407,7 +387,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         self.reset()
         self._selected_figure_name = selected_figure_name
         self.action_st = ActionSt.SELECTED
-        self.update_fields()
+        self._update_fields()
         figure = self._project.figures[self._selected_figure_name]
         if isinstance(figure, Point):
             self.controller_add_point(ControllerCmd.SHOW)
@@ -465,22 +445,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self.controller_st = ControllerSt.ADD_SEGMENT
                 self.creation_st = CreationSt.SEGMENT_START_SET
 
-                # if self.field_length_add_segment.value() != 0:
                 self._created_figure = Segment.from_coordinates(
                     self.field_x1_add_segment.value(),
                     self.field_y1_add_segment.value(),
                     self.field_x2_add_segment.value(),
                     self.field_y2_add_segment.value(),
                 )
-                # else:
-                #     self._created_figure = Segment(
-                #         start=(
-                #             self.field_x1_add_segment.value(),
-                #             self.field_y1_add_segment.value()
-                #         ),
-                #         angle=self.field_length_add_segment.value(),
-                #         length=self.field_angle_add_segment.value()
-                #     )
 
             self.widget_add_segment.show()
             self.field_x1_add_segment.setFocus()
@@ -576,8 +546,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
 
     def controller_restr_fixed(self, cmd, bindings: list = None):
-        print(f'fixed: cmd: {cmd}')
-
         def get_restr_fun(binding):
             figure_name = binding.get_object_names()[0]
             coo = self._project.figures[figure_name].get_base_representation()
@@ -741,12 +709,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self._created_figure,
         )
 
-        # self._update_list_view()
+        self._update_list_view()
 
     def mousePressEvent(self, event):
         self._logger.debug('mousePressEvent: start')
         if event.button() == Qt.LeftButton:
-            x, y = self.to_real_xy(event.x(), event.y())
+            x, y = self._to_real_xy(event.x(), event.y())
 
             if self.controller_st == ControllerSt.ADD_POINT:
                 if self.creation_st == CreationSt.POINT_SET:
@@ -792,7 +760,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
     def mouseMoveEvent(self, event):
         # self._logger.debug('mouseMoveEvent: start')
-        x, y = self.to_real_xy(event.x(), event.y())
+        x, y = self._to_real_xy(event.x(), event.y())
         self._mouse_xy = (x, y)
 
         if self.action_st == ActionSt.BINDING_PRESSED:
@@ -810,22 +778,22 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
             try:
                 self._project.move_figure(self._moved_binding, x, y)
-                self.update_fields()
+                self._update_fields()
             except CannotSolveSystemError:
                 self._project.rollback()
 
         if self.controller_st == ControllerSt.ADD_POINT:
             if self.creation_st == CreationSt.POINT_SET:
                 self._created_figure.set_param('x', x).set_param('y', y)
-                self.update_fields()
+                self._update_fields()
 
         elif self.controller_st == ControllerSt.ADD_SEGMENT:
             if self.creation_st == CreationSt.SEGMENT_START_SET:
                 self._created_figure.set_param('x1', x).set_param('y1', y)
-                self.update_fields()
+                self._update_fields()
             elif self.creation_st == CreationSt.SEGMENT_END_SET:
                 self._created_figure.set_param('x2', x).set_param('y2', y)
-                self.update_fields()
+                self._update_fields()
 
         self.update()
 
@@ -850,14 +818,13 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if len(selected_figures) == 1:
                     self._selected_figure_name = selected_figures[0]
                     # Also start changing and set action_st = SELECTED
-                    self.select_figure_on_list_view()
+                    self.select_element_on_tree()
                 self.action_st = ActionSt.SELECTED
 
         self.update()
 
     def keyPressEvent(self, event):
         key = event.key()
-        print(key)
         modifiers = event.modifiers()
         if key == Qt.Key_Enter or key == Qt.Key_Return:
             if self.controller_st == ControllerSt.ADD_POINT:
@@ -889,14 +856,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             if box.checkState() == Qt.Checked:
                 box.toggle()
 
-        self.field_x_add_point.setValue(0)
-        self.field_y_add_point.setValue(0)
-        self.field_x1_add_segment.setValue(0)
-        self.field_y1_add_segment.setValue(0)
-        self.field_x2_add_segment.setValue(0)
-        self.field_y2_add_segment.setValue(0)
-        self.field_length_add_segment.setValue(0)
-        self.field_angle_add_segment.setValue(0)
+        for field in self._footer_fields.values():
+            field.setValue(0)
 
     def _uncheck_left_buttons(self):
         for _, button in self._left_buttons.items():
@@ -1032,7 +993,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         painter.setRenderHint(QPainter.Antialiasing, True)
         painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255)))
         painter.save()
-        painter.translate(*self.center)
+        painter.translate(*self._center)
 
         # Paint all
         paint.write_coordinates_near_pointer(painter, self._mouse_xy)
