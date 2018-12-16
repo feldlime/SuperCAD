@@ -306,7 +306,7 @@ class TestProject:
         point1_name = project.add_figure(point1)
         point2 = Point((5, 6))
         point2_name = project.add_figure(point2)
-        segment1 = Segment((0, 0), 0, 10)
+        segment1 = Segment.from_coordinates(0, 0, 10, 1)
         segment1_name = project.add_figure(segment1)
 
         # Fix point1
@@ -315,7 +315,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (0, 0, 10, 0)
+            segment1_name: (0, 0, 10, 1)
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 
@@ -326,7 +326,7 @@ class TestProject:
         correct_figures = {
             point1_name: (1, 2),
             point2_name: (5, 6),
-            segment1_name: (1, 2, 10, 0)
+            segment1_name: (1, 2, 10, 1)
         }
         assert self._is_figures_correct(project.figures, correct_figures)
 

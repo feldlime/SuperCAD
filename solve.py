@@ -707,7 +707,7 @@ class EquationsSystem:
             equations = [0] * len(symbols)
             for i, (name, sym) in enumerate(symbols.items()):
                 if name in high_priority_desired_values:
-                    eq = Eq(BIG_NUMBER * (sym - high_priority_desired_values[name]) + loss_part2.diff(sym), 0)
+                    eq = Eq(1000 * (sym - high_priority_desired_values[name]) + loss_part2.diff(sym), 0)
                 else:
                     eq = Eq(sym - desired_values[name] + loss_part2.diff(sym), 0)
                 equations[i] = eq

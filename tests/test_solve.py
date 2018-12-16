@@ -88,7 +88,9 @@ class TestBaseFunctions:
 class TestSubstitutor:
     def test_pass(self):
         symbols_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-        a, b, c, d, e, f, g = sympy.symbols(' '.join(symbols_names))
+        symbols_ = sympy.symbols(' '.join(symbols_names))
+        symbols_dict = {name: s for name, s in zip(symbols_names, symbols_)}
+        a, b, c, d, e, f, g = symbols_
         system = [
             sympy.Eq(a ** 2 + b * 2, c - a),
             sympy.Eq(a, 6),
@@ -98,7 +100,7 @@ class TestSubstitutor:
             sympy.Eq(f, c)
         ]
 
-        substitutor = Substitutor().fit(system, symbols_names)
+        substitutor = Substitutor().fit(system, symbols_dict)
 
         simplified = [
             sympy.Eq(6.0 ** 2 + e * 2, c - 6.0),
