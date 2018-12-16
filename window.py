@@ -343,12 +343,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def handle_elements_table_click(self, item_idx):
         # I don't know why [0]
         object_name = self.widget_elements_table.model().itemData(item_idx)[0]
+        self._reset_behind_statuses()
+
         if object_name in self._project.figures:
-            self._reset_behind_statuses()
             self._selected_figure_name = object_name
             self.begin_figure_selection()
         elif object_name in self._project.restrictions:
-            self._reset_behind_statuses()
             self._selected_restriction_name = object_name
             restr = self._project.restrictions[object_name]
             self._highlighted_figures = [
@@ -357,16 +357,26 @@ class WindowContent(QOpenGLWidget, Ui_window):
             ]
             self.update()
 
-    def select_element_on_tree(self):
+    def _select_element_on_tree(self):
         self.widget_elements_table.clearSelection()
+
         if self._selected_figure_name is not None:
-            figure_to_select = self.widget_elements_table.findItems(
-                str(self._selected_figure_name),
-                # Qt.MatchExactly,
-                Qt.MatchRecursive,
-            )
-            self.widget_elements_table.setCurrentItem(figure_to_select[0])
-            # if self._project.bindings.key()
+            element_name = self._selected_figure_name
+        elif self._selected_restriction_name is not None:
+            element_name = self._selected_restriction_name
+        else:
+            return
+
+        element_to_select = self.widget_elements_table.findItems(
+            element_name,
+            # Qt.MatchExactly,
+            Qt.MatchRecursive,
+        )[0]
+
+        self.widget_elements_table.setCurrentItem(element_to_select)
+
+    def handle_selecting_element_on_plane(self):
+        self._select_element_on_tree()
         self.begin_figure_selection()
 
     def change_created_or_selected_figure(self, field: str, value: float):
@@ -404,7 +414,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             figure_coo = self._created_figure.get_base_representation()
             self._project.add_figure(Point.from_coordinates(*figure_coo))
             self.reset()
-            self._update_list_view()
 
             self.controller_add_point(ControllerCmd.SHOW)
 
@@ -417,8 +426,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.field_x_add_point.value(),
                     self.field_y_add_point.value(),
                 )
+                self.button_add_point.setChecked(True)
 
-            self.button_add_point.setChecked(True)
             self.widget_add_point.show()
             self.field_x_add_point.setFocus()
             self.field_x_add_point.selectAll()
@@ -436,7 +445,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             s = Segment.from_coordinates(*figure_coo)
             self._project.add_figure(s)
             self.reset()
-            self._update_list_view()
 
             self.controller_add_segment(ControllerCmd.SHOW)
 
@@ -453,7 +461,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.field_y2_add_segment.value(),
                 )
 
-            self.button_add_segment.setChecked(True)
+                self.button_add_segment.setChecked(True)
+
             self.widget_add_segment.show()
             self.field_x1_add_segment.setFocus()
             self.field_x1_add_segment.selectAll()
@@ -629,7 +638,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             except CannotSolveSystemError:
                 pass
             self.reset()
-            self._update_list_view()
 
             controller_name = f'controller_restr_{name}'
             getattr(self, controller_name)(ControllerCmd.SHOW)
@@ -675,7 +683,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
             except CannotSolveSystemError:
                 pass
             self.reset()
-            self._update_list_view()
 
             controller_name = f'controller_restr_{name}'
             getattr(self, controller_name)(ControllerCmd.SHOW)
@@ -824,7 +831,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 if len(selected_figures) == 1:
                     self._selected_figure_name = selected_figures[0]
                     # Also start changing and set action_st = SELECTED
-                    self.select_element_on_tree()
+                    self.handle_selecting_element_on_plane()
                 self.action_st = ActionSt.SELECTED
 
         self.update()
@@ -968,6 +975,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             for name in updateble_type.keys():
                 element = QTreeWidgetItem([name])
                 updateble_type_tree.addChild(element)
+
+        self._select_element_on_tree()
 
     def _update_current_bindings(self):
         # Work with bindings
