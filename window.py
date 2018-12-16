@@ -731,6 +731,9 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     if self.action_st == ActionSt.SELECTED:
                         self._moved_binding = bindings[0]
                         self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
+                else:
+                    self.reset()
+                    
         self.update()
 
     def mouseMoveEvent(self, event):
