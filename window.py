@@ -620,7 +620,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         elif cmd == ControllerCmd.SUBMIT:
             if len(self._restriction_bindings) != 1:
-                raise RuntimeError
+                return
             binding = self._restriction_bindings[0]
             figure_name = binding.get_object_names()[0]
             restr = get_restr_fun(binding)
@@ -665,7 +665,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         elif cmd == ControllerCmd.SUBMIT:
             if len(self._restriction_bindings) != 2:
-                raise RuntimeError
+                return
             b1, b2 = self._restriction_bindings
             f1_name = b1.get_object_names()[0]
             f2_name = b2.get_object_names()[0]
