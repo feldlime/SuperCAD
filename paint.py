@@ -54,7 +54,7 @@ def paint_figure(painter: QPainter, figure: Figure, style: str):
     coo = figure.get_base_representation()
     if isinstance(figure, Point):
         if style == 'basic':
-            paint_point(painter, coo, 4, Qt.darkCyan)
+            paint_point(painter, coo, 5, Qt.darkCyan)
         elif style == 'selected':
             paint_point(painter, coo, 6, Qt.cyan)
         elif style == 'created':
