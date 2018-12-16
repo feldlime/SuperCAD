@@ -2,6 +2,7 @@ from contracts import contract
 import numpy as np
 
 BIG_DISTANCE = 10000
+BIG_NUMBER = 10_000_000
 
 
 class IncorrectParamError(Exception):
@@ -56,6 +57,7 @@ class Stack:
     ------
     EmptyStackError: when try to see or pop elements of empty stack.
     """
+
     def __init__(self):
         self._arr = []
 
@@ -87,6 +89,7 @@ class Stack:
 
 class ReferencedToObjects:
     """Interface for objects that are referenced to other object"""
+
     _n_objects = None
 
     def __init__(self):
@@ -98,7 +101,8 @@ class ReferencedToObjects:
         if self._n_objects is not None:
             if len(object_names) != self._n_objects:
                 raise ValueError(
-                    f'Len of object_names must be {self._n_objects}')
+                    f'Len of object_names must be {self._n_objects}'
+                )
             self._object_names = object_names
         else:
             raise RuntimeError('self._objects_names is None.')

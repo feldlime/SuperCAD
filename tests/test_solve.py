@@ -44,28 +44,18 @@ class TestBaseFunctions:
 
     def test_roll_up_and_unroll(self):
         flatten = {
-            f'figure1{DELIMITER}x': 1.,
-            f'figure1{DELIMITER}y': 2.,
-            f'figure2{DELIMITER}x1': 3.,
-            f'figure2{DELIMITER}y1': 4.,
-            f'figure2{DELIMITER}x2': 5.,
-            f'figure2{DELIMITER}y2': 6.,
-            f'figure3{DELIMITER}z': 7.,
+            f'figure1{DELIMITER}x': 1.0,
+            f'figure1{DELIMITER}y': 2.0,
+            f'figure2{DELIMITER}x1': 3.0,
+            f'figure2{DELIMITER}y1': 4.0,
+            f'figure2{DELIMITER}x2': 5.0,
+            f'figure2{DELIMITER}y2': 6.0,
+            f'figure3{DELIMITER}z': 7.0,
         }
         hierarchical = {
-            'figure1': {
-                'x': 1.,
-                'y': 2.,
-            },
-            'figure2': {
-                'x1': 3.,
-                'y1': 4.,
-                'x2': 5.,
-                'y2': 6.,
-            },
-            'figure3': {
-                'z': 7.,
-            }
+            'figure1': {'x': 1.0, 'y': 2.0},
+            'figure2': {'x1': 3.0, 'y1': 4.0, 'x2': 5.0, 'y2': 6.0},
+            'figure3': {'z': 7.0},
         }
 
         hierarchical_ = roll_up_values_dict(flatten)
@@ -80,7 +70,7 @@ class TestBaseFunctions:
     def test_getting_equation_symbols(self):
         symbols_names = ['a', 'b', 'c', 'd']
         a, b, c, d = sympy.symbols(' '.join(symbols_names))
-        eq = sympy.Eq(a**2 + b * b, c - a)
+        eq = sympy.Eq(a ** 2 + b * b, c - a)
         eq_symbols_names_ = get_equation_symbols_names(eq, symbols_names)
         assert eq_symbols_names_ == {'a', 'b', 'c'}
 
@@ -88,21 +78,23 @@ class TestBaseFunctions:
 class TestSubstitutor:
     def test_pass(self):
         symbols_names = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
-        a, b, c, d, e, f, g = sympy.symbols(' '.join(symbols_names))
+        symbols_ = sympy.symbols(' '.join(symbols_names))
+        symbols_dict = {name: s for name, s in zip(symbols_names, symbols_)}
+        a, b, c, d, e, f, g = symbols_
         system = [
             sympy.Eq(a ** 2 + b * 2, c - a),
             sympy.Eq(a, 6),
             sympy.Eq(d, 10),
             sympy.Eq(e, b),
             sympy.Eq(f * 2, a + c),
-            sympy.Eq(f, c)
+            sympy.Eq(f, c),
         ]
 
-        substitutor = Substitutor().fit(system, symbols_names)
+        substitutor = Substitutor().fit(system, symbols_dict)
 
         simplified = [
             sympy.Eq(6.0 ** 2 + e * 2, c - 6.0),
-            sympy.Eq(c * 2, 6.0 + c)
+            sympy.Eq(c * 2, 6.0 + c),
         ]
         simplified_ = substitutor.sub(system)
         assert isinstance(simplified_, list)
@@ -172,14 +164,8 @@ class TestEquationsSystem:
         f2_ = system.get_symbols('figure2')
         f2_x1, f2_y1, f2_x2, f2_y2 = f2_['x1'], f2_['y1'], f2_['x2'], f2_['y2']
 
-        fixed_f1 = [
-            sympy.Eq(f1_x, 1),
-            sympy.Eq(f1_y, 2)
-         ]
-        joint_f1_f21 = [
-            sympy.Eq(f2_x1, f1_x),
-            sympy.Eq(f2_y1, f1_y)
-        ]
+        fixed_f1 = [sympy.Eq(f1_x, 1), sympy.Eq(f1_y, 2)]
+        joint_f1_f21 = [sympy.Eq(f2_x1, f1_x), sympy.Eq(f2_y1, f1_y)]
         fixed_length_f2 = [
             sympy.Eq((f2_x2 - f2_x1) ** 2 + (f2_y2 - f2_y1) ** 2, 5 ** 2)
         ]
@@ -214,53 +200,26 @@ class TestEquationsSystem:
         f3_z = f3_['z']
 
         values = {
-            'figure1': {
-                'x': 1.,
-                'y': 1.
-            },
-            'figure2': {
-                'x1': 5.,
-                'y1': 6.,
-                'x2': 10.,
-                'y2': 2.
-            },
-            'figure3': {
-                'z': 100.
-            }
+            'figure1': {'x': 1.0, 'y': 1.0},
+            'figure2': {'x1': 5.0, 'y1': 6.0, 'x2': 10.0, 'y2': 2.0},
+            'figure3': {'z': 100.0},
         }
 
         # Check restriction 1
-        fixed_f1 = [
-            sympy.Eq(f1_x, 1.),
-            sympy.Eq(f1_y, 2.)
-        ]
+        fixed_f1 = [sympy.Eq(f1_x, 1.0), sympy.Eq(f1_y, 2.0)]
         system.add_restriction_equations('fixed_f1', fixed_f1)
         result = system.solve(values)
-        answer = {
-            'figure1': {
-                'x': 1.,
-                'y': 2.
-            }
-        }
+        answer = {'figure1': {'x': 1.0, 'y': 2.0}}
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure1'].update(result['figure1'])
 
         # Check restriction 2
-        joint_f1_f21 = [
-            sympy.Eq(f2_x1, f1_x),
-            sympy.Eq(f2_y1, f1_y)
-        ]
+        joint_f1_f21 = [sympy.Eq(f2_x1, f1_x), sympy.Eq(f2_y1, f1_y)]
         system.add_restriction_equations('joint_f1_f21', joint_f1_f21)
         result = system.solve(values)
         answer = {
-            'figure1': {
-                'x': 1.,
-                'y': 2.
-            },
-            'figure2': {
-                'x1': 1.,
-                'y1': 2.,
-            },
+            'figure1': {'x': 1.0, 'y': 2.0},
+            'figure2': {'x1': 1.0, 'y1': 2.0},
         }
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure1'].update(result['figure1'])
@@ -273,16 +232,8 @@ class TestEquationsSystem:
         system.add_restriction_equations('fixed_length_f2', fixed_length_f2)
         result = system.solve(values)
         answer = {
-            'figure1': {
-                'x': 1.,
-                'y': 2.
-            },
-            'figure2': {
-                'x1': 1.,
-                'y1': 2.,
-                'x2': 6.,
-                'y2': 2.
-            },
+            'figure1': {'x': 1.0, 'y': 2.0},
+            'figure2': {'x1': 1.0, 'y1': 2.0, 'x2': 6.0, 'y2': 2.0},
         }
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure1'].update(result['figure1'])
@@ -297,70 +248,40 @@ class TestEquationsSystem:
         ]  # Directed
         result = system.solve_new(rotate_30, values)
         answer = {
-            'figure1': {
-                'x': 1.,
-                'y': 2.
-            },
+            'figure1': {'x': 1.0, 'y': 2.0},
             'figure2': {
-                'x1': 1.,
-                'y1': 2.,
-                'x2': 1. + 5 * np.cos(np.pi / 6),
-                'y2': 2. + 5 * np.sin(np.pi / 6)
-            }
+                'x1': 1.0,
+                'y1': 2.0,
+                'x2': 1.0 + 5 * np.cos(np.pi / 6),
+                'y2': 2.0 + 5 * np.sin(np.pi / 6),
+            },
         }
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure1'].update(result['figure1'])
         values['figure2'].update(result['figure2'])
 
         # Check moving
-        move_high = {
-            'figure2': {
-                'x2': 1.,
-                'y2': 100.
-            }
-        }
+        move_high = {'figure2': {'x2': 1.0, 'y2': 100.0}}
         result = system.solve_optimization_task(move_high, values)
         answer = {
-            'figure1': {
-                'x': 1.,
-                'y': 2.
-            },
-            'figure2': {
-                'x1': 1.,
-                'y1': 2.,
-                'x2': 1.,
-                'y2': 7.
-            }
+            'figure1': {'x': 1.0, 'y': 2.0},
+            'figure2': {'x1': 1.0, 'y1': 2.0, 'x2': 1.0, 'y2': 7.0},
         }
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure1'].update(result['figure1'])
         values['figure2'].update(result['figure2'])
 
         # Check changing z
-        change_z = [
-            sympy.Eq(f3_z, 0)
-        ]
+        change_z = [sympy.Eq(f3_z, 0)]
         result = system.solve_new(change_z, values)
-        answer = {
-            'figure3': {
-                'z': 0.
-            }
-        }
+        answer = {'figure3': {'z': 0.0}}
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure3'].update(result['figure3'])
 
         # Check moving z
-        move_z = {
-            'figure3': {
-                'z': 1.
-            }
-        }
+        move_z = {'figure3': {'z': 1.0}}
         result = system.solve_optimization_task(move_z, values)
-        answer = {
-            'figure3': {
-                'z': 1.
-            }
-        }
+        answer = {'figure3': {'z': 1.0}}
         assert_2_level_dicts_equal(result, answer, is_close=True)
         values['figure3'].update(result['figure3'])
 
@@ -371,29 +292,16 @@ class TestEquationsSystem:
         f_ = system.get_symbols('figure')
         f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
 
-        values = {
-            'figure': {
-                'x1': 5.,
-                'y1': 6.,
-                'x2': 10.,
-                'y2': 2.
-            }
-        }
+        values = {'figure': {'x1': 5.0, 'y1': 6.0, 'x2': 10.0, 'y2': 2.0}}
 
         # Fix start
-        fixed_f_1 = [
-            sympy.Eq(f_x1, 0.),
-            sympy.Eq(f_y1, 0.)
-        ]
+        fixed_f_1 = [sympy.Eq(f_x1, 0.0), sympy.Eq(f_y1, 0.0)]
         system.add_restriction_equations('fixed_f_1', fixed_f_1)
         result = system.solve(values)
         values['figure'].update(result['figure'])
 
         # Fix end
-        fixed_f_2 = [
-            sympy.Eq(f_x2, 1.),
-            sympy.Eq(f_y2, 1.)
-        ]
+        fixed_f_2 = [sympy.Eq(f_x2, 1.0), sympy.Eq(f_y2, 1.0)]
         system.add_restriction_equations('fixed_f_2', fixed_f_2)
         result = system.solve(values)
         values['figure'].update(result['figure'])
@@ -402,8 +310,9 @@ class TestEquationsSystem:
         fixed_length_incorrect = [
             sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 10 ** 2)
         ]
-        system.add_restriction_equations('fixed_length_incorrect',
-                                         fixed_length_incorrect)
+        system.add_restriction_equations(
+            'fixed_length_incorrect', fixed_length_incorrect
+        )
         with pytest.raises(MoreEquationsThanSymbolsError):
             system.solve(values)
         system.remove_restriction_equations('fixed_length_incorrect')
@@ -412,8 +321,9 @@ class TestEquationsSystem:
         fixed_length_correct = [
             sympy.Eq((f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2, 5 ** 2)
         ]
-        system.add_restriction_equations('fixed_length_correct',
-                                         fixed_length_correct)
+        system.add_restriction_equations(
+            'fixed_length_correct', fixed_length_correct
+        )
         with pytest.raises(MoreEquationsThanSymbolsError):
             system.solve(values)
         system.remove_restriction_equations('fixed_length_correct')
@@ -425,14 +335,7 @@ class TestEquationsSystem:
         f_ = system.get_symbols('figure')
         f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
 
-        values = {
-            'figure': {
-                'x1': 5.,
-                'y1': 6.,
-                'x2': 10.,
-                'y2': 2.
-            }
-        }
+        values = {'figure': {'x1': 5.0, 'y1': 6.0, 'x2': 10.0, 'y2': 2.0}}
 
         # Fix length
         fixed_length = [
@@ -443,9 +346,7 @@ class TestEquationsSystem:
         values['figure'].update(result['figure'])
 
         # Fix vertical
-        fixed_vertical = [
-            sympy.Eq(f_x1, f_x2),
-        ]
+        fixed_vertical = [sympy.Eq(f_x1, f_x2)]
         system.add_restriction_equations('fixed_vertical', fixed_vertical)
         result = system.solve(values)
         values['figure'].update(result['figure'])
@@ -453,11 +354,10 @@ class TestEquationsSystem:
         # Cannot be horizontal and vertical simultaneously if length > 0
 
         # Try fix horizontal simple
-        fixed_horizontal_simple = [
-            sympy.Eq(f_y1, f_y2),
-        ]
-        system.add_restriction_equations('fixed_horizontal_simple',
-                                         fixed_horizontal_simple)
+        fixed_horizontal_simple = [sympy.Eq(f_y1, f_y2)]
+        system.add_restriction_equations(
+            'fixed_horizontal_simple', fixed_horizontal_simple
+        )
         with pytest.raises(SystemIncompatibleError):
             system.solve(values)
         system.remove_restriction_equations('fixed_horizontal_simple')
@@ -465,10 +365,11 @@ class TestEquationsSystem:
         # Try fix horizontal complex
         length = (f_x2 - f_x1) ** 2 + (f_y2 - f_y1) ** 2
         fixed_horizontal_complex = [
-            sympy.Eq(length * np.cos(0), f_x2 - f_x1),  # cheater (without y)
+            sympy.Eq(length * np.cos(0), f_x2 - f_x1)  # cheater (without y)
         ]
-        system.add_restriction_equations('fixed_horizontal_complex',
-                                         fixed_horizontal_complex)
+        system.add_restriction_equations(
+            'fixed_horizontal_complex', fixed_horizontal_complex
+        )
         with pytest.raises(CannotSolveSystemError):
             system.solve(values)
         system.remove_restriction_equations('fixed_horizontal_complex')
@@ -482,27 +383,16 @@ class TestEquationsSystem:
         f_ = system.get_symbols('figure')
         f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
 
-        values = {
-            'figure': {
-                'x1': 5.,
-                'y1': 6.,
-                'x2': 10.,
-                'y2': 2.
-            }
-        }
+        values = {'figure': {'x1': 5.0, 'y1': 6.0, 'x2': 10.0, 'y2': 2.0}}
 
         # Fix vertical 1
-        fixed_vertical_1 = [
-            sympy.Eq(f_x1, f_x2),
-        ]
+        fixed_vertical_1 = [sympy.Eq(f_x1, f_x2)]
         system.add_restriction_equations('fixed_vertical_1', fixed_vertical_1)
         result = system.solve(values)
         values['figure'].update(result['figure'])
 
         # Fix vertical 2
-        fixed_vertical_2 = [
-            sympy.Eq(f_x1, f_x2),
-        ]
+        fixed_vertical_2 = [sympy.Eq(f_x1, f_x2)]
         system.add_restriction_equations('fixed_vertical_2', fixed_vertical_2)
         with pytest.raises(CannotSolveSystemError):
             system.solve(values)
@@ -516,14 +406,7 @@ class TestEquationsSystem:
         f_ = system.get_symbols('figure')
         f_x1, f_y1, f_x2, f_y2 = f_['x1'], f_['y1'], f_['x2'], f_['y2']
 
-        values = {
-            'figure': {
-                'x1': 5.,
-                'y1': 6.,
-                'x2': 10.,
-                'y2': 2.
-            }
-        }
+        values = {'figure': {'x1': 5.0, 'y1': 6.0, 'x2': 10.0, 'y2': 2.0}}
 
         # Fix length 1
         fixed_length_1 = [

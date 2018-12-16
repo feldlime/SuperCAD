@@ -1,19 +1,18 @@
 """Module with main class of system (backend)."""
 
 from contracts import contract
-import pickle
+from pickle import load as pkl_load, dump as pkl_dump
 from copy import deepcopy
 import numpy as np
+from typing import Dict
 
 
 from figures import Figure, Point, Segment
 from bindings import (
-    SegmentStartBinding,
-    SegmentEndBinding,
-    SegmentCenterBinding,
+    SegmentSpotBinding,
     PointBinding,
     FullSegmentBinding,
-    create_bindings
+    create_bindings,
 )
 from restrictions import Restriction
 from solve import EquationsSystem, CannotSolveSystemError
@@ -21,9 +20,10 @@ from utils import (
     IncorrectParamType,
     IncorrectParamValue,
     Stack,
-    EmptyStackError
+    EmptyStackError,
 )
 
+from diagnostic_context import measured
 
 CIRCLE_BINDING_RADIUS = 12
 SEGMENT_BINDING_MARGIN = 6
@@ -132,7 +132,7 @@ class CADProject:
             self._bindings = create_bindings(
                 self._figures,
                 circle_bindings_radius=CIRCLE_BINDING_RADIUS,
-                segment_bindings_margin=SEGMENT_BINDING_MARGIN
+                segment_bindings_margin=SEGMENT_BINDING_MARGIN,
             )  # Slow but easy
             self._system.add_figure_symbols(name, figure.base_parameters)
         except:
@@ -163,7 +163,8 @@ class CADProject:
         figure = self._figures[figure_name]
         if param not in figure.all_parameters:
             raise IncorrectParamValue(
-                f'Parameter must be one of {figure.all_parameters}')
+                f'Parameter must be one of {figure.all_parameters}'
+            )
 
         figure_symbols = self._system.get_symbols(figure_name)
         equations = figure.get_setter_equations(figure_symbols, param, value)
@@ -182,9 +183,11 @@ class CADProject:
         else:
             self._commit()
 
+    @measured
     @contract(cursor_x='number', cursor_y='number')
-    def move_figure(self, binding: PointBinding,
-                    cursor_x: float, cursor_y: float):
+    def move_figure(
+        self, binding: PointBinding, cursor_x: float, cursor_y: float
+    ):
         """Move figure.
 
         Parameters
@@ -198,27 +201,35 @@ class CADProject:
         obj_name = binding.get_object_names()[0]
         if obj_name not in self._figures:
             raise RuntimeError(
-                'Binding references to figure that does not exist.')
+                'Binding references to figure that does not exist.'
+            )
 
         cursor_x, cursor_y = float(cursor_x), float(cursor_y)
 
         if isinstance(binding, PointBinding):
             optimizing_values = {obj_name: {'x': cursor_x, 'y': cursor_y}}
-        elif isinstance(binding, SegmentStartBinding):
-            optimizing_values = {obj_name: {'x1': cursor_x, 'y1': cursor_y}}
-        elif isinstance(binding, SegmentEndBinding):
-            optimizing_values = {obj_name: {'x2': cursor_x, 'y2': cursor_y}}
-        elif isinstance(binding, SegmentCenterBinding):
-            params = self._figures[obj_name].get_params()
-            length, angle = params['length'], params['angle']
-            optimizing_values = {obj_name: {
-                'x1': cursor_x - length * np.cos(angle) / 2,
-                'y1': cursor_y - length * np.sin(angle) / 2,
-                'x2': cursor_x + length * np.cos(angle) / 2,
-                'y2': cursor_y + length * np.sin(angle) / 2
-            }}  # TODO: Check
+        elif isinstance(binding, SegmentSpotBinding):
+            spot_type = binding.spot_type
+            if spot_type == 'start':
+                optimizing_values = {
+                    obj_name: {'x1': cursor_x, 'y1': cursor_y}
+                }
+            elif spot_type == 'end':
+                optimizing_values = {
+                    obj_name: {'x2': cursor_x, 'y2': cursor_y}
+                }
+            else:  # center
+                params = self._figures[obj_name].get_params()
+                length, angle = params['length'], params['angle']
+                optimizing_values = {
+                    obj_name: {
+                        'x1': cursor_x - length * np.cos(angle) / 2,
+                        'y1': cursor_y - length * np.sin(angle) / 2,
+                        'x2': cursor_x + length * np.cos(angle) / 2,
+                        'y2': cursor_y + length * np.sin(angle) / 2,
+                    }
+                }
         elif isinstance(binding, FullSegmentBinding):
-            # TODO: Use min distance
             return
         else:
             raise IncorrectParamType(f"Incorrect type {type(binding)}")
@@ -226,14 +237,12 @@ class CADProject:
         current_values = self._get_values()
         try:
             new_values = self._system.solve_optimization_task(
-                optimizing_values,
-                current_values
+                optimizing_values, current_values
             )
         except CannotSolveSystemError as e:
             raise e
 
         self._set_values(new_values)
-        # TODO: do commit / rollback from outside
 
     @contract(figure_name='str')
     def remove_figure(self, figure_name: str):
@@ -257,15 +266,16 @@ class CADProject:
             # Remove restrictions
             restrictions_to_remove = []
             for name, restriction in self._restrictions.items():
-                if figure_name in restriction.get_objects_name():
+                if figure_name in restriction.get_object_names():
                     restrictions_to_remove.append(name)
             for restriction_name in restrictions_to_remove:
                 self._restrictions.pop(restriction_name)
 
             # Remove from system
-            self._system.remove_figure_symbols(figure_name)
             for restriction_name in restrictions_to_remove:
                 self._system.remove_restriction_equations(restriction_name)
+            self._system.remove_figure_symbols(figure_name)
+
         except:
             self._rollback()
             raise
@@ -273,8 +283,9 @@ class CADProject:
             self._commit()
 
     @contract(figures_names='tuple(str) | tuple(str,str)', name='str|None')
-    def add_restriction(self, restriction: Restriction, figures_names: tuple,
-                        name: str = None):
+    def add_restriction(
+        self, restriction: Restriction, figures_names: tuple, name: str = None
+    ):
         """Add restriction to system.
 
         Parameters
@@ -313,11 +324,14 @@ class CADProject:
         for figure_name, type_ in zip(figures_names, types):
             if not isinstance(self._figures[figure_name], type_):
                 raise IncorrectParamValue(
-                    f'Given figures must have types {types}')
+                    f'Given figures must have types {types}'
+                )
 
         # Add to system
-        figures_symbols = [self._system.get_symbols(figure_name)
-                           for figure_name in figures_names]
+        figures_symbols = [
+            self._system.get_symbols(figure_name)
+            for figure_name in figures_names
+        ]
         equations = restriction.get_equations(*figures_symbols)
 
         current_values = self._get_values()
@@ -334,6 +348,7 @@ class CADProject:
                 raise e
 
             # Add
+            restriction.set_object_names(list(figures_names))
             self._restrictions[name] = restriction
 
             # Update values
@@ -357,8 +372,9 @@ class CADProject:
             Name of restriction to remove.
         """
         if restriction_name not in self._restrictions:
-            raise IncorrectParamValue(f'Invalid restriction_name'
-                                      f' {restriction_name}')
+            raise IncorrectParamValue(
+                f'Invalid restriction_name' f' {restriction_name}'
+            )
 
         try:
             self._restrictions.pop(restriction_name)
@@ -398,7 +414,7 @@ class CADProject:
             Name of file to save (with extension).
         """
         with open(filename, 'wb') as f:
-            pickle.dump(self._state, f)
+            pkl_dump(self._state, f)
 
     @contract(filename='str')
     def load(self, filename: str):
@@ -410,7 +426,7 @@ class CADProject:
             Name of file to load.
         """
         with open(filename, 'rb') as f:
-            state = pickle.load(f)
+            state = pkl_load(f)
 
         if not isinstance(state, ProjectState):
             raise IncorrectTypeOfLoadedObject
@@ -438,8 +454,11 @@ class CADProject:
         else:
             raise ValueError(f'Incorrect obj type {type_str}')
 
-        nums = [int(name.split('_')[-1])
-                for name in names_list if name.startswith(type_str)]
+        nums = [
+            int(name.split('_')[-1])
+            for name in names_list
+            if name.startswith(type_str)
+        ]
 
         num = max(nums) + 1 if nums else 1
         name = f'{type_str}_{num}'
@@ -499,7 +518,8 @@ class CADProject:
         for figure_name, figure_values in values.items():
             if figure_name not in self._figures:
                 raise ValueError(
-                    f'Figure with name {figure_name} does not exist.')
+                    f'Figure with name {figure_name} does not exist.'
+                )
 
             for param_name, value in figure_values.items():
                 self._figures[figure_name].set_base_param(param_name, value)

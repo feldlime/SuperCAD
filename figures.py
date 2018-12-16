@@ -1,14 +1,14 @@
 """Module with classes of geometry figures."""
 
 import numpy as np
-import sympy
+from sympy import Eq
 from contracts import contract
 
 from utils import (
     IncorrectParamValue,
     segment_length,
     segment_angle,
-    simplify_angle
+    simplify_angle,
 )
 
 
@@ -22,6 +22,7 @@ class Figure:
     angle: int or float, optional, default 0
         Angle (in radians) of rotation of figure with response to Ox.
     """
+
     all_parameters = ['base_x', 'base_y', 'angle']
     base_parameters = []
 
@@ -93,8 +94,10 @@ class Figure:
         raise NotImplementedError
 
     def __repr__(self):
-        desc = f'{self.__class__.__name__} with base representation: ' \
-               f'{self.get_base_representation()}'
+        desc = (
+            f'{self.__class__.__name__} with base representation: '
+            f'{self.get_base_representation()}'
+        )
         return desc
 
 
@@ -106,6 +109,7 @@ class Point(Figure):
     coordinates: tuple, optional, default (0, 0)
         Pair of point coordinates (int or float).
     """
+
     all_parameters = ['x', 'y']
     base_parameters = ['x', 'y']
 
@@ -154,8 +158,7 @@ class Point(Figure):
         params: dict(str -> float)
             Keys are ['x', 'y'].
         """
-        return {'x': self._base[0],
-                'y': self._base[1]}
+        return {'x': self._base[0], 'y': self._base[1]}
 
     @contract(param_name='str', value='number')
     def set_param(self, param_name, value):
@@ -206,7 +209,8 @@ class Point(Figure):
             self._base = (self._base[0], float(value))
         else:
             raise IncorrectParamValue(
-                f'Incorrect name of parameter: {param_name}.')
+                f'Incorrect name of parameter: {param_name}.'
+            )
 
         return self
 
@@ -237,7 +241,8 @@ class Point(Figure):
             self._base = (self._base[0], float(value))
         else:
             raise IncorrectParamValue(
-                f'Incorrect name of parameter: {param_name}.')
+                f'Incorrect name of parameter: {param_name}.'
+            )
 
         return self
 
@@ -258,7 +263,7 @@ class Point(Figure):
 
         Returns
         -------
-        equations: list[sympy.Eq]
+        equations: list[Eq]
             List of equations.
 
         Raises
@@ -267,9 +272,9 @@ class Point(Figure):
         """
         x, y = symbols['x'], symbols['y']
         if param == 'x':
-            return [sympy.Eq(x, value)]
+            return [Eq(x, value)]
         elif param == 'y':
-            return [sympy.Eq(y, value)]
+            return [Eq(y, value)]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')
 
@@ -286,11 +291,15 @@ class Segment(Figure):
     length: int or float, optional, default 1
         Length of segment.
     """
+
     all_parameters = ['x1', 'y1', 'x2', 'y2', 'length', 'angle']
     base_parameters = ['x1', 'y1', 'x2', 'y2']
 
-    @contract(start='tuple(number, number) | None',
-              angle='number | None', length='number, >=0 | None')
+    @contract(
+        start='tuple(number, number) | None',
+        angle='number | None',
+        length='number, >=0 | None',
+    )
     def __init__(self, start=(0, 0), angle=0, length=1):
         super().__init__(start, angle)
         self._i_length = float(length)
@@ -351,7 +360,7 @@ class Segment(Figure):
             'x2': self._base[0] + self._length * np.cos(self._angle),
             'y2': self._base[1] + self._length * np.sin(self._angle),
             'length': self._length,
-            'angle': self._angle
+            'angle': self._angle,
         }
 
     @contract(param_name='str', value='number')
@@ -394,7 +403,8 @@ class Segment(Figure):
             self._length, self._angle = length, angle
         else:
             raise IncorrectParamValue(
-                f'Incorrect name of parameter: {param_name}.')
+                f'Incorrect name of parameter: {param_name}.'
+            )
 
         return self
 
@@ -432,7 +442,8 @@ class Segment(Figure):
             base_repr[3] = value
         else:
             raise IncorrectParamValue(
-                f'Incorrect name of parameter: {param_name}.')
+                f'Incorrect name of parameter: {param_name}.'
+            )
 
         length = segment_length(*base_repr)
         angle = segment_angle(*base_repr)
@@ -457,7 +468,7 @@ class Segment(Figure):
 
         Returns
         -------
-        equations: list[sympy.Eq]
+        equations: list[Eq]
             List of equations.
 
         Raises
@@ -467,20 +478,20 @@ class Segment(Figure):
         x1, y1 = symbols['x1'], symbols['y1']
         x2, y2 = symbols['x2'], symbols['y2']
         if param == 'x1':
-            return [sympy.Eq(x1, value)]
+            return [Eq(x1, value)]
         elif param == 'y1':
-            return [sympy.Eq(y1, value)]
+            return [Eq(y1, value)]
         elif param == 'x2':
-            return [sympy.Eq(x2, value)]
+            return [Eq(x2, value)]
         elif param == 'y2':
-            return [sympy.Eq(y2, value)]
+            return [Eq(y2, value)]
         elif param == 'length':
-            return [sympy.Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
+            return [Eq((x2 - x1) ** 2 + (y2 - y1) ** 2, value ** 2)]
         elif param == 'angle':
-            sign = np.sign(simplify_angle(value) - np.pi)
+            # sign = np.sign(simplify_angle(value) - np.pi)
             return [
-                sympy.Eq((y2 - y1), (x2 - x1) * np.tan(value)),
-                sympy.Eq(sympy.sign(y2 - y1), sign)  # TODO: Maybe drop?
+                Eq((y2 - y1), (x2 - x1) * np.tan(value)),
+                # Eq(sympy_sign(y2 - y1), sign),
             ]
         else:
             raise IncorrectParamValue(f'Unexpected param {param}')

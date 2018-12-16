@@ -4,9 +4,7 @@ import numpy.random as random
 from contracts import ContractNotRespected
 
 from figures import Figure, Point, Segment
-from utils import (
-    IncorrectParamValue,
-)
+from utils import IncorrectParamValue
 
 
 # noinspection PyTypeChecker
@@ -14,9 +12,9 @@ class TestFigure:
     def test_normal_creation(self):
         f = Figure((1, 2), 1)
         assert isinstance(f, Figure)
-        f = Figure((1., 2.), 1)
+        f = Figure((1.0, 2.0), 1)
         assert isinstance(f, Figure)
-        f = Figure((1, 2), 1.)
+        f = Figure((1, 2), 1.0)
         assert isinstance(f, Figure)
         f = Figure()
         assert isinstance(f, Figure)
@@ -154,18 +152,28 @@ class TestSegment:
     def test_move(self):
         for coo in random.random((10, 4)) * 100 - 50:
             s = Segment((coo[2], coo[3]), 0, 1)
-            s.move(coo[0],coo[1])
-            assert all(isclose((coo[0]+coo[2], coo[1]+coo[3], coo[0]+coo[2]+1, coo[1]+coo[3]), s.get_base_representation()))
+            s.move(coo[0], coo[1])
+            assert all(
+                isclose(
+                    (
+                        coo[0] + coo[2],
+                        coo[1] + coo[3],
+                        coo[0] + coo[2] + 1,
+                        coo[1] + coo[3],
+                    ),
+                    s.get_base_representation(),
+                )
+            )
 
     def test_rotate(self):
         s = Segment((1, 1), 0, 1)
         s.rotate(pi)
         assert all(isclose((1, 1, 0, 1), s.get_base_representation()))
-        s.rotate(pi/2)
+        s.rotate(pi / 2)
         assert all(isclose((1, 1, 1, 0), s.get_base_representation()))
         s.rotate(-pi)
         assert all(isclose((1, 1, 1, 2), s.get_base_representation()))
-        s.rotate(-pi/2)
+        s.rotate(-pi / 2)
         assert all(isclose((1, 1, 2, 1), s.get_base_representation()))
 
     def test_getting_params(self):
@@ -173,12 +181,14 @@ class TestSegment:
         res = s.get_params()
         assert isinstance(res, dict)
         assert set(res.keys()) == {'x1', 'y1', 'x2', 'y2', 'length', 'angle'}
-        assert res['x1'] == 1.0 \
-            and res['y1'] == 2.0 \
-            and res['x2'] == 11.0 \
-            and res['y2'] == 2.0 \
-            and res['length'] == 10.0 \
+        assert (
+            res['x1'] == 1.0
+            and res['y1'] == 2.0
+            and res['x2'] == 11.0
+            and res['y2'] == 2.0
+            and res['length'] == 10.0
             and res['angle'] == 0.0
+        )
 
     def test_setting_param(self):
         s = Segment((1, 2), 0, 10)

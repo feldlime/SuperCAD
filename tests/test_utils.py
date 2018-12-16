@@ -55,7 +55,7 @@ def test_segment_angle():
     assert np.isclose(res, 3 * np.pi / 2)
 
     res = segment_angle(1, 1, 1, 1)
-    assert np.isnan(res)
+    assert np.isclose(res, 0)
 
 
 def test_stack():

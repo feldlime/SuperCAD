@@ -1,29 +1,21 @@
-class ChooseSt:
-    NOTHING = 0
-    CHOOSE = 1
-
-
-class ControllerWorkSt:
+class ControllerSt:
     NOTHING = 0
     ADD_POINT = 1
     ADD_SEGMENT = 2
-    RESTR_FIXED = 3
-    RESTR_POINT_ON_SEGMENT = 4
-    RESTR_JOINT = 5
-    RESTR_SEGMENT_ANGLE_FIXED = 6
-    RESTR_SEGMENT_HORIZONTAL = 7
-    RESTR_SEGMENT_LENGTH_FIXED = 8
-    RESTR_SEGMENTS_NORMAL = 9
-    RESTR_SEGMENTS_PARALLEL = 10
+    RESTR_JOINT = 3
+    RESTR_POINT_ON_SEGMENT_LINE = 4
+    RESTR_SEGMENTS_PARALLEL = 5
+    RESTR_SEGMENTS_NORMAL = 6
+    RESTR_SEGMENT_VERTICAL = 7
+    RESTR_SEGMENT_HORIZONTAL = 8
+    RESTR_FIXED = 9
+    RESTR_SEGMENT_LENGTH_FIXED = 10
+    RESTR_SEGMENT_ANGLE_FIXED = 11
+    RESTR_SEGMENT_ANGLE_BETWEEN_FIXED = 12
 
-
-class ControllerSt:
-    HIDE = 0
-    SHOW = 1
-    SUBMIT = 2
-    ADD = 3
-    MOUSE_ADD = 4
-    MOVE = 5
+    @staticmethod
+    def is_restr(st):
+        return 3 <= st <= 12
 
 
 class CreationSt:
@@ -31,6 +23,19 @@ class CreationSt:
     POINT_SET = 1
     SEGMENT_START_SET = 2
     SEGMENT_END_SET = 3
-    MOVE = 4
 
 
+class ActionSt:
+    NOTHING = 0
+    BINDING_PRESSED = 1
+    SELECTED = 2
+    MOVE = 3
+    MOVE_WHILE_SELECTED = 4
+    BINDING_PRESSED_WHILE_SELECTED = 5
+
+
+class ControllerCmd:
+    HIDE = 0
+    SHOW = 1
+    STEP = 2
+    SUBMIT = 3
