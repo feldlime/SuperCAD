@@ -687,7 +687,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
 
         self.paint_all(
             event,
-            self._mouse_xy,
             self._current_bindings,
             self._project.figures,
             selected_figures,
@@ -733,7 +732,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                         self.action_st = ActionSt.BINDING_PRESSED_WHILE_SELECTED
                 else:
                     self.reset()
-                    
+
         self.update()
 
     def mouseMoveEvent(self, event):
@@ -955,46 +954,33 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._current_bindings.append(binding)
 
     def paint_all(self, event: QPaintEvent,
-                  mouse_xy,
                   bindings,
                   figures: Dict[str, Figure],
                   selected_figures: list,
-                  painted_figure: Optional[Figure] = None,
+                  created_figure: Optional[Figure] = None,
                   ):
-        # self._logger.debug('paint_all start')
         painter = QPainter()
         painter.begin(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.Antialiasing, True)
         painter.fillRect(event.rect(), QBrush(QColor(255, 255, 255)))
         painter.save()
         painter.translate(*self.center)
 
-        # self._logger.debug(f'current_bindings: {self._current_bindings}')
-        paint.paint_all(
-            painter, figures, bindings, mouse_xy
-        )
+        # Paint all
+        paint.write_coordinates_near_pointer(painter, self._mouse_xy)
+
+        for figure in figures.values():
+            paint.paint_figure(painter, figure, 'basic')
+
+        paint.paint_bindings(painter, figures, bindings)
 
         # Paint painted figure
-        if painted_figure is not None:
-            coo = painted_figure.get_base_representation()
-            if isinstance(painted_figure, Point):
-                paint.paint_point(painter, coo, 6, Qt.green)
-            elif isinstance(painted_figure, Segment):
-                paint.paint_segment(painter, coo, 3, Qt.green)
-            else:
-                raise RuntimeError(
-                    f'Unexpected figure type {type(painted_figure)}')
+        if created_figure is not None:
+            paint.paint_figure(painter, created_figure, 'created')
 
         # Paint selected figure
         for selected_figure in selected_figures:
-            coo = selected_figure.get_base_representation()
-            if isinstance(selected_figure, Point):
-                paint.paint_point(painter, coo, 6, Qt.cyan)
-            elif isinstance(selected_figure, Segment):
-                paint.paint_segment(painter, coo, 3, Qt.blue)
-            else:
-                raise RuntimeError(
-                    f'Unexpected figure type {type(selected_figure)}')
+            paint.paint_figure(painter, selected_figure, 'selected')
 
         # Finish painting
         painter.restore()

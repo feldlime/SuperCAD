@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QPointF, Qt
-from PyQt5.QtGui import QBrush, QColor, QPen, QPainter
+from PyQt5.QtGui import QPen, QPainter
 import logging
 from typing import Tuple, List, Dict
 from figures import Figure, Point, Segment
@@ -14,26 +14,17 @@ from bindings import (
 module_logger = logging.getLogger('paint.py')
 
 
-def paint_all(painter: QPainter, figures: Dict[str, Figure],
-              bindings: List[Binding], mouse_xy: Tuple[int, int]):
-    # module_logger.debug('paint_all start')
-
-    # Write coordinates near the mouse
+def write_coordinates_near_pointer(painter, mouse_xy):
     painter.setPen(QPen(Qt.black, 2, Qt.SolidLine))
+    xy = to_display_xy(mouse_xy)
     painter.drawText(
-        QPointF(mouse_xy[0] + 15, -mouse_xy[1] - 10),
+        QPointF(xy[0] + 15, xy[1] - 10),
         f'{mouse_xy[0]}, {mouse_xy[1]}'
     )
 
-    # Draw figures
-    for figure in figures.values():
-        to_draw = figure.get_base_representation()
-        if isinstance(figure, Point):
-            paint_point(painter, to_draw, 4, Qt.darkCyan)
-        elif isinstance(figure, Segment):
-            paint_segment(painter, to_draw, 2, Qt.darkBlue)
-        else:
-            raise RuntimeError(f'Unexpected figure type {type(figure)}.')
+
+def paint_bindings(painter: QPainter, figures: Dict[str, Figure],
+                   bindings: List[Binding]):
 
     # Draw bindings
     for binding in bindings:
@@ -55,6 +46,31 @@ def paint_all(painter: QPainter, figures: Dict[str, Figure],
             raise RuntimeError(f'Unexpected binding type {type(binding)}.')
 
 
+def paint_figure(painter: QPainter, figure: Figure, style: str):
+    """Paint points and segments.
+    Style may be 'basic', 'selected' or 'created'.
+    """
+
+    coo = figure.get_base_representation()
+    if isinstance(figure, Point):
+        if style == 'basic':
+            paint_point(painter, coo, 4, Qt.darkCyan)
+        elif style == 'selected':
+            paint_point(painter, coo, 6, Qt.cyan)
+        elif style == 'created':
+            paint_point(painter, coo, 6, Qt.green)
+    elif isinstance(figure, Segment):
+        if style == 'basic':
+            paint_segment(painter, coo, 2, Qt.darkBlue)
+        elif style == 'selected':
+            paint_segment(painter, coo, 3, Qt.blue)
+        elif style == 'created':
+            paint_segment(painter, coo, 3, Qt.green)
+    else:
+        raise RuntimeError(
+            f'Unexpected figure type {type(figure)}')
+
+
 def paint_point(painter: QPainter, xy: Tuple[int, int], size: int, color):
     xy = to_display_xy(xy)
     painter.setPen(QPen(color, size // 2 + 1, Qt.SolidLine))
@@ -65,18 +81,14 @@ def paint_point(painter: QPainter, xy: Tuple[int, int], size: int, color):
 
 def paint_segment(
         painter: QPainter,
-        coordinates: Tuple[int, int, int, int],  # x1, y1, x2, y2
+        coo: Tuple[int, int, int, int],  # x1, y1, x2, y2
         width: int,
         color
 ):
-    coordinates = to_display_xy(coordinates)
+    coo = [*to_display_xy(coo[:2]), *to_display_xy(coo[2:])]
     painter.setPen(QPen(color, width, Qt.SolidLine))
-    painter.drawLine(*coordinates)
+    painter.drawLine(*coo)
 
 
-def to_display_xy(xy: tuple):
-    if len(xy) == 2:
-        return xy[0], -xy[1]
-    elif len(xy) == 4:
-        return xy[0], -xy[1], xy[2], -xy[3]
-
+def to_display_xy(xy: Tuple[int, int]):
+    return xy[0], -xy[1]
