@@ -418,6 +418,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.field_y_add_point.value(),
                 )
 
+            self.button_add_point.setChecked(True)
             self.widget_add_point.show()
             self.field_x_add_point.setFocus()
             self.field_x_add_point.selectAll()
@@ -452,6 +453,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
                     self.field_y2_add_segment.value(),
                 )
 
+            self.button_add_segment.setChecked(True)
             self.widget_add_segment.show()
             self.field_x1_add_segment.setFocus()
             self.field_x1_add_segment.selectAll()
@@ -637,6 +639,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             status = getattr(ControllerSt, f'restr_{name}'.upper())
             widget = getattr(self, f'widget_restr_{name}')
             widget.show()
+            button = getattr(self, f'button_restr_{name}')
+            button.setChecked(True)
             self.controller_st = status
 
         elif cmd == ControllerCmd.HIDE:
@@ -681,6 +685,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             status = getattr(ControllerSt, f'restr_{name}'.upper())
             widget = getattr(self, f'widget_restr_{name}')
             widget.show()
+            button = getattr(self, f'button_restr_{name}')
+            button.setChecked(True)
             self.controller_st = status
 
         elif cmd == ControllerCmd.HIDE:
