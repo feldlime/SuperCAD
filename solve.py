@@ -323,6 +323,7 @@ class EquationsSystem:
         self._symbols = dict()
         self._equations = dict()
         self._graph = nx.MultiGraph()
+        self._derivatives = dict()  # eq_name -> (sym_name -> derivative)
 
     @property
     def _figures_names(self):
@@ -460,6 +461,13 @@ class EquationsSystem:
         }
         self._equations.update(new_equations)
         self._update_graph()
+
+        for eq_name, eq in new_equations.items():
+            symbols_names = get_equation_symbols_names(eq, list(self._symbols.keys()))
+            eq_canonical = self._system_to_canonical([eq])[0]
+            eq_derivatives = {eq_canonical.diff(self._symbols[sym_name])
+                              for sym_name in symbols_names}
+            self._derivatives[eq_name] = eq_derivatives
 
     @contract(restriction_name='str')
     def remove_restriction_equations(self, restriction_name: str):
