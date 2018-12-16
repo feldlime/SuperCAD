@@ -1,11 +1,9 @@
 """Main module that creates and closes application."""
-
-
 import sys
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QMainWindow
 import logging
+
+from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMainWindow
 
 from window import WindowContent
 
@@ -23,11 +21,9 @@ class MainWindow(QMainWindow):
 
 
 def main():
-
-    logfile_name = f'log.log'
+    # logfile_name = f'log.log'
 
     logfile_format = '[%(asctime)s] %(name)-20s %(levelname)-8s %(message)s'
-    # logfile_format = '%(name)-20s %(levelname)-8s %(message)s'
     logging.basicConfig(
         format=logfile_format,
         level=logging.INFO,

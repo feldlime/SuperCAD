@@ -1,25 +1,24 @@
 """Module with main class of application that manage system and picture."""
 
+
+from logging import getLogger
+import re
+from typing import Dict, Optional
+
+
+from numpy import pi as np_pi
+
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
     QMainWindow,
     QFileDialog,
     QTreeWidgetItem,
+    QSizePolicy,
 )
-from PyQt5.QtCore import Qt
-from logging import getLogger
-import re
-from numpy import pi
-
-from typing import Dict, Tuple, List, Optional, Type
-
-import paint
-
-
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPaintEvent
 
+import paint
 from design import Ui_window
 from states import ControllerSt, ControllerCmd, CreationSt, ActionSt
 
@@ -38,7 +37,7 @@ from restrictions import (
     SegmentsParallel,
     SegmentsNormal,
     SegmentsSpotsJoint,
-    SegmentsAngleBetweenFixed,
+    # SegmentsAngleBetweenFixed,
     # PointOnSegmentFixed,
     PointOnSegmentLine,
     PointAndSegmentSpotJoint,
@@ -54,11 +53,6 @@ from bindings import (
     is_normal_point_binding,
     is_any_normal_binding,
 )
-from diagnostic_context import measure, measured
-
-import sys
-
-sys.stdout = sys.stderr
 
 
 def find_first(lst, cond_fun):
@@ -158,12 +152,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         # Располагаем виджет в области work_plane и присваеваем ему те же
         # параметры как в design
         self.setGeometry(
-            QtCore.QRect(
+            QRect(
                 0, 0, self.work_plane.width(), self.work_plane.height()
             )
         )
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        sizePolicy = QSizePolicy(
+            QSizePolicy.Preferred, QSizePolicy.Preferred
         )
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -268,7 +262,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
         )
         self.field_angle_add_segment.valueChanged.connect(
             lambda new_value: self.change_created_or_selected_figure(
-                'angle', new_value * pi / 180
+                'angle', new_value * np_pi / 180
             )
         )
 
@@ -348,7 +342,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
             self.field_length_add_segment.setValue(params['length'])
             self.field_length_add_segment.blockSignals(False)
             self.field_angle_add_segment.blockSignals(True)
-            self.field_angle_add_segment.setValue(params['angle'] * 180 / pi)
+            self.field_angle_add_segment.setValue(
+                params['angle'] * 180 / np_pi)
             self.field_angle_add_segment.blockSignals(False)
 
             # Select field with focus
@@ -838,7 +833,6 @@ class WindowContent(QOpenGLWidget, Ui_window):
     def mouseReleaseEvent(self, event):
         self._logger.debug('mouseReleaseEvent: start')
         if event.button() == Qt.LeftButton:
-            x, y = self.to_real_xy(event.x(), event.y())
 
             if self.action_st == ActionSt.MOVE:
                 self._project.commit()
@@ -856,7 +850,8 @@ class WindowContent(QOpenGLWidget, Ui_window):
                 self._moved_binding = None
                 if len(selected_figures) == 1:
                     self._selected_figure_name = selected_figures[0]
-                    self.select_figure_on_list_view()  # Also start changing and set action_st = SELECTED
+                    # Also start changing and set action_st = SELECTED
+                    self.select_figure_on_list_view()
                 self.action_st = ActionSt.SELECTED
 
         self.update()

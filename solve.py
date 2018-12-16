@@ -19,8 +19,9 @@ from collections import defaultdict
 import re
 import types
 
-from utils import IncorrectParamValue, BIG_NUMBER
+from utils import IncorrectParamValue
 
+# noinspection PyUnresolvedReferences,PyPep8Naming
 from diagnostic_context import (
     measure,
     measured,
@@ -160,16 +161,14 @@ class Substitutor:
         ----------
         system: list[sympy.Eq]
             List of equations.
-        symbols_dict: list[str]
-            Dict (sym_name -> sym) of all symbols that can be used in equations.
+        symbols_dict: dict
+            Dict (sym_name -> sym) - all symbols that can be used in equations.
 
         Returns
         -------
         self
         """
         self._symbols_dict = symbols_dict
-
-        # ### Define and save simple equations
 
         # At first, go through all simple equations,
         # swap if, e.g. 5 = 'x',
