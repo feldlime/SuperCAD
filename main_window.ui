@@ -780,7 +780,7 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QCheckBox" name="checkbox_restr_point_on_segment_line_2">
+    <widget class="QCheckBox" name="checkbox_restr_point_on_segment_line_1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -799,7 +799,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QCheckBox" name="checkbox_restr_point_on_segment_line_1">
+    <widget class="QCheckBox" name="checkbox_restr_point_on_segment_line_2">
      <property name="geometry">
       <rect>
        <x>90</x>
@@ -1189,7 +1189,6 @@
    <zorder>widget_add_point</zorder>
    <zorder>widget_restr_fixed</zorder>
    <zorder>widget_restr_joint</zorder>
-   <zorder>widget_restr_point_on_segment_line</zorder>
    <zorder>widget_restr_segment_angle_fixed</zorder>
    <zorder>widget_restr_segment_length_fixed</zorder>
    <zorder>widget_restr_segments_parallel</zorder>
@@ -1199,6 +1198,7 @@
    <zorder>widget_restr_segments_angle_between_fixed</zorder>
    <zorder>widget_add_segment</zorder>
    <zorder>widget_elements_table</zorder>
+   <zorder>widget_restr_point_on_segment_line</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -1344,8 +1344,8 @@
   <tabstop>field_y2_add_segment</tabstop>
   <tabstop>checkbox_restr_joint_1</tabstop>
   <tabstop>checkbox_restr_joint_2</tabstop>
-  <tabstop>checkbox_restr_point_on_segment_line_2</tabstop>
   <tabstop>checkbox_restr_point_on_segment_line_1</tabstop>
+  <tabstop>checkbox_restr_point_on_segment_line_2</tabstop>
   <tabstop>checkbox_restr_segments_parallel_1</tabstop>
   <tabstop>checkbox_restr_segments_parallel_2</tabstop>
   <tabstop>checkbox_restr_segments_normal_1</tabstop>
