@@ -434,6 +434,7 @@ class CADProject:
         self._state = state
         self._history.clear()
         self._cancelled.clear()
+        self._commit()
 
     def commit(self):
         """Commit changes."""
