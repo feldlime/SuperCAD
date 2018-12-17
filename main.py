@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
 
 
 def main():
-    diagnostic_context.VERBOSE = False
+    diagnostic_context.VERBOSE = True
 
     # logfile_name = f'log.log'
     logfile_format = '[%(asctime)s] %(name)-20s %(levelname)-8s %(message)s'
