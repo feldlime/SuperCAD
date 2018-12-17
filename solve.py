@@ -499,6 +499,9 @@ class EquationsSystem:
             self._equations.pop(equation_name)
         self._update_graph()
 
+        for eq_name in equations_to_delete:
+            self._derivatives.pop(eq_name)
+
     @contract(current_values='figures_values', returns='figures_values')
     def solve(self, current_values: dict) -> dict:
         """Solve full system in a current state.
