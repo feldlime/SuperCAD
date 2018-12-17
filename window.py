@@ -384,9 +384,12 @@ class WindowContent(QOpenGLWidget, Ui_window):
         if self._created_figure is not None:
             self._created_figure.set_param(field, value)
         elif self._selected_figure_name is not None:
-            self._project.change_figure(
-                self._selected_figure_name, field, value
-            )
+            try:
+                self._project.change_figure(
+                    self._selected_figure_name, field, value
+                )
+            except CannotSolveSystemError:
+                pass
 
         self.update()
 
