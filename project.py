@@ -24,6 +24,7 @@ from utils import (
 )
 
 from diagnostic_context import measured
+from solve import MovingCache
 
 CIRCLE_BINDING_RADIUS = 12
 SEGMENT_BINDING_MARGIN = 6
@@ -413,6 +414,8 @@ class CADProject:
         filename: str
             Name of file to save (with extension).
         """
+
+        del self._state.system._moving_cache
         with open(filename, 'wb') as f:
             pkl_dump(self._state, f)
 
@@ -432,6 +435,7 @@ class CADProject:
             raise IncorrectTypeOfLoadedObject
 
         self._state = state
+        self._state.system._moving_cache = MovingCache()
         self._history.clear()
         self._cancelled.clear()
         self._commit()
