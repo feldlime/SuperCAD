@@ -184,6 +184,146 @@ class TestEquationsSystem:
         with pytest.raises(IncorrectParamValue):
             system.remove_restriction_equations('fixed_f1')
 
+    def test_moving_state_1(self):
+        system = EquationsSystem()
+        system.add_figure_symbols('figure1', ['x', 'y'])
+
+        f1_ = system.get_symbols('figure1')
+        f1_x, f1_y = f1_['x'], f1_['y']
+
+        values = {
+            'figure1': {'x': 1.0, 'y': 1.0}
+        }
+
+        # Check moving
+        new_values = {'figure1': {'x': 1.0, 'y': 2.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure1': {'x': 1.0, 'y': 2.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'].update(result['figure1'])
+
+        new_values = {'figure1': {'x': 2.0, 'y': 2.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure1': {'x': 2.0, 'y': 2.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure1'].update(result['figure1'])
+
+    def test_moving_state_2(self):
+        system = EquationsSystem()
+
+        # Add figures
+        system.add_figure_symbols('figure2', ['x1', 'y1', 'x2', 'y2'])
+        f2_ = system.get_symbols('figure2')
+        f2_x1, f2_y1, f2_x2, f2_y2 = f2_['x1'], f2_['y1'], f2_['x2'], f2_['y2']
+
+        system.add_figure_symbols('figure3', ['x1', 'y1', 'x2', 'y2'])
+        f3_ = system.get_symbols('figure3')
+        f3_x1, f3_y1, f3_x2, f3_y2 = f3_['x1'], f3_['y1'], f3_['x2'], f3_['y2']
+
+        system.add_figure_symbols('figure4', ['x1', 'y1', 'x2', 'y2'])
+        f4_ = system.get_symbols('figure4')
+        f4_x1, f4_y1, f4_x2, f4_y2 = f4_['x1'], f4_['y1'], f4_['x2'], f4_['y2']
+
+        # Add restrictions
+        joint_f2_f3 = [sympy.Eq(f2_x2, f3_x1), sympy.Eq(f2_y2, f3_y1)]
+        system.add_restriction_equations('joint_f2_f3', joint_f2_f3)
+
+        joint_f3_f4 = [sympy.Eq(f3_x2, f4_x1), sympy.Eq(f3_y2, f4_y1)]
+        system.add_restriction_equations('joint_f3_f4', joint_f3_f4)
+
+        joint_f4_f2 = [sympy.Eq(f4_x2, f2_x1), sympy.Eq(f4_y2, f2_y1)]
+        system.add_restriction_equations('joint_f4_f2', joint_f4_f2)
+
+        # Solve restrictions
+        values = {
+            'figure2': {'x1': 1.0, 'y1': 1.0, 'x2': 10.0, 'y2': 10.0},
+            'figure3': {'x1': 10.0, 'y1': 10.0, 'x2': 5.0, 'y2': 10.0},
+            'figure4': {'x1': 5.0, 'y1': 10.0, 'x2': 1.0, 'y2': 1.0},
+        }
+
+        result = system.solve(values)
+
+        # Check restrictions
+        answer = {
+            'figure2': {'x1': 1.0, 'y1': 1.0, 'x2': 10.0, 'y2': 10.0},
+            'figure3': {'x1': 10.0, 'y1': 10.0, 'x2': 5.0, 'y2': 10.0},
+            'figure4': {'x1': 5.0, 'y1': 10.0, 'x2': 1.0, 'y2': 1.0},
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+
+        values['figure2'].update(result['figure2'])
+        values['figure4'].update(result['figure4'])
+        values['figure3'].update(result['figure3'])
+
+        # Check moving
+
+        new_values = {'figure4': {'x1': 5.0, 'y1': 5.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure4': {'x1': 5.0, 'y1': 5.0},
+            'figure3': {'x2': 5.0, 'y2': 5.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure4'].update(result['figure4'])
+        values['figure3'].update(result['figure3'])
+
+        new_values = {'figure4': {'x1': 4.0, 'y1': 4.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure4': {'x1': 4.0, 'y1': 4.0},
+            'figure3': {'x2': 4.0, 'y2': 4.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure4'].update(result['figure4'])
+        values['figure3'].update(result['figure3'])
+
+        new_values = {'figure4': {'x1': 4.0, 'y1': 5.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure4': {'x1': 4.0, 'y1': 5.0},
+            'figure3': {'x2': 4.0, 'y2': 5.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure4'].update(result['figure4'])
+        values['figure3'].update(result['figure3'])
+
+        new_values = {'figure4': {'x1': 5.0, 'y1': 5.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure4': {'x1': 5.0, 'y1': 5.0},
+            'figure3': {'x2': 5.0, 'y2': 5.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure4'].update(result['figure4'])
+        values['figure3'].update(result['figure3'])
+
+        # ###############
+        new_values = {'figure2': {'x1': 7.0, 'y1': 8.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure2': {'x1': 7.0, 'y1': 8.0},
+            'figure4': {'x2': 7.0, 'y2': 8.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure2'].update(result['figure2'])
+        values['figure4'].update(result['figure4'])
+
+        new_values = {'figure2': {'x1': 8.0, 'y1': 8.0}}
+        result = system.solve_optimization_task(new_values, values)
+        answer = {
+            'figure2': {'x1': 8.0, 'y1': 8.0},
+            'figure4': {'x2': 8.0, 'y2': 8.0}
+        }
+        assert_2_level_dicts_equal(result, answer, is_close=True)
+        values['figure2'].update(result['figure2'])
+        values['figure4'].update(result['figure4'])
+
+
+
     def test_full_pass(self):
         system = EquationsSystem()
         system.add_figure_symbols('figure1', ['x', 'y'])

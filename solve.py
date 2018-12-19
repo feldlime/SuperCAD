@@ -288,15 +288,16 @@ class Substitutor:
             Given solution with added items - variables that were substituted.
         """
         full_solution = solution.copy()
+        subs = self._subs.copy()
 
         try:
             for k, v in self._subs.items():
                 if not isinstance(v, float):
-                    self._subs[k] = solution[str(v)]  # v must be in solution
+                    subs[k] = solution[str(v)]  # v must be in solution
         except KeyError:
             raise RuntimeError(f'Symbol {v} not in solution')
 
-        full_solution.update(self._subs)
+        full_solution.update(subs)
         return full_solution
 
     def _is_simple_equation(self, eq):
@@ -318,11 +319,50 @@ class Substitutor:
             return False
 
 
+
+class MovingState:
+    def __init__(self, fun=None, symbol_names: list =None, desired_values: dict=None, substitutor=None):
+        self.fun = fun
+        self.symbol_names = symbol_names
+        self.desired_values = desired_values
+        self.substitutor = substitutor
+
+
+class MovingCache:
+    def __init__(self):
+        self._states = []
+        self.save = False
+        self.current_values = None
+        self.optimizing_values = None
+
+    def reset(self):
+        self._states = []
+        self.save = False
+        self.current_values = None
+        self.optimizing_values = None
+
+    def start(self):
+        self.save = True
+
+    def add(self, state):
+        if self.save:
+            self._states.append(state)
+
+    def pop_last(self):
+        if self._states:
+            return self._states.pop()
+
+    @property
+    def states(self):
+        return self._states
+
+
 class EquationsSystem:
     def __init__(self):
         self._symbols = dict()
         self._equations = dict()
         self._graph = nx.MultiGraph()
+        self._moving_cache = MovingCache()
 
     @property
     def _figures_names(self):
@@ -362,6 +402,8 @@ class EquationsSystem:
         }
         self._symbols.update(new_symbols)
         self._update_graph()
+
+        self._moving_cache.reset()
 
     @contract(figure_name='str', symbol_name='str | None')
     def get_symbols(self, figure_name: str, symbol_name: str = None):
@@ -427,6 +469,7 @@ class EquationsSystem:
         for symbol_name in symbols_to_delete:
             self._symbols.pop(symbol_name)
         self._update_graph()
+        self._moving_cache.reset()
 
     @contract(restriction_name='str', equations='list')
     def add_restriction_equations(
@@ -460,6 +503,7 @@ class EquationsSystem:
         }
         self._equations.update(new_equations)
         self._update_graph()
+        self._moving_cache.reset()
 
     @contract(restriction_name='str')
     def remove_restriction_equations(self, restriction_name: str):
@@ -490,6 +534,7 @@ class EquationsSystem:
         for equation_name in equations_to_delete:
             self._equations.pop(equation_name)
         self._update_graph()
+        self._moving_cache.reset()
 
     @contract(current_values='figures_values', returns='figures_values')
     def solve(self, current_values: dict) -> dict:
@@ -505,7 +550,7 @@ class EquationsSystem:
         new_values: str -> (str -> number)
             New values of variables: figure_name -> (symbol_name -> value).
         """
-
+        self._moving_cache.reset()
         current_values = unroll_values_dict(current_values)
 
         result = {}
@@ -558,7 +603,7 @@ class EquationsSystem:
         new_values: str -> (str -> number)
             New values of variables: figure_name -> (symbol_name -> value).
         """
-
+        self._moving_cache.reset()
         current_values = unroll_values_dict(current_values)
 
         graph = self._graph.copy()
@@ -637,6 +682,56 @@ class EquationsSystem:
 
         optimizing_values = unroll_values_dict(optimizing_values)
         current_values = unroll_values_dict(current_values)
+
+        if self._moving_cache.save \
+                and set(optimizing_values.keys()) == set(self._moving_cache.optimizing_values.keys()) \
+                and set(current_values.keys()) == set(self._moving_cache.current_values.keys()):
+            full_result = dict()
+
+            for state in self._moving_cache.states:
+                current_values_ = current_values.copy()
+                optimizing_values_ = optimizing_values.copy()
+                for k, v in state.substitutor.subs.items():
+                    if str(k) in state.high_priority_symbols:
+                        cur_v = optimizing_values_.pop(str(k))
+                        optimizing_values_[str(v)] = cur_v
+
+                ini_values = list(random.random(state.size))
+                for i, symbol_name in enumerate(state.symbol_names):
+                    if symbol_name in optimizing_values_:
+                        ini_values[i] = optimizing_values_[symbol_name]
+                    elif symbol_name in current_values_:
+                        ini_values[i] = current_values_[symbol_name]
+
+                def new_fun(X):
+                    res = list(state.fun(X))
+                    for i, (res_value, sym_name) in enumerate(zip(res, state.symbol_names)):
+                        if sym_name in optimizing_values_:
+                            res[i] += 1000 * (state.desired_values[sym_name]
+                                              - optimizing_values_[sym_name])
+                        else:
+                            res[i] += state.desired_values[sym_name] \
+                                      - current_values_[sym_name]
+                    return res
+
+                # Solve
+                result = self._solve_numeric(new_fun, np_array(ini_values))
+                result = dict(zip(state.symbol_names, result))
+                result = {
+                    name: value
+                    for name, value in result.items()
+                    if split_full_name(name)[0] != 'lambda'
+                }
+                result = state.substitutor.restore(result)
+                full_result.update(result)
+
+            return roll_up_values_dict(full_result)
+
+        else:
+            self._moving_cache.reset()
+            self._moving_cache.optimizing_values = optimizing_values.copy()
+            self._moving_cache.current_values = current_values.copy()
+            self._moving_cache.start()
 
         result = dict()
         subgraphs = [
@@ -744,68 +839,81 @@ class EquationsSystem:
         # Subs will be {x1: x2}.
         # If not change we will optimize x2 -> 1, x1 = x2 = 1.
         # So we change hpdv to {'x2': 5}.
+        hpdv_copy = high_priority_desired_values.copy()
+
         for k, v in substitutor.subs.items():
             if str(k) in high_priority_desired_values:
                 cur_v = high_priority_desired_values.pop(str(k))
                 high_priority_desired_values[str(v)] = cur_v
 
         # ############################################################
-        if len(system) == len(symbols):  # Optimization
+        if False:  # len(system) == len(symbols):  # Optimization
             result = self._solve_square_system(system, symbols, desired_values)
             result = {name: value for name, value in result.items()}
-            result = substitutor.restore(result)
-            return result
 
-        lambdas_names = [
-            compose_full_name('lambda', str(i)) for i in range(len(system))
-        ]
-        lambdas_dict = {
-            name: Symbol(name) for name in lambdas_names
-        }
-        lambdas = lambdas_dict.values()
+        else:
+            lambdas_names = [
+                compose_full_name('lambda', str(i)) for i in range(len(system))
+            ]
+            lambdas_dict = {
+                name: Symbol(name) for name in lambdas_names
+            }
+            lambdas = lambdas_dict.values()
 
-        # Loss function: F = 1/2 * sum((xi - xi0) ** 2) + sum(lambda_j * eqj)
-        # Derivatives by xi: dF/dxi = (xi - xi0) + d(sum(lambda_j * eqj)) / dxi
-        # Derivatives by lambda_j: dF/d lambda_j = eqj (source system)
+            # Loss function: F = 1/2 * sum((xi - xi0) ** 2) + sum(lambda_j * eqj)
+            # Derivatives by xi: dF/dxi = (xi - xi0) + d(sum(lambda_j * eqj)) / dxi
+            # Derivatives by lambda_j: dF/d lambda_j = eqj (source system)
 
-        canonical = self._system_to_canonical(system)
-        loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
-        if loss_part2 == 0:  # System is empty -> no lambdas
-            loss_part2 = sympy_Integer(0)  # To be possible to diff
+            canonical = self._system_to_canonical(system)
+            loss_part2 = sum([l_j * canonical[j] for j, l_j in enumerate(lambdas)])
+            if loss_part2 == 0:  # System is empty -> no lambdas
+                loss_part2 = sympy_Integer(0)  # To be possible to diff
 
-        for sub_sym in substitutor.subs.keys():
-            symbols.pop(sub_sym)
+            for sub_sym in substitutor.subs.keys():
+                symbols.pop(sub_sym)
 
-        with measure('get equations with diff'):
-            equations = [0] * len(symbols)
-            for i, (name, sym) in enumerate(symbols.items()):
-                if name in high_priority_desired_values:
-                    eq = Eq(
-                        1000 * (sym - high_priority_desired_values[name])
-                        + loss_part2.diff(sym),
-                        0,
-                    )
-                else:
-                    eq = Eq(
-                        sym - desired_values[name] + loss_part2.diff(sym), 0
-                    )
-                equations[i] = eq
+            symbols_names = list(symbols.keys())
+            with measure('get equations with diff'):
+                equations = [0] * len(symbols)
+                for i, name in enumerate(symbols_names):
+                    sym = symbols[name]
+                    if name in high_priority_desired_values:
+                        eq = Eq(
+                            1000 * (sym - high_priority_desired_values[name])
+                            + loss_part2.diff(sym),
+                            0,
+                        )
+                    else:
+                        eq = Eq(
+                            sym - desired_values[name] + loss_part2.diff(sym), 0
+                        )
+                    equations[i] = eq
 
-        equations.extend(system)
-        lambdas_dict.update(symbols)
-        result = self._solve_square_system(
-            equations, lambdas_dict, desired_values
-        )
+            equations.extend(system)
+            lambdas_dict.update(symbols)
+            full_symbols_names = symbols_names + lambdas_names
+            desired_values.update(high_priority_desired_values)
+            result = self._solve_square_system(
+                equations, lambdas_dict, desired_values, symbols_names=full_symbols_names
+            )
 
-        result = {
-            name: value
-            for name, value in result.items()
-            if split_full_name(name)[0] != 'lambda'
-        }
+            result = {
+                name: value
+                for name, value in result.items()
+                if split_full_name(name)[0] != 'lambda'
+            }
+
+        moving_state = self._moving_cache.pop_last()
+        if moving_state:
+            moving_state.substitutor = substitutor
+            moving_state.symbol_names = symbols_names
+            moving_state.high_priority_symbols = list(hpdv_copy.keys())
+            moving_state.size = len(equations)
+            self._moving_cache.add(moving_state)
+
         result = substitutor.restore(result)
         return result
 
-    @classmethod
     @contract(
         system='list[N]',
         symbols_dict='dict[N]',
@@ -813,7 +921,7 @@ class EquationsSystem:
         returns='dict[N]',
     )
     def _solve_square_system(
-        cls, system: list, symbols_dict: dict, desired_values: dict = None
+        self, system: list, symbols_dict: dict, desired_values: dict = None, symbols_names: list = None
     ):
         """Desired values only for setting initial conditions."""
 
@@ -823,13 +931,14 @@ class EquationsSystem:
                 f'len(simplified_system) = {len(system)}'
             )
 
-        symbols_names = list(symbols_dict.keys())
+        if not symbols_names:
+            symbols_names = list(symbols_dict.keys())
         symbols_list = [symbols_dict[name] for name in symbols_names]
 
         if system:
             # Prepare
-            canonical_system = cls._system_to_canonical(system)
-            system_function = cls._system_to_function(
+            canonical_system = self._system_to_canonical(system)
+            system_function = self._system_to_function(
                 canonical_system, symbols_list
             )
 
@@ -841,14 +950,23 @@ class EquationsSystem:
                         ini_values[i] = desired_values[symbol_name]
 
             # Solve
-            solution = cls._solve_numeric(
+            solution = self._solve_numeric(
                 system_function, np_array(ini_values)
             )
+
+            moving_state = MovingState(
+                fun=system_function,
+                desired_values=desired_values,
+                # symbol_names=symbols_names
+            )
+            self._moving_cache.add(moving_state)
         else:
             solution = []
+            self._moving_cache.reset()
 
         # Add values for symbols that were substituted
         solution_dict = dict(zip(symbols_names, solution))
+
 
         return solution_dict
 
