@@ -11,7 +11,7 @@ class ControllerSt:
     RESTR_FIXED = 9
     RESTR_SEGMENT_LENGTH_FIXED = 10
     RESTR_SEGMENT_ANGLE_FIXED = 11
-    RESTR_SEGMENT_ANGLE_BETWEEN_FIXED = 12
+    RESTR_SEGMENTS_ANGLE_BETWEEN_FIXED = 12
 
     @staticmethod
     def is_restr(st):

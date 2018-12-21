@@ -5,7 +5,7 @@ import re
 from typing import Dict, Optional
 
 
-from numpy import pi as np_pi
+from numpy import pi as np_pi, arccos as np_arccos
 
 from PyQt5.QtWidgets import (
     QOpenGLWidget,
@@ -36,7 +36,7 @@ from restrictions import (
     SegmentsParallel,
     SegmentsNormal,
     SegmentsSpotsJoint,
-    # SegmentsAngleBetweenFixed,
+    SegmentsAngleBetweenFixed,
     # PointOnSegmentFixed,
     PointOnSegmentLine,
     PointAndSegmentSpotJoint,
@@ -221,7 +221,7 @@ class WindowContent(QOpenGLWidget, Ui_window):
             )
         )
         self.button_restr_segments_angle_between_fixed.clicked['bool'].connect(
-            lambda ev: self.controller_restr_segment_angle_between_fixed(
+            lambda ev: self.controller_restr_segments_angle_between_fixed(
                 ControllerCmd.SHOW
             )
         )
@@ -614,11 +614,36 @@ class WindowContent(QOpenGLWidget, Ui_window):
             is_any_segment_binding,
         )
 
-    def controller_restr_segment_angle_between_fixed(
+    def controller_restr_segments_angle_between_fixed(
         self, cmd, bindings: list = None
     ):
-        # TODO
-        pass
+        def get_restr_fun(_b1, _b2):
+            s1_name = _b1.get_object_names()[0]
+            s2_name = _b2.get_object_names()[0]
+            s1_params = self._project.figures[s1_name].get_params()
+            s2_params = self._project.figures[s2_name].get_params()
+            s1_x1, s1_y1 = s1_params['x1'], s1_params['y1']
+            s1_x2, s1_y2 = s1_params['x2'], s1_params['y2']
+            s2_x1, s2_y1 = s2_params['x1'], s2_params['y1']
+            s2_x2, s2_y2 = s2_params['x2'], s2_params['y2']
+
+            s1_dx, s1_dy = s1_x2 - s1_x1, s1_y2 - s1_y1
+            s2_dx, s2_dy = s2_x2 - s2_x1, s2_y2 - s2_y1
+
+            scalar_prod = s1_dx * s2_dx + s1_dy * s2_dy
+            l1 = (s1_dx ** 2 + s1_dy ** 2) ** 0.5
+            l2 = (s2_dx ** 2 + s2_dy ** 2) ** 0.5
+
+            angle_cos = scalar_prod / (l1 * l2)
+            return SegmentsAngleBetweenFixed(np_arccos(angle_cos))
+
+        self._controller_restr_two_objects(
+            'segments_angle_between_fixed',
+            cmd,
+            bindings,
+            get_restr_fun,
+            (is_any_segment_binding, is_any_segment_binding),
+        )
 
     def _controller_restr_single_object(
         self, name, cmd, bindings, get_restr_fun, check_binding_func
