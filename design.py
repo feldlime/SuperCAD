@@ -489,7 +489,7 @@ class Ui_window(object):
 
     def retranslateUi(self, window):
         _translate = QtCore.QCoreApplication.translate
-        window.setWindowTitle(_translate("window", "MainWindow"))
+        window.setWindowTitle(_translate("window", "SuperCAD"))
         self.button_restr_segments_angle_between_fixed.setText(_translate("window", "SABF"))
         self.label_x_add_point.setText(_translate("window", "X:"))
         self.label_y_add_point.setText(_translate("window", "Y:"))
